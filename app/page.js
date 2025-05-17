@@ -8,6 +8,7 @@ export default function Home() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
+        scopes: "https://www.googleapis.com/auth/calendar.readonly",
         redirectTo: window.location.href + `${"/home"}`, // here we mentioned to redirect to the same link which was opened, post authentication.
       },
     });

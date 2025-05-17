@@ -4,68 +4,139 @@ import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import styles from "./page.module.css";
-import AiListener from "@/components/AiListener";
+import UpcomingEvents from "@/components/UpcomingEvents";
+import WeatherCard from "@/components/WeatherCard";
+// import AiListener from "@/components/AiListener";
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const router = useRouter();
-  const [dateTimeData, setDateTimeData] = useState();
-
-  // Reference to the eyes container
+  const [settingsFlag, setSettingsFlag] = useState(false);
+  const [signOutFlag, setSignOutFlag] = useState(false);
   const eyesRef = useRef(null);
+  const [upcomingEventsData, setUpcomingEventsData] = useState([]);
+  const [weather, setWeather] = useState({});
+  const [voiceModeToggle, setVoiceModeToggle] = useState(true);
+  const [query, setQuery] = useState("");
+  const menuRef = useRef(null);
+
+  const handleClickOutside = (event) => {
+    if (menuRef.current && !menuRef.current.contains(event.target)) {
+      setSettingsFlag(false);
+    }
+  };
 
   useEffect(() => {
-    const updateTime = () => {
-      const dateTime = new Date();
-      setDateTimeData(dateTime);
+    if (settingsFlag) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
     };
-    updateTime();
-    const interval = setInterval(updateTime, 1000 * 60);
-    return () => clearInterval(interval);
+  }, [settingsFlag]);
+
+  useEffect(() => {
+    const getWeather = async () => {
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+        const { latitude, longitude } = position.coords;
+        const apiKey = process.env.NEXT_PUBLIC_WEATHER_API; // Make sure it's public
+        const response = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`
+        );
+        const data = await response.json();
+        setWeather(data);
+        // console.log("Current Weather:", data);
+      } catch (error) {
+        console.error("Failed to get location or weather data:", error);
+      }
+    };
+    getWeather();
   }, []);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const response = await fetch(
+        "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        {
+          headers: {
+            Authorization: `Bearer ${session.provider_token}`,
+          },
+        }
+      );
+      const calendarData = await response.json();
+      if (calendarData?.items?.length) {
+        const now = new Date();
+        const upcomingEvents = calendarData.items
+          .filter((event) => {
+            const start = new Date(event.start?.dateTime || event.start?.date);
+            return start >= now;
+          })
+          .sort((a, b) => {
+            const dateA = new Date(a.start?.dateTime || a.start?.date);
+            const dateB = new Date(b.start?.dateTime || b.start?.date);
+            return dateA - dateB;
+          })
+          .slice(0, 3); // Keep only the next 3 upcoming events
+        setUpcomingEventsData(upcomingEvents);
+        // console.log("Next 3 upcoming events:", upcomingEvents);
+      } else {
+        console.log("No upcoming events found.");
+      }
+    };
+    session?.provider_token && fetchEvents();
+  }, [session]);
 
   useEffect(() => {
     const handleMouseMove = (event) => {
       if (!eyesRef.current) return;
-
       // Get bounding rect of the eyes container
       const rect = eyesRef.current.getBoundingClientRect();
-
       // Calculate the center of the eyes container
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
-
       // Calculate the relative mouse position from the center (range -1 to 1)
       let deltaX = (event.clientX - centerX) / (rect.width / 2);
       let deltaY = (event.clientY - centerY) / (rect.height / 2);
-
       // Clamp the delta between -1 and 1 for smooth max movement
       deltaX = Math.max(-1, Math.min(1, deltaX));
       deltaY = Math.max(-1, Math.min(1, deltaY));
-
       // Max translation in pixels for the eyes movement
       const maxTranslate = 20;
-
       // Calculate final translation
       const translateX = deltaX * maxTranslate;
       const translateY = deltaY * maxTranslate;
-
       // Apply transform to each eye div
       const eyes = eyesRef.current.querySelectorAll("div");
       eyes.forEach((eye) => {
         eye.style.transform = `translate(${translateX}px, ${translateY}px)`;
       });
     };
-
     window.addEventListener("mousemove", handleMouseMove);
-
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
     };
   }, []);
 
+  useEffect(() => {
+    const getSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      setSession(data?.session ?? null);
+      setLoading(false);
+      if (error) {
+        console.error("Session fetch error:", error.message);
+      }
+    };
+    getSession();
+  }, []);
+
   const signOut = async () => {
+    setSignOutFlag(true);
     setLoading(true);
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -76,51 +147,27 @@ export default function HomePage() {
     }
   };
 
-  useEffect(() => {
-    const getSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      setSession(data?.session ?? null);
-      setLoading(false);
-
-      if (error) {
-        console.error("Session fetch error:", error.message);
-      }
-    };
-    getSession();
-  }, []);
+  function handleSubmit(e) {
+    e.preventDefault();
+    console.log(e.target.query.value);
+    setQuery(e.target.query.value);
+  }
 
   if (!loading && !session) return "Unauthenticated";
 
   return (
     <div className={`${"wrapper"} ${"container"}`}>
       <ul className={styles.header}>
-        <li>
+        <li className={styles.headerElement}>
           <h1>Zena</h1>
         </li>
-        <li>
-          {dateTimeData && (
-            <div className={styles.dateTimeSection}>
-              <p>
-                {dateTimeData?.toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}{" "}
-                {dateTimeData?.toLocaleTimeString("en-IN", {
-                  hour: "numeric",
-                  minute: "numeric",
-                  hour12: true,
-                })}
-              </p>
-            </div>
-          )}
-        </li>
-        <li>
+        <li className={styles.headerElement} ref={menuRef}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             width="1.8rem"
             height="1.8rem"
+            onClick={() => setSettingsFlag(!settingsFlag)}
           >
             <g fill="none">
               <path
@@ -143,6 +190,15 @@ export default function HomePage() {
               ></circle>
             </g>
           </svg>
+          {settingsFlag && (
+            <ul className={styles.options}>
+              <li>Preferences</li>
+              <li>Chat History</li>
+              <li onClick={() => signOut()}>
+                {signOutFlag ? "Signing out..." : "Sign Out"}
+              </li>
+            </ul>
+          )}
         </li>
       </ul>
       <div className={styles.whiteSection}>
@@ -160,15 +216,81 @@ export default function HomePage() {
               </div>
             </div>
           )}
+          {upcomingEventsData.length !== 0 &&
+            Object.keys(weather).length !== 0 && (
+              <section className={styles.cardsContainer}>
+                <UpcomingEvents events={upcomingEventsData} />
+                <WeatherCard weatherData={weather} />
+              </section>
+            )}
         </section>
-        <section className={styles.aiListener}>
-          <div className={styles.eyes} ref={eyesRef}>
-            <div></div>
-            <div></div>
-          </div>
-          {/* <AiListener /> */}
-          <img src="/images/aiBackground.gif" alt="" />
-        </section>
+        {voiceModeToggle ? (
+          <section
+            className={styles.aiListener}
+            onDoubleClick={() => setVoiceModeToggle(false)}
+          >
+            <div className={styles.eyes} ref={eyesRef}>
+              <div></div>
+              <div></div>
+            </div>
+            {/* <AiListener /> */}
+            <img src="/images/aiBackground.gif" alt="" />
+          </section>
+        ) : (
+          <section className={styles.textInput} key={voiceModeToggle}>
+            <form onSubmit={handleSubmit}>
+              <input
+                type="text"
+                placeholder="Enter your query..."
+                name="query"
+                required
+              />
+              <button type="submit">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  width="2.5rem"
+                  height="2.5rem"
+                >
+                  <path
+                    fill="black"
+                    fillRule="evenodd"
+                    d="M12 1.25C6.063 1.25 1.25 6.063 1.25 12S6.063 22.75 12 22.75S22.75 17.937 22.75 12S17.937 1.25 12 1.25m1.03 6.72l3.5 3.5a.75.75 0 0 1 0 1.06l-3.5 3.5a.75.75 0 1 1-1.06-1.06l2.22-2.22H8a.75.75 0 0 1 0-1.5h6.19l-2.22-2.22a.75.75 0 0 1 1.06-1.06"
+                    clipRule="evenodd"
+                  ></path>
+                </svg>
+              </button>
+              <button type="button" onClick={() => setVoiceModeToggle(true)}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 26 26"
+                  width="2.5rem"
+                  height="2.5rem"
+                >
+                  <g fill="black">
+                    <path
+                      d="M26 14c0 6.627-5.373 12-12 12S2 20.627 2 14S7.373 2 14 2s12 5.373 12 12"
+                      opacity=".2"
+                    ></path>
+                    <path
+                      fillRule="evenodd"
+                      d="M10.75 7.25a2.25 2.25 0 0 1 4.5 0v3.5a2.25 2.25 0 0 1-4.5 0z"
+                      clipRule="evenodd"
+                    ></path>
+                    <path d="M13 20c-2.48 0-4-.217-4-1s1.52-1 4-1s4 .217 4 1s-1.52 1-4 1"></path>
+                    <path d="M12.5 15.5h1V19h-1z"></path>
+                    <path d="M17 10.5a.5.5 0 0 1 1 0v1.65c0 2.421-2.254 4.35-5 4.35s-5-1.929-5-4.35V10.5a.5.5 0 0 1 1 0v1.65c0 1.831 1.775 3.35 4 3.35s4-1.519 4-3.35z"></path>
+                    <path
+                      fillRule="evenodd"
+                      d="M13 24.5c6.351 0 11.5-5.149 11.5-11.5S19.351 1.5 13 1.5S1.5 6.649 1.5 13S6.649 24.5 13 24.5m0 1c6.904 0 12.5-5.596 12.5-12.5S19.904.5 13 .5S.5 6.096.5 13S6.096 25.5 13 25.5"
+                      clipRule="evenodd"
+                    ></path>
+                  </g>
+                </svg>
+              </button>
+            </form>
+          </section>
+        )}
       </div>
     </div>
   );
