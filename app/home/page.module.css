@@ -1,0 +1,109 @@
+.header {
+  display: flex;
+}
+.header {
+  padding: 1rem 3rem;
+  list-style-type: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+}
+.header li:last-child {
+  background-color: whitesmoke;
+  padding: 0.4rem;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: inset -3px -3px 8px rgba(0, 0, 0, 0.215);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.header li:last-child:hover {
+  background-color: #f0f0f0;
+  box-shadow: inset -2px -2px 5px rgba(0, 0, 0, 0.1),
+    inset 2px 2px 5px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.header li:last-child:active {
+  background-color: #e0e0e0;
+  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.2);
+  transform: scale(0.98);
+}
+
+.header li:nth-child(2) {
+  background-color: rgba(255, 255, 255, 0.463);
+  backdrop-filter: blur(10px);
+  box-shadow: inset -3px -3px 8px rgba(0, 0, 0, 0.215);
+  padding: 0 1rem;
+  border-radius: 10px;
+}
+.chatScreen {
+  flex: 1; /* Let it grow and push down .aiListener */
+  overflow-y: auto; /* Optional: scroll if content exceeds */
+  padding: 1rem; /* Optional */
+}
+.aiListener {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.aiListener img {
+  height: 20vh;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+}
+.eyes {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 1rem;
+  z-index: 10000;
+}
+.eyes div {
+  border-radius: 50px;
+  height: 1.5rem;
+  width: 0.4rem;
+  background-color: white;
+  border: solid 1px black;
+  animation: eyeBlink 2s infinite;
+  transform-origin: center;
+  transition: all 0.3s ease-in-out;
+}
+@keyframes eyeBlink {
+  0%, 90%, 100% {
+    height: 1.5rem;
+    /* transform: scaleY(1); */
+  }
+  92%, 96% {
+    height: 0.3rem;
+    /* transform: scaleY(0.1); */
+  }
+}
+
+.whiteSection{
+  position: relative;
+  background-color: white;
+  margin: 0 3rem;
+  border-radius: 10px;
+  opacity: 0.5;
+  height: 80vh;
+  backdrop-filter: blur(10px);
+}
+.whiteSection img{
+  filter: invert(100%) brightness(150%) contrast(150%);
+  height: 23vh;
+}
+.whiteSection .aiListener:hover{
+  cursor: pointer;
+}
