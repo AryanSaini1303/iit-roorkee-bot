@@ -1,13 +1,12 @@
 .header {
   display: flex;
-}
-.header {
   padding: 1rem 3rem;
   list-style-type: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin: 0;
+  animation: revealHeader 0.8s ease-in-out forwards;
 }
 .header li:last-child {
   background-color: whitesmoke;
@@ -41,10 +40,13 @@
   padding: 0 1rem;
   border-radius: 10px;
 }
+.header li:nth-child(1) {
+  font-family: "Rubik", sans-serif;
+}
 .chatScreen {
-  flex: 1; /* Let it grow and push down .aiListener */
-  overflow-y: auto; /* Optional: scroll if content exceeds */
-  padding: 1rem; /* Optional */
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
 }
 .aiListener {
   position: absolute;
@@ -53,6 +55,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  animation: revealAi 0.8s ease-in-out forwards;
 }
 .aiListener img {
   height: 20vh;
@@ -67,12 +70,12 @@
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   z-index: 10000;
 }
 .eyes div {
   border-radius: 50px;
-  height: 1.5rem;
+  height: 1.2rem;
   width: 0.4rem;
   background-color: white;
   border: solid 1px black;
@@ -81,17 +84,20 @@
   transition: all 0.3s ease-in-out;
 }
 @keyframes eyeBlink {
-  0%, 90%, 100% {
-    height: 1.5rem;
+  0%,
+  90%,
+  100% {
+    height: 1.2rem;
     /* transform: scaleY(1); */
   }
-  92%, 96% {
+  92%,
+  96% {
     height: 0.3rem;
     /* transform: scaleY(0.1); */
   }
 }
 
-.whiteSection{
+.whiteSection {
   position: relative;
   background-color: white;
   margin: 0 3rem;
@@ -100,10 +106,67 @@
   height: 80vh;
   backdrop-filter: blur(10px);
 }
-.whiteSection img{
+.whiteSection img {
   filter: invert(100%) brightness(150%) contrast(150%);
   height: 23vh;
 }
-.whiteSection .aiListener:hover{
+.whiteSection .aiListener:hover {
   cursor: pointer;
+}
+.greetingsModal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 10rem auto;
+}
+.greetingsModal .holder {
+  overflow: hidden;
+}
+.greetingsModal h1 {
+  font-size: 2.5rem;
+  margin: 0.5rem;
+  font-weight: lighter;
+  font-family: "Playpen Sans Arabic", cursive;
+  font-weight: 500;
+  font-style: normal;
+  opacity: 0;
+}
+.greetingsModal h1:nth-child(1) {
+  animation: revealInfo 0.8s ease-in-out forwards;
+}
+.greetingsModal .holder:nth-child(2) h1 {
+  animation: revealInfo 0.8s ease-in-out forwards;
+  animation-delay: 0.2s;
+}
+@keyframes revealInfo {
+  0% {
+    transform: translateY(4rem);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(-0.3rem);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes revealAi {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes revealHeader {
+  0%{
+    opacity: 0;
+  }
+  100%{
+    opacity: 1;
+  }
 }

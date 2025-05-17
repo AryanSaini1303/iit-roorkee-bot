@@ -98,20 +98,22 @@ export default function HomePage() {
           <h1>Zena</h1>
         </li>
         <li>
-          <div className="dateTimeSection">
-            <p>
-              {dateTimeData?.toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}{" "}
-              {dateTimeData?.toLocaleTimeString("en-IN", {
-                hour: "numeric",
-                minute: "numeric",
-                hour12: true,
-              })}
-            </p>
-          </div>
+          {dateTimeData && (
+            <div className={styles.dateTimeSection}>
+              <p>
+                {dateTimeData?.toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}{" "}
+                {dateTimeData?.toLocaleTimeString("en-IN", {
+                  hour: "numeric",
+                  minute: "numeric",
+                  hour12: true,
+                })}
+              </p>
+            </div>
+          )}
         </li>
         <li>
           <svg
@@ -144,7 +146,21 @@ export default function HomePage() {
         </li>
       </ul>
       <div className={styles.whiteSection}>
-        <section className={styles.chatScreen}>chat Screen</section>
+        <section className={styles.chatScreen}>
+          {session && (
+            <div className={styles.greetingsModal}>
+              <div className={styles.holder}>
+                <h1>
+                  Good Morning,{" "}
+                  {session?.user?.user_metadata?.name.split(" ")[0]}
+                </h1>
+              </div>
+              <div className={styles.holder}>
+                <h1>How can I assist you today?</h1>
+              </div>
+            </div>
+          )}
+        </section>
         <section className={styles.aiListener}>
           <div className={styles.eyes} ref={eyesRef}>
             <div></div>
