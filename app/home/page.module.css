@@ -221,7 +221,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 1.5rem auto;
+  margin: 1rem auto;
   user-select: none;
 }
 .greetingsModal .holder {
@@ -276,8 +276,10 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  margin: 4rem 0;
+  margin: 2rem 0;
   animation: revealAi 0.8s ease-in-out forwards;
+  position: absolute;
+  bottom: 0;
 }
 
 @keyframes revealAi {

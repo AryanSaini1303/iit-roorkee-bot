@@ -107,7 +107,7 @@ export default function HomePage() {
       deltaX = Math.max(-1, Math.min(1, deltaX));
       deltaY = Math.max(-1, Math.min(1, deltaY));
       // Max translation in pixels for the eyes movement
-      const maxTranslate = 20;
+      const maxTranslate = 16;
       // Calculate final translation
       const translateX = deltaX * maxTranslate;
       const translateY = deltaY * maxTranslate;
@@ -234,7 +234,7 @@ export default function HomePage() {
               <div></div>
             </div>
             {/* <AiListener /> */}
-            <img src="/images/aiBackground.gif" alt="" />
+            <img src="/images/aiBackground7.gif" alt="" />
           </section>
         ) : (
           <section className={styles.textInput} key={voiceModeToggle}>
