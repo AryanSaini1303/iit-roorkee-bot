@@ -6,7 +6,10 @@ import { useEffect, useState, useRef } from "react";
 import styles from "./page.module.css";
 import UpcomingEvents from "@/components/UpcomingEvents";
 import WeatherCard from "@/components/WeatherCard";
-// import AiListener from "@/components/AiListener";
+import ChatResponse from "@/components/ChatResponse";
+import ChatPlaceholder from "@/components/ChatPlaceholder";
+import ZenaLoading from "@/components/ZenaLoading";
+import { Howl } from "howler";
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -24,6 +27,17 @@ export default function HomePage() {
   const [voiceInputFlag, setVoiceInputFlag] = useState(false);
   const [greeting, setGreeting] = useState("Good Morning");
   const [value, setValue] = useState("");
+  const [reply, setReply] = useState("");
+  const [sessionQuery, setSessionQuery] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const sound = new Howl({
+    src: ["/sounds/tapSound.mp3"],
+  });
+  const [messages, setMessages] = useState([]);
+
+  const playSound = () => {
+    sound.play();
+  };
 
   const handleVoiceInput = () => {
     const recognition = new window.webkitSpeechRecognition();
@@ -36,7 +50,7 @@ export default function HomePage() {
     };
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
-      console.log(transcript);
+      // console.log(transcript);
       setQuery(transcript);
     };
     recognition.start();
@@ -67,6 +81,54 @@ export default function HomePage() {
   }
 
   useEffect(() => {
+    query.length !== 0 && setIsProcessing(true);
+    setReply("");
+    if (!sessionStorage.getItem("query")) {
+      sessionStorage.setItem("query", query);
+    } else {
+      setSessionQuery(sessionStorage.getItem("query"));
+    }
+    console.log(query);
+    const processQuery = async () => {
+      setMessages((prev) => [...prev, { role: "user", content: query }]);
+      const res = await fetch("/api/getIntent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: query }),
+      });
+      const { intent } = await res.json();
+      // console.log(intent);
+      setQuery("");
+      if (intent === "chat") {
+        const chatRes = await fetch("/api/chat", {
+          method: "POST",
+          body: JSON.stringify({
+            query,
+            messages: messages,
+          }),
+        });
+        const { reply } = await chatRes.json();
+        console.log("Zena:", reply);
+        setMessages((prev) => [...prev, { role: "system", content: reply }]);
+        setReply(reply);
+        setIsProcessing(false);
+      } else {
+        setReply("");
+        setIsProcessing(false);
+      }
+    };
+    query.length !== 0 && processQuery();
+  }, [query]);
+
+  useEffect(() => {
+    // console.log(messages);
+    messages.length !== 0 &&
+      sessionStorage.setItem("messages", JSON.stringify(messages));
+  }, [messages]);
+
+  useEffect(() => {
     if (voiceInputFlag && voiceModeToggle) {
       handleVoiceInput();
     }
@@ -85,6 +147,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const getWeather = async () => {
+      console.log("weather");
       try {
         const position = await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject);
@@ -101,17 +164,21 @@ export default function HomePage() {
         console.error("Failed to get location or weather data:", error);
       }
     };
-    getWeather();
+    !voiceInputFlag &&
+      !sessionStorage.getItem("query") &&
+      !query &&
+      getWeather();
     const time = new Date();
     if (time.getHours() < 12) {
       setGreeting("Good Morning");
     } else if (time.getHours() > 12) {
       setGreeting("Good Evening");
     }
-  }, []);
+  }, [voiceInputFlag, query]);
 
   useEffect(() => {
     const fetchEvents = async () => {
+      console.log("events");
       const response = await fetch(
         "https://www.googleapis.com/calendar/v3/calendars/primary/events",
         {
@@ -140,8 +207,12 @@ export default function HomePage() {
         console.log("No upcoming events found.");
       }
     };
-    session?.provider_token && fetchEvents();
-  }, [session]);
+    session?.provider_token &&
+      !voiceInputFlag &&
+      !sessionStorage.getItem("query") &&
+      !query &&
+      fetchEvents();
+  }, [session, voiceInputFlag, query]);
 
   useEffect(() => {
     const handleMouseMove = (event) => {
@@ -184,6 +255,8 @@ export default function HomePage() {
       }
     };
     getSession();
+    setSessionQuery(sessionStorage.getItem("query") || "");
+    setMessages(JSON.parse(sessionStorage.getItem("messages")) || []);
   }, []);
 
   if (!loading && !session) return "Unauthenticated";
@@ -234,9 +307,12 @@ export default function HomePage() {
           )}
         </li>
       </ul>
-      <div className={styles.whiteSection}>
+      <div
+        className={styles.whiteSection}
+        style={!reply ? { overflow: "hidden" } : null}
+      >
         <section className={styles.chatScreen}>
-          {session && (
+          {session && sessionQuery.length === 0 && !query && (
             <div className={styles.greetingsModal}>
               <div className={styles.holder}>
                 <h1>
@@ -249,6 +325,8 @@ export default function HomePage() {
             </div>
           )}
           {upcomingEventsData &&
+            sessionQuery.length === 0 &&
+            !query &&
             Object.keys(weather).length !== 0 &&
             !isRecording && (
               <section className={styles.cardsContainer}>
@@ -258,9 +336,19 @@ export default function HomePage() {
                 <WeatherCard weatherData={weather} />
               </section>
             )}
+          {reply.length !== 0 ? (
+            <ChatResponse content={reply} />
+          ) : sessionQuery.length !== 0 && !isProcessing ? (
+            <ChatPlaceholder />
+          ) : (
+            isProcessing && <ZenaLoading />
+          )}
         </section>
         {voiceModeToggle ? (
-          <section className={styles.aiListener}>
+          <section
+            className={styles.aiListener}
+            style={!reply ? { position: "absolute" } : null}
+          >
             {voiceInputFlag ? (
               <div
                 className={styles.voiceBeats}
@@ -271,6 +359,7 @@ export default function HomePage() {
                   setTimeout(() => {
                     setVoiceInputFlag(true);
                   }, 500);
+                  playSound();
                 }}
                 key={voiceInputFlag}
               >
@@ -308,7 +397,11 @@ export default function HomePage() {
             />
           </section>
         ) : (
-          <section className={styles.textInput} key={voiceModeToggle}>
+          <section
+            className={styles.textInput}
+            key={voiceModeToggle}
+            style={!reply ? { position: "absolute" } : null}
+          >
             <form onSubmit={handleSubmit}>
               <input
                 type="text"
