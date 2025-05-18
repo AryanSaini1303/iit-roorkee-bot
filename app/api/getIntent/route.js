@@ -20,7 +20,7 @@ export async function POST(req) {
         },
       ],
     });
-    console.log(response.choices[0].message.content.trim().toLowerCase());
+    // console.log(response.choices[0].message.content.trim().toLowerCase());
     const intent = response.choices[0].message.content.trim().toLowerCase();
     return intent && Response.json({ intent });
   } catch (error) {

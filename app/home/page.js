@@ -30,10 +30,49 @@ export default function HomePage() {
   const [reply, setReply] = useState("");
   const [sessionQuery, setSessionQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const sound = new Howl({
-    src: ["/sounds/tapSound.mp3"],
-  });
+  const sound = new Howl({ src: ["/sounds/tapSound.mp3"] });
   const [messages, setMessages] = useState([]);
+  const [audioIsReady, setAudioIsReady] = useState(false);
+
+  const playElevenLabsAudio = async (text) => {
+    const apiKey = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY;
+    const voiceId = "KoVIHoyLDrQyd4pGalbs"; // You can get this from their voice settings
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      {
+        method: "POST",
+        headers: {
+          "xi-api-key": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text,
+          model_id: "eleven_monolingual_v1", // or "eleven_multilingual_v2"
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75,
+          },
+        }),
+      }
+    );
+    const audioBlob = await response.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
+    audio.play();
+    setAudioIsReady(true);
+  };
+
+  // const speakText = (text) => {
+  //   if ("speechSynthesis" in window) {
+  //     const utterance = new SpeechSynthesisUtterance(text);
+  //     utterance.lang = "en-US"; // Change to desired language
+  //     utterance.rate = 1; // Speaking speed
+  //     utterance.pitch = 1; // Voice pitch
+  //     window.speechSynthesis.speak(utterance);
+  //   } else {
+  //     console.warn("Speech Synthesis not supported in this browser.");
+  //   }
+  // };
 
   const playSound = () => {
     sound.play();
@@ -88,7 +127,7 @@ export default function HomePage() {
     } else {
       setSessionQuery(sessionStorage.getItem("query"));
     }
-    console.log(query);
+    // console.log(query);
     const processQuery = async () => {
       setMessages((prev) => [...prev, { role: "user", content: query }]);
       const res = await fetch("/api/getIntent", {
@@ -110,10 +149,12 @@ export default function HomePage() {
           }),
         });
         const { reply } = await chatRes.json();
-        console.log("Zena:", reply);
+        // console.log("Zena:", reply);
         setMessages((prev) => [...prev, { role: "system", content: reply }]);
         setReply(reply);
         setIsProcessing(false);
+        // speakText(reply);
+        playElevenLabsAudio(reply);
       } else {
         setReply("");
         setIsProcessing(false);
@@ -147,7 +188,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const getWeather = async () => {
-      console.log("weather");
+      // console.log("weather");
       try {
         const position = await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject);
@@ -178,7 +219,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      console.log("events");
+      // console.log("events");
       const response = await fetch(
         "https://www.googleapis.com/calendar/v3/calendars/primary/events",
         {
@@ -336,13 +377,15 @@ export default function HomePage() {
                 <WeatherCard weatherData={weather} />
               </section>
             )}
-          {reply.length !== 0 ? (
+          {reply.length !== 0 && audioIsReady ? (
             <ChatResponse content={reply} />
-          ) : sessionQuery.length !== 0 && !isProcessing ? (
+          ) : reply.length === 0 &&
+            sessionQuery.length !== 0 &&
+            !isProcessing ? (
             <ChatPlaceholder />
-          ) : (
-            isProcessing && <ZenaLoading />
-          )}
+          ) : isProcessing || !audioIsReady ? (
+            <ZenaLoading />
+          ) : null}
         </section>
         {voiceModeToggle ? (
           <section
@@ -359,7 +402,6 @@ export default function HomePage() {
                   setTimeout(() => {
                     setVoiceInputFlag(true);
                   }, 500);
-                  playSound();
                 }}
                 key={voiceInputFlag}
               >
@@ -377,6 +419,7 @@ export default function HomePage() {
                 onClick={() => {
                   setTimeout(() => {
                     setVoiceInputFlag(true);
+                    playSound();
                   }, 500);
                 }}
               >
@@ -391,6 +434,7 @@ export default function HomePage() {
               onClick={() => {
                 setTimeout(() => {
                   setVoiceInputFlag(true);
+                  playSound();
                 }, 500);
               }}
               style={isRecording ? { transform: "scale(1.3)" } : null}
