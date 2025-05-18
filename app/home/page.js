@@ -138,6 +138,7 @@ export default function HomePage() {
     query.length !== 0 && setIsProcessing(true);
     setReply("");
     setAudioIsReady(false);
+    stopAudio();
     if (!sessionStorage.getItem("query")) {
       sessionStorage.setItem("query", query);
     } else {
