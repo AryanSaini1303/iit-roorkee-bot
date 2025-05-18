@@ -5,6 +5,9 @@
   padding: 20px;
   font-family: "Segoe UI", sans-serif;
   animation: cardReveal 0.3s ease-in-out forwards;
+  flex: 1;
+  max-width: 300px;
+  margin: auto;
 }
 @keyframes cardReveal {
   0% {

@@ -15,7 +15,7 @@ export default function HomePage() {
   const [settingsFlag, setSettingsFlag] = useState(false);
   const [signOutFlag, setSignOutFlag] = useState(false);
   const eyesRef = useRef(null);
-  const [upcomingEventsData, setUpcomingEventsData] = useState([]);
+  const [upcomingEventsData, setUpcomingEventsData] = useState();
   const [weather, setWeather] = useState({});
   const [voiceModeToggle, setVoiceModeToggle] = useState(true);
   const [query, setQuery] = useState("");
@@ -26,6 +26,24 @@ export default function HomePage() {
       setSettingsFlag(false);
     }
   };
+
+  const signOut = async () => {
+    setSignOutFlag(true);
+    setLoading(true);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Sign-out error:", error.message);
+    } else {
+      setSession(null);
+      router.push("/");
+    }
+  };
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    console.log(e.target.query.value);
+    setQuery(e.target.query.value);
+  }
 
   useEffect(() => {
     if (settingsFlag) {
@@ -84,7 +102,7 @@ export default function HomePage() {
           })
           .slice(0, 3); // Keep only the next 3 upcoming events
         setUpcomingEventsData(upcomingEvents);
-        // console.log("Next 3 upcoming events:", upcomingEvents);
+        console.log("Next 3 upcoming events:", upcomingEvents);
       } else {
         console.log("No upcoming events found.");
       }
@@ -134,24 +152,6 @@ export default function HomePage() {
     };
     getSession();
   }, []);
-
-  const signOut = async () => {
-    setSignOutFlag(true);
-    setLoading(true);
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Sign-out error:", error.message);
-    } else {
-      setSession(null);
-      router.push("/");
-    }
-  };
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    console.log(e.target.query.value);
-    setQuery(e.target.query.value);
-  }
 
   if (!loading && !session) return "Unauthenticated";
 
@@ -216,10 +216,10 @@ export default function HomePage() {
               </div>
             </div>
           )}
-          {upcomingEventsData.length !== 0 &&
+          {upcomingEventsData &&
             Object.keys(weather).length !== 0 && (
               <section className={styles.cardsContainer}>
-                <UpcomingEvents events={upcomingEventsData} />
+                {upcomingEventsData.length!==0&&(<UpcomingEvents events={upcomingEventsData} />)}
                 <WeatherCard weatherData={weather} />
               </section>
             )}

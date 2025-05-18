@@ -265,8 +265,7 @@
   }
 }
 .cardsContainer {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   gap: 2rem;
   width: 50%;
   margin: auto;
@@ -276,10 +275,11 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  margin: 2rem 0;
+  margin: 1rem 0;
   animation: revealAi 0.8s ease-in-out forwards;
   position: absolute;
   bottom: 0;
+  z-index: 10000;
 }
 
 @keyframes revealAi {
