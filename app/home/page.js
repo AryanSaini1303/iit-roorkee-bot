@@ -20,6 +20,27 @@ export default function HomePage() {
   const [voiceModeToggle, setVoiceModeToggle] = useState(true);
   const [query, setQuery] = useState("");
   const menuRef = useRef(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceInputFlag, setVoiceInputFlag] = useState(false);
+  const [greeting, setGreeting] = useState("Good Morning");
+  const [value, setValue] = useState("");
+
+  const handleVoiceInput = () => {
+    const recognition = new window.webkitSpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.onstart = () => setIsRecording(true);
+    recognition.onend = () => {
+      setIsRecording(false);
+      setVoiceInputFlag(false);
+    };
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      console.log(transcript);
+      setQuery(transcript);
+    };
+    recognition.start();
+  };
 
   const handleClickOutside = (event) => {
     if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -41,9 +62,15 @@ export default function HomePage() {
 
   function handleSubmit(e) {
     e.preventDefault();
-    console.log(e.target.query.value);
     setQuery(e.target.query.value);
+    setValue("");
   }
+
+  useEffect(() => {
+    if (voiceInputFlag && voiceModeToggle) {
+      handleVoiceInput();
+    }
+  }, [voiceInputFlag]);
 
   useEffect(() => {
     if (settingsFlag) {
@@ -75,6 +102,12 @@ export default function HomePage() {
       }
     };
     getWeather();
+    const time = new Date();
+    if (time.getHours() < 12) {
+      setGreeting("Good Morning");
+    } else if (time.getHours() > 12) {
+      setGreeting("Good Evening");
+    }
   }, []);
 
   useEffect(() => {
@@ -102,7 +135,7 @@ export default function HomePage() {
           })
           .slice(0, 3); // Keep only the next 3 upcoming events
         setUpcomingEventsData(upcomingEvents);
-        console.log("Next 3 upcoming events:", upcomingEvents);
+        // console.log("Next 3 upcoming events:", upcomingEvents);
       } else {
         console.log("No upcoming events found.");
       }
@@ -207,8 +240,7 @@ export default function HomePage() {
             <div className={styles.greetingsModal}>
               <div className={styles.holder}>
                 <h1>
-                  Good Morning,{" "}
-                  {session?.user?.user_metadata?.name.split(" ")[0]}
+                  {greeting}, {session?.user?.user_metadata?.name.split(" ")[0]}
                 </h1>
               </div>
               <div className={styles.holder}>
@@ -217,24 +249,63 @@ export default function HomePage() {
             </div>
           )}
           {upcomingEventsData &&
-            Object.keys(weather).length !== 0 && (
+            Object.keys(weather).length !== 0 &&
+            !isRecording && (
               <section className={styles.cardsContainer}>
-                {upcomingEventsData.length!==0&&(<UpcomingEvents events={upcomingEventsData} />)}
+                {upcomingEventsData.length !== 0 && (
+                  <UpcomingEvents events={upcomingEventsData} />
+                )}
                 <WeatherCard weatherData={weather} />
               </section>
             )}
         </section>
         {voiceModeToggle ? (
-          <section
-            className={styles.aiListener}
-            onDoubleClick={() => setVoiceModeToggle(false)}
-          >
-            <div className={styles.eyes} ref={eyesRef}>
-              <div></div>
-              <div></div>
-            </div>
-            {/* <AiListener /> */}
-            <img src="/images/aiBackground7.gif" alt="" />
+          <section className={styles.aiListener}>
+            {voiceInputFlag ? (
+              <div
+                className={styles.voiceBeats}
+                onDoubleClick={() =>
+                  !voiceInputFlag && setVoiceModeToggle(false)
+                }
+                onClick={() => {
+                  setTimeout(() => {
+                    setVoiceInputFlag(true);
+                  }, 500);
+                }}
+                key={voiceInputFlag}
+              >
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+            ) : (
+              <div
+                className={styles.eyes}
+                ref={eyesRef}
+                onDoubleClick={() =>
+                  !voiceInputFlag && setVoiceModeToggle(false)
+                }
+                onClick={() => {
+                  setTimeout(() => {
+                    setVoiceInputFlag(true);
+                  }, 500);
+                }}
+              >
+                <div></div>
+                <div></div>
+              </div>
+            )}
+            <img
+              src="/images/aiBackground7.gif"
+              alt="AI"
+              onDoubleClick={() => !voiceInputFlag && setVoiceModeToggle(false)}
+              onClick={() => {
+                setTimeout(() => {
+                  setVoiceInputFlag(true);
+                }, 500);
+              }}
+              style={isRecording ? { transform: "scale(1.3)" } : null}
+            />
           </section>
         ) : (
           <section className={styles.textInput} key={voiceModeToggle}>
@@ -244,6 +315,8 @@ export default function HomePage() {
                 placeholder="Enter your query..."
                 name="query"
                 required
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
               />
               <button type="submit">
                 <svg
@@ -260,7 +333,13 @@ export default function HomePage() {
                   ></path>
                 </svg>
               </button>
-              <button type="button" onClick={() => setVoiceModeToggle(true)}>
+              <button
+                type="button"
+                onClick={() => {
+                  setVoiceModeToggle(true);
+                  setVoiceInputFlag(false);
+                }}
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 26 26"
