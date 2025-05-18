@@ -383,7 +383,7 @@ export default function HomePage() {
             sessionQuery.length !== 0 &&
             !isProcessing ? (
             <ChatPlaceholder />
-          ) : isProcessing || !audioIsReady ? (
+          ) : isProcessing || (!audioIsReady && reply.length !== 0) ? (
             <ZenaLoading />
           ) : null}
         </section>
