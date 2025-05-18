@@ -33,6 +33,7 @@ export default function HomePage() {
   const sound = new Howl({ src: ["/sounds/tapSound.mp3"] });
   const [messages, setMessages] = useState([]);
   const [audioIsReady, setAudioIsReady] = useState(false);
+  const [currentAudio, setCurrentAudio] = useState(null);
 
   const playElevenLabsAudio = async (text) => {
     const apiKey = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY;
@@ -58,8 +59,21 @@ export default function HomePage() {
     const audioBlob = await response.blob();
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioUrl);
+    setCurrentAudio(audio);
     audio.play();
+    audio.onended = () => {
+      setCurrentAudio(null);
+    };
     setAudioIsReady(true);
+  };
+
+  const stopAudio = () => {
+    if (currentAudio) {
+      console.log("paused");
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setCurrentAudio(null);
+    }
   };
 
   // const speakText = (text) => {
@@ -69,6 +83,7 @@ export default function HomePage() {
   //     utterance.rate = 1; // Speaking speed
   //     utterance.pitch = 1; // Voice pitch
   //     window.speechSynthesis.speak(utterance);
+  //     setAudioIsReady(true);
   //   } else {
   //     console.warn("Speech Synthesis not supported in this browser.");
   //   }
@@ -122,6 +137,7 @@ export default function HomePage() {
   useEffect(() => {
     query.length !== 0 && setIsProcessing(true);
     setReply("");
+    setAudioIsReady(false);
     if (!sessionStorage.getItem("query")) {
       sessionStorage.setItem("query", query);
     } else {
@@ -420,6 +436,7 @@ export default function HomePage() {
                   setTimeout(() => {
                     setVoiceInputFlag(true);
                     playSound();
+                    stopAudio();
                   }, 500);
                 }}
               >
@@ -435,6 +452,7 @@ export default function HomePage() {
                 setTimeout(() => {
                   setVoiceInputFlag(true);
                   playSound();
+                  stopAudio();
                 }, 500);
               }}
               style={isRecording ? { transform: "scale(1.3)" } : null}

@@ -14,14 +14,16 @@ export async function POST(req) {
       messages: [
         {
           role: "system",
-          content: `Your name is Zena. You are an intelligent, articulate, and friendly AI assistant.
-        You engage in natural conversations, answer questions, and offer helpful suggestions.
-        Keep responses concise unless asked for detail. Be warm, confident, and clear.`,
+          content: `Your name is Zena. You are a concise and intelligent AI assistant.
+          Only respond with the most essential information needed to help the user. Avoid any repetition, filler, or elaboration unless explicitly asked.
+          Keep responses extremely short and efficient, but never omit critical facts.
+          Use natural, human-like tone, but prioritize clarity and directness.`,
         },
         ...messages,
         { role: "user", content: query },
       ],
     });
+
     const reply = response.choices[0]?.message?.content?.trim();
     return NextResponse.json({ reply });
   } catch (error) {
