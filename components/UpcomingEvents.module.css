@@ -7,7 +7,7 @@
   animation: cardReveal 0.3s ease-in-out forwards;
   flex: 1;
   max-width: 300px;
-  margin: auto;
+  margin: 0 auto;
 }
 @keyframes cardReveal {
   0% {
