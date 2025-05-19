@@ -1,15 +1,16 @@
-"use client";
+'use client';
 
-import { supabase } from "@/lib/supabaseClient";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
-import styles from "./page.module.css";
-import UpcomingEvents from "@/components/UpcomingEvents";
-import WeatherCard from "@/components/WeatherCard";
-import ChatResponse from "@/components/ChatResponse";
-import ChatPlaceholder from "@/components/ChatPlaceholder";
-import ZenaLoading from "@/components/ZenaLoading";
-import { Howl } from "howler";
+import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState, useRef } from 'react';
+import styles from './page.module.css';
+import UpcomingEvents from '@/components/UpcomingEvents';
+import WeatherCard from '@/components/WeatherCard';
+import ChatResponse from '@/components/ChatResponse';
+import ChatPlaceholder from '@/components/ChatPlaceholder';
+import ZenaLoading from '@/components/ZenaLoading';
+import { Howl } from 'howler';
+import { Base64 } from 'js-base64';
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -20,41 +21,45 @@ export default function HomePage() {
   const eyesRef = useRef(null);
   const [upcomingEventsData, setUpcomingEventsData] = useState();
   const [weather, setWeather] = useState({});
-  const [voiceModeToggle, setVoiceModeToggle] = useState(true);
-  const [query, setQuery] = useState("");
+  const [voiceModeToggle, setVoiceModeToggle] = useState(false);
+  const [query, setQuery] = useState('');
   const menuRef = useRef(null);
   const [isRecording, setIsRecording] = useState(false);
   const [voiceInputFlag, setVoiceInputFlag] = useState(false);
-  const [greeting, setGreeting] = useState("Good Morning");
-  const [value, setValue] = useState("");
-  const [reply, setReply] = useState("");
-  const [sessionQuery, setSessionQuery] = useState("");
+  const [greeting, setGreeting] = useState('Good Morning');
+  const [value, setValue] = useState('');
+  const [reply, setReply] = useState('');
+  const [sessionQuery, setSessionQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const sound = new Howl({ src: ["/sounds/tapSound.mp3"] });
+  const sound = new Howl({ src: ['/sounds/tapSound.mp3'] });
   const [messages, setMessages] = useState([]);
   const [audioIsReady, setAudioIsReady] = useState(false);
   const [currentAudio, setCurrentAudio] = useState(null);
+  const [accessToken, setAccessToken] = useState('');
+  const [emailData, setEmailData] = useState({});
+  const [emailProcess, setEmailProcess] = useState(false);
+  const [emailIsConfirm, setEmailIsConfirm] = useState(false);
 
   const playElevenLabsAudio = async (text) => {
     const apiKey = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY;
-    const voiceId = "KoVIHoyLDrQyd4pGalbs"; // You can get this from their voice settings
+    const voiceId = 'KoVIHoyLDrQyd4pGalbs'; // You can get this from their voice settings
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
       {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "xi-api-key": apiKey,
-          "Content-Type": "application/json",
+          'xi-api-key': apiKey,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           text,
-          model_id: "eleven_monolingual_v1", // or "eleven_multilingual_v2"
+          model_id: 'eleven_monolingual_v1', // or "eleven_multilingual_v2"
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.75,
           },
         }),
-      }
+      },
     );
     const audioBlob = await response.blob();
     const audioUrl = URL.createObjectURL(audioBlob);
@@ -69,7 +74,7 @@ export default function HomePage() {
 
   const stopAudio = () => {
     if (currentAudio) {
-      console.log("paused");
+      console.log('paused');
       currentAudio.pause();
       currentAudio.currentTime = 0;
       setCurrentAudio(null);
@@ -95,7 +100,7 @@ export default function HomePage() {
 
   const handleVoiceInput = () => {
     const recognition = new window.webkitSpeechRecognition();
-    recognition.lang = "en-US";
+    recognition.lang = 'en-US';
     recognition.interimResults = false;
     recognition.onstart = () => setIsRecording(true);
     recognition.onend = () => {
@@ -121,69 +126,23 @@ export default function HomePage() {
     setLoading(true);
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error("Sign-out error:", error.message);
+      console.error('Sign-out error:', error.message);
     } else {
       setSession(null);
-      router.push("/");
+      router.push('/');
     }
   };
 
   function handleSubmit(e) {
     e.preventDefault();
     setQuery(e.target.query.value);
-    setValue("");
+    setValue('');
   }
-
-  useEffect(() => {
-    query.length !== 0 && setIsProcessing(true);
-    setReply("");
-    setAudioIsReady(false);
-    stopAudio();
-    if (!sessionStorage.getItem("query")) {
-      sessionStorage.setItem("query", query);
-    } else {
-      setSessionQuery(sessionStorage.getItem("query"));
-    }
-    // console.log(query);
-    const processQuery = async () => {
-      setMessages((prev) => [...prev, { role: "user", content: query }]);
-      const res = await fetch("/api/getIntent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: query }),
-      });
-      const { intent } = await res.json();
-      // console.log(intent);
-      setQuery("");
-      if (intent === "chat") {
-        const chatRes = await fetch("/api/chat", {
-          method: "POST",
-          body: JSON.stringify({
-            query,
-            messages: messages,
-          }),
-        });
-        const { reply } = await chatRes.json();
-        // console.log("Zena:", reply);
-        setMessages((prev) => [...prev, { role: "system", content: reply }]);
-        setReply(reply);
-        setIsProcessing(false);
-        // speakText(reply);
-        playElevenLabsAudio(reply);
-      } else {
-        setReply("");
-        setIsProcessing(false);
-      }
-    };
-    query.length !== 0 && processQuery();
-  }, [query]);
 
   useEffect(() => {
     // console.log(messages);
     messages.length !== 0 &&
-      sessionStorage.setItem("messages", JSON.stringify(messages));
+      sessionStorage.setItem('messages', JSON.stringify(messages));
   }, [messages]);
 
   useEffect(() => {
@@ -194,12 +153,12 @@ export default function HomePage() {
 
   useEffect(() => {
     if (settingsFlag) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
     } else {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     }
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [settingsFlag]);
 
@@ -213,24 +172,24 @@ export default function HomePage() {
         const { latitude, longitude } = position.coords;
         const apiKey = process.env.NEXT_PUBLIC_WEATHER_API; // Make sure it's public
         const response = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`
+          `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`,
         );
         const data = await response.json();
         setWeather(data);
         // console.log("Current Weather:", data);
       } catch (error) {
-        console.error("Failed to get location or weather data:", error);
+        console.error('Failed to get location or weather data:', error);
       }
     };
     !voiceInputFlag &&
-      !sessionStorage.getItem("query") &&
+      !sessionStorage.getItem('query') &&
       !query &&
       getWeather();
     const time = new Date();
     if (time.getHours() < 12) {
-      setGreeting("Good Morning");
+      setGreeting('Good Morning');
     } else if (time.getHours() > 12) {
-      setGreeting("Good Evening");
+      setGreeting('Good Evening');
     }
   }, [voiceInputFlag, query]);
 
@@ -238,12 +197,12 @@ export default function HomePage() {
     const fetchEvents = async () => {
       // console.log("events");
       const response = await fetch(
-        "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        'https://www.googleapis.com/calendar/v3/calendars/primary/events',
         {
           headers: {
             Authorization: `Bearer ${session.provider_token}`,
           },
-        }
+        },
       );
       const calendarData = await response.json();
       if (calendarData?.items?.length) {
@@ -262,12 +221,12 @@ export default function HomePage() {
         setUpcomingEventsData(upcomingEvents);
         // console.log("Next 3 upcoming events:", upcomingEvents);
       } else {
-        console.log("No upcoming events found.");
+        console.log('No upcoming events found.');
       }
     };
     session?.provider_token &&
       !voiceInputFlag &&
-      !sessionStorage.getItem("query") &&
+      !sessionStorage.getItem('query') &&
       !query &&
       fetchEvents();
   }, [session, voiceInputFlag, query]);
@@ -292,14 +251,14 @@ export default function HomePage() {
       const translateX = deltaX * maxTranslate;
       const translateY = deltaY * maxTranslate;
       // Apply transform to each eye div
-      const eyes = eyesRef.current.querySelectorAll("div");
+      const eyes = eyesRef.current.querySelectorAll('div');
       eyes.forEach((eye) => {
         eye.style.transform = `translate(${translateX}px, ${translateY}px)`;
       });
     };
-    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove);
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
 
@@ -309,18 +268,183 @@ export default function HomePage() {
       setSession(data?.session ?? null);
       setLoading(false);
       if (error) {
-        console.error("Session fetch error:", error.message);
+        console.error('Session fetch error:', error.message);
       }
     };
     getSession();
-    setSessionQuery(sessionStorage.getItem("query") || "");
-    setMessages(JSON.parse(sessionStorage.getItem("messages")) || []);
+    setSessionQuery(sessionStorage.getItem('query') || '');
+    setMessages(JSON.parse(sessionStorage.getItem('messages')) || []);
   }, []);
 
-  if (!loading && !session) return "Unauthenticated";
+  useEffect(() => {
+    if (session) {
+      setAccessToken(session?.provider_token);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (
+      accessToken.length !== 0 &&
+      Object.values(emailData).length !== 0 &&
+      emailData.missing.length === 0 &&
+      emailIsConfirm
+    ) {
+      const createRawEmail = (to, subject, body) => {
+        const email = [
+          `To: ${to}`,
+          `Subject: ${subject}`,
+          'Content-Type: text/plain; charset="UTF-8"',
+          '',
+          body,
+        ].join('\n');
+        return Base64.encode(email)
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, ''); // Gmail prefers base64url format
+      };
+      const sendEmail = async (accessToken, to, subject, body) => {
+        const rawEmail = createRawEmail(to, subject, body);
+        const res = await fetch(
+          'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ raw: rawEmail }),
+          },
+        );
+        const data = await res.json();
+        return data;
+      };
+      const executeSendEmail = async () => {
+        const data = await sendEmail(
+          accessToken,
+          emailData.to,
+          emailData.subject,
+          emailData.body,
+        );
+        console.log(data);
+        if (data.id) {
+          const reply =
+            "Your email has been sent successfully! Let me know if there's anything else I can help you with.";
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          setEmailData({});
+          setEmailIsConfirm(false);
+        }
+      };
+      executeSendEmail();
+    }
+  }, [accessToken, emailData, emailIsConfirm]);
+
+  useEffect(() => {
+    if (query.length === 0) return;
+    setIsProcessing(true);
+    setReply('');
+    setAudioIsReady(false);
+    stopAudio();
+    if (!sessionStorage.getItem('query')) {
+      sessionStorage.setItem('query', query);
+    } else {
+      setSessionQuery(sessionStorage.getItem('query'));
+    }
+    const processQuery = async () => {
+      setMessages((prev) => [...prev, { role: 'user', content: query }]);
+      if (emailProcess) {
+        const res = await fetch('/api/getEmailIntent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userInput: query }),
+        });
+        const { intent } = await res.json();
+        // console.log('Email confirmation intent:', intent);
+        if (intent === 'decline' || intent === 'unknown') {
+          const reply = 'Alright, I won’t send the email.';
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          setEmailProcess(false); // exit email flow
+          playElevenLabsAudio(reply);
+        } else if (intent === 'confirm') {
+          setEmailData((prev) => prev); // keeps the data, or send directly if you prefer
+          setEmailProcess(false);
+          setEmailIsConfirm(true);
+        }
+        setQuery('');
+        return;
+      }
+      const res = await fetch('/api/getIntent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: query }),
+      });
+      const { intent } = await res.json();
+      setQuery('');
+      if (intent === 'chat') {
+        const chatRes = await fetch('/api/chat', {
+          method: 'POST',
+          body: JSON.stringify({
+            query,
+            messages,
+          }),
+        });
+        const { reply } = await chatRes.json();
+        setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+        setReply(reply);
+        setIsProcessing(false);
+        playElevenLabsAudio(reply);
+      } else if (intent === 'send_email') {
+        const res = await fetch('/api/extractEmailFields', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userInput: query }),
+        });
+        const { data } = await res.json();
+        console.log(data);
+        if (data.missing.length !== 0) {
+          const reply = `It looks like your email request is missing the following required field${
+            data.missing.length > 1 ? 's' : ''
+          }: ${data.missing.join(', ')}.\nPlease try again!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+        } else {
+          setEmailProcess(true);
+          let reply = `📨 Here's the email you've asked me to draft:
+
+            To: ${data.to}
+            Subject: ${data.subject}
+
+            ${data.body}
+          `.trim();
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(
+            "Here's the email you've asked me to draft. Would you like me to go ahead and send this email?",
+          );
+          setEmailData(data);
+        }
+      }
+    };
+    processQuery();
+  }, [query]);
+
+  if (!loading && !session) return 'Unauthenticated';
 
   return (
-    <div className={`${"wrapper"} ${"container"}`}>
+    <div className={`${'wrapper'} ${'container'}`}>
       <ul className={styles.header}>
         <li className={styles.headerElement}>
           <h1>Zena</h1>
@@ -359,7 +483,7 @@ export default function HomePage() {
               <li>Preferences</li>
               <li>Chat History</li>
               <li onClick={() => signOut()}>
-                {signOutFlag ? "Signing out..." : "Sign Out"}
+                {signOutFlag ? 'Signing out...' : 'Sign Out'}
               </li>
             </ul>
           )}
@@ -367,14 +491,14 @@ export default function HomePage() {
       </ul>
       <div
         className={styles.whiteSection}
-        style={!reply ? { overflow: "hidden" } : null}
+        style={!reply ? { overflow: 'hidden' } : null}
       >
         <section className={styles.chatScreen}>
           {session && sessionQuery.length === 0 && !query && (
             <div className={styles.greetingsModal}>
               <div className={styles.holder}>
                 <h1>
-                  {greeting}, {session?.user?.user_metadata?.name.split(" ")[0]}
+                  {greeting}, {session?.user?.user_metadata?.name.split(' ')[0]}
                 </h1>
               </div>
               <div className={styles.holder}>
@@ -407,7 +531,7 @@ export default function HomePage() {
         {voiceModeToggle ? (
           <section
             className={styles.aiListener}
-            style={!reply ? { position: "absolute" } : null}
+            style={!reply ? { position: 'absolute' } : null}
           >
             {voiceInputFlag ? (
               <div
@@ -456,14 +580,14 @@ export default function HomePage() {
                   stopAudio();
                 }, 500);
               }}
-              style={isRecording ? { transform: "scale(1.3)" } : null}
+              style={isRecording ? { transform: 'scale(1.3)' } : null}
             />
           </section>
         ) : (
           <section
             className={styles.textInput}
             key={voiceModeToggle}
-            style={!reply ? { position: "absolute" } : null}
+            style={!reply ? { position: 'absolute' } : null}
           >
             <form onSubmit={handleSubmit}>
               <input

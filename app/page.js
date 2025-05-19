@@ -8,7 +8,18 @@ export default function Home() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        scopes: "https://www.googleapis.com/auth/calendar.readonly",
+        scopes: [
+          // added the scope to send email through user's email and read his/her google calender
+          "https://www.googleapis.com/auth/calendar.readonly",
+          "https://www.googleapis.com/auth/gmail.send",
+          "openid",
+          "email",
+          "profile",
+        ],
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
         redirectTo: window.location.href + `${"/home"}`, // here we mentioned to redirect to the same link which was opened, post authentication.
       },
     });
