@@ -335,6 +335,15 @@ export default function HomePage() {
           playElevenLabsAudio(reply);
           setEmailData({});
           setEmailIsConfirm(false);
+        } else {
+          const reply =
+            'Unfortunately, the email could not be sent due to an error. Please verify the information and try again.';
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          setEmailData({});
+          setEmailIsConfirm(false);
         }
       };
       executeSendEmail();
@@ -362,16 +371,25 @@ export default function HomePage() {
           },
           body: JSON.stringify({ userInput: query }),
         });
-        const { intent } = await res.json();
-        // console.log('Email confirmation intent:', intent);
-        if (intent === 'decline' || intent === 'unknown') {
+        const data = await res.json();
+        // console.log('Email confirmation intent:', data.intent);
+        if (data.error) {
+          const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          setEmailProcess(false);
+          playElevenLabsAudio(reply);
+          return;
+        }
+        if (data.intent === 'decline' || data.intent === 'unknown') {
           const reply = 'Alright, I won’t send the email.';
           setMessages((prev) => [...prev, { role: 'system', content: reply }]);
           setReply(reply);
           setIsProcessing(false);
           setEmailProcess(false); // exit email flow
           playElevenLabsAudio(reply);
-        } else if (intent === 'confirm') {
+        } else if (data.intent === 'confirm') {
           setEmailData((prev) => prev); // keeps the data, or send directly if you prefer
           setEmailProcess(false);
           setEmailIsConfirm(true);
@@ -386,9 +404,18 @@ export default function HomePage() {
         },
         body: JSON.stringify({ message: query }),
       });
-      const { intent } = await res.json();
+      const data = await res.json();
+      if (data.error) {
+        const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
+        setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+        setReply(reply);
+        setIsProcessing(false);
+        setEmailProcess(false);
+        playElevenLabsAudio(reply);
+        return;
+      }
       setQuery('');
-      if (intent === 'chat') {
+      if (data.intent === 'chat') {
         const chatRes = await fetch('/api/chat', {
           method: 'POST',
           body: JSON.stringify({
@@ -401,7 +428,7 @@ export default function HomePage() {
         setReply(reply);
         setIsProcessing(false);
         playElevenLabsAudio(reply);
-      } else if (intent === 'send_email') {
+      } else if (data.intent === 'send_email') {
         const res = await fetch('/api/extractEmailFields', {
           method: 'POST',
           headers: {
@@ -409,24 +436,47 @@ export default function HomePage() {
           },
           body: JSON.stringify({ userInput: query }),
         });
-        const { data } = await res.json();
-        console.log(data);
-        if (data.missing.length !== 0) {
+        const data = await res.json();
+        if (!data.success) {
+          const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          setEmailProcess(false);
+          playElevenLabsAudio(reply);
+          return;
+        }
+        // console.log(data.data);
+        if (data.data.missing.length !== 0) {
           const reply = `It looks like your email request is missing the following required field${
-            data.missing.length > 1 ? 's' : ''
-          }: ${data.missing.join(', ')}.\nPlease try again!`;
+            data.data.missing.length > 1 ? 's' : ''
+          }: ${data.data.missing.join(', ')}.\nPlease try again!`;
           setMessages((prev) => [...prev, { role: 'system', content: reply }]);
           setReply(reply);
           setIsProcessing(false);
           playElevenLabsAudio(reply);
         } else {
+          const isValidEmail = (email) =>
+            /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+          if (!data.data.to || !isValidEmail(data.data.to)) {
+            const reply = `Please provide a valid email address and try again!`;
+            setMessages((prev) => [
+              ...prev,
+              { role: 'system', content: reply },
+            ]);
+            setReply(reply);
+            setIsProcessing(false);
+            setEmailProcess(false);
+            playElevenLabsAudio(reply);
+            return;
+          }
           setEmailProcess(true);
           let reply = `📨 Here's the email you've asked me to draft:
 
-            To: ${data.to}
-            Subject: ${data.subject}
+            To: ${data.data.to}
+            Subject: ${data.data.subject}
 
-            ${data.body}
+            ${data.data.body}
           `.trim();
           setMessages((prev) => [...prev, { role: 'system', content: reply }]);
           setReply(reply);
@@ -434,7 +484,7 @@ export default function HomePage() {
           playElevenLabsAudio(
             "Here's the email you've asked me to draft. Would you like me to go ahead and send this email?",
           );
-          setEmailData(data);
+          setEmailData(data.data);
         }
       }
     };

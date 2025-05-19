@@ -10,7 +10,7 @@ const openai = new OpenAI({
 export async function POST(req) {
   try {
     const { userInput } = await req.json();
-    console.log(userInput);
+    // console.log(userInput);
     const systemPrompt = `
         You are an intent classifier assistant. Your job is to analyze a user's response and classify their intent into one of the following three categories:
         - "confirm": The user agrees to send the email.
