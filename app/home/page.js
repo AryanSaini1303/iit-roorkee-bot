@@ -514,7 +514,9 @@ export default function HomePage() {
           if (data.data.missing.length !== 0) {
             const reply = `It looks like your cab booking request is missing the following required field${
               data.data.missing.length > 1 ? 's' : ''
-            }: ${data.data.missing.join(', ')}.\nPlease try again with specific locations!`;
+            }: ${data.data.missing.join(
+              ', ',
+            )}.\nPlease try again with specific locations!`;
             setMessages((prev) => [
               ...prev,
               { role: 'system', content: reply },
@@ -619,8 +621,8 @@ export default function HomePage() {
         className={styles.whiteSection}
         style={!reply ? { overflow: 'hidden' } : null}
       >
-        <section className={styles.chatScreen} key={sessionQuery}>
-          {session && sessionQuery.length === 0 && !query && (
+        <section className={styles.chatScreen}>
+          {session && !query && !sessionStorage.getItem('query') && (
             <div className={styles.greetingsModal}>
               <div className={styles.holder}>
                 <h1>
@@ -633,7 +635,7 @@ export default function HomePage() {
             </div>
           )}
           {upcomingEventsData &&
-            sessionQuery.length === 0 &&
+            !sessionStorage.getItem('query') &&
             !query &&
             Object.keys(weather).length !== 0 &&
             !isRecording && (
