@@ -619,7 +619,7 @@ export default function HomePage() {
         className={styles.whiteSection}
         style={!reply ? { overflow: 'hidden' } : null}
       >
-        <section className={styles.chatScreen}>
+        <section className={styles.chatScreen} key={sessionQuery}>
           {session && sessionQuery.length === 0 && !query && (
             <div className={styles.greetingsModal}>
               <div className={styles.holder}>
