@@ -12,41 +12,33 @@ export async function POST(req) {
       messages: [
         {
           role: 'system',
-          content: `You are an intent classifier. You must classify the user's message into ONE of the following three intents ONLY:
+          content: `You are an intent classifier. Classify the user's message as one of:
 
-          - "chat" → general conversation, questions, explanations, hypotheticals, or meta-discussion.
-          - "send_email" → when the user clearly wants to **send or draft** an actual email now.
-          - "order_food" → when the user wants to **place a food order** now.
+          - "chat" → questions, general talk, hypotheticals, or meta-discussion  
+          - "send_email" → if the user clearly wants to send or draft an email now  
+          - "book_cab" → if the user clearly wants to book a cab/ride now
                   
-          ❗️Only classify as "send_email" or "order_food" if the user is giving a **clear, direct command or request** to do it right now.
+          ❗ Only classify as "send_email" or "book_cab" if the command is clear and actionable **right now**.
                   
-          ---
-          Special Rules:
-          - If the message is a **question, hypothetical, or meta-statement** (e.g. "what if", "what will you do", "how to", "can you"), classify it as **"chat"**.
-          - Do **not** assume intent based on keywords alone — understand the user’s actual purpose.
-                  
-          ---
           Examples:
                   
-          ✅ Send Email:
-          - "Send an email to John about the meeting" → send_email
-          - "Draft a mail saying I’ll be late" → send_email
+          ✅ send_email:  
+          - "Send an email to my boss" → send_email  
+          - "Draft a mail saying I'm sick" → send_email  
                   
-          ❌ Not Send Email (Chat):
-          - "How do I send an email?" → chat
-          - "Can you send emails?" → chat
-          - "What will you do if I say 'send an email to my friend'?" → chat
-          - "Do you know how to email using Gmail?" → chat
-          - "I was thinking about sending an email" → chat
+          ❌ chat:  
+          - "How to send email?"  
+          - "Can you send emails?"
                   
-          ✅ Order Food:
-          - "Order a large pizza with mushrooms" → order_food
+          ✅ book_cab:  
+          - "Book a cab from Delhi to Gurgaon" → book_cab  
+          - "Call an Uber to my house" → book_cab  
                   
-          ❌ Not Order Food (Chat):
-          - "How do you order food online?" → chat
-          - "What if I said I wanted biryani?" → chat
+          ❌ chat:  
+          - "Can you book rides?"  
+          - "How do I book a cab?"
                   
-          Respond with ONLY: "chat", "send_email", or "order_food". No explanation.`,
+          Respond with just: "chat", "send_email", or "book_cab"`,
         },
         {
           role: 'user',

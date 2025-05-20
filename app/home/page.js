@@ -40,7 +40,7 @@ export default function HomePage() {
   const [emailProcess, setEmailProcess] = useState(false);
   const [emailIsConfirm, setEmailIsConfirm] = useState(false);
 
-  const playElevenLabsAudio = async (text) => {
+  const playElevenLabsAudio = async (text, intent, cabUrl) => {
     const apiKey = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY;
     const voiceId = 'KoVIHoyLDrQyd4pGalbs'; // You can get this from their voice settings
     const response = await fetch(
@@ -70,11 +70,17 @@ export default function HomePage() {
       setCurrentAudio(null);
     };
     setAudioIsReady(true);
+    if (intent === 'book_cab') {
+      // console.log(cabUrl);
+      setTimeout(() => {
+        window.open(cabUrl, '_blank');
+      }, 1000);
+    }
   };
 
   const stopAudio = () => {
     if (currentAudio) {
-      console.log('paused');
+      // console.log('paused');
       currentAudio.pause();
       currentAudio.currentTime = 0;
       setCurrentAudio(null);
@@ -325,7 +331,7 @@ export default function HomePage() {
           emailData.subject,
           emailData.body,
         );
-        console.log(data);
+        // console.log(data);
         if (data.id) {
           const reply =
             "Your email has been sent successfully! Let me know if there's anything else I can help you with.";
@@ -415,6 +421,7 @@ export default function HomePage() {
         return;
       }
       setQuery('');
+      // console.log(data.intent);
       if (data.intent === 'chat') {
         const chatRes = await fetch('/api/chat', {
           method: 'POST',
@@ -486,6 +493,75 @@ export default function HomePage() {
           );
           setEmailData(data.data);
         }
+      } else if (data.intent === 'book_cab') {
+        const res = await fetch('/api/extractCabFields', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message: query }),
+        });
+        const data = await res.json();
+        // console.log(data);
+        if (data.error) {
+          const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          return;
+        } else if (data.success) {
+          if (data.data.missing.length !== 0) {
+            const reply = `It looks like your cab booking request is missing the following required field${
+              data.data.missing.length > 1 ? 's' : ''
+            }: ${data.data.missing.join(', ')}.\nPlease try again with specific locations!`;
+            setMessages((prev) => [
+              ...prev,
+              { role: 'system', content: reply },
+            ]);
+            setReply(reply);
+            setIsProcessing(false);
+            playElevenLabsAudio(reply);
+            return;
+          }
+          const response = await fetch('/api/cabDeepLink', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              origin: data.data.origin,
+              destination: data.data.destination,
+            }),
+          });
+          const data1 = await response.json();
+          if (!data1.success) {
+            const reply =
+              data1.message === 'Something went wrong'
+                ? `Looks like there is an issue in interpreting your request, please try again later!`
+                : 'Your specified location is invalid, please try again with correct location!';
+            setMessages((prev) => [
+              ...prev,
+              { role: 'system', content: reply },
+            ]);
+            setReply(reply);
+            setIsProcessing(false);
+            playElevenLabsAudio(reply);
+            return;
+          } else {
+            const reply = `🚗 Redirecting you to the cab booking page with your selected pickup and destination.`;
+            setMessages((prev) => [
+              ...prev,
+              { role: 'system', content: reply },
+            ]);
+            setReply(reply);
+            setIsProcessing(false);
+            playElevenLabsAudio(reply, 'book_cab', data1.url);
+          }
+        }
+      } else {
+        setReply('');
+        setIsProcessing(false);
       }
     };
     processQuery();
