@@ -1,26 +1,26 @@
-"use client";
-import { useEffect } from "react";
-import styles from "./page.module.css";
-import { supabase } from "@/lib/supabaseClient";
+'use client';
+
+import styles from './page.module.css';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function Home() {
   const signIn = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider: 'google',
       options: {
         scopes: [
           // added the scope to send email through user's email and read his/her google calender
-          "https://www.googleapis.com/auth/calendar.readonly",
-          "https://www.googleapis.com/auth/gmail.send",
-          "openid",
-          "email",
-          "profile",
+          'https://www.googleapis.com/auth/calendar.readonly',
+          'https://www.googleapis.com/auth/gmail.send',
+          'openid',
+          'email',
+          'profile',
         ],
         queryParams: {
-          access_type: "offline",
-          prompt: "consent",
+          access_type: 'offline',
+          prompt: 'consent',
         },
-        redirectTo: window.location.href + `${"/home"}`, // here we mentioned to redirect to the same link which was opened, post authentication.
+        redirectTo: window.location.href + `${'/home'}`, // here we mentioned to redirect to the same link which was opened, post authentication.
       },
     });
     if (error) {
@@ -31,11 +31,13 @@ export default function Home() {
 
   return (
     <div className={`wrapper ${styles.container}`}>
-      <img
-        src="/images/loginImage.jpg"
-        alt="ai-assistant"
-        className={styles.image}
-      />
+      <div className={styles.imageContainer}>
+        <img
+          src="/images/loginImage.jpg"
+          alt="ai-assistant"
+          className={styles.image}
+        />
+      </div>
       <section className={styles.loginSection}>
         <div className={styles.holder}>
           <h1>Zena</h1>

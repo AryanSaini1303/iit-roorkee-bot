@@ -3,7 +3,7 @@
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.269);
   padding: 20px;
-  font-family: "Segoe UI", sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   animation: cardReveal 0.3s ease-in-out forwards;
   flex: 1;
   max-width: 300px;
@@ -67,4 +67,10 @@
 .time {
   font-size: 0.875rem;
   color: #666;
+}
+
+@media (max-width: 850px) {
+  .card{
+    display: none;
+  }
 }

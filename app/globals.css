@@ -7,7 +7,10 @@ body {
   background: url("/images/background.png") no-repeat center;
   background-size: cover;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  height: 100%;
+  overflow-x: hidden;
   box-sizing: border-box;
+  background-color: #f7f7f7;
 }
 .wrapper{
   min-height: 100vh;
