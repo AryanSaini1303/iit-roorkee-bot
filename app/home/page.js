@@ -393,8 +393,8 @@ export default function HomePage() {
 
   useEffect(() => {
     if (query.length === 0) return;
-    // setRecordingUrl('');
-    // setCallSid('')
+    setRecordingUrl('');
+    setCallSid('')
     setIsProcessing(true);
     setReply('');
     setAudioIsReady(false);
