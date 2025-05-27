@@ -5,7 +5,7 @@ const RecordingPlayer = ({ recordingUrl }) => {
   if (!recordingUrl) return null;
 
   const encodedUrl = encodeURIComponent(recordingUrl);
-  const proxyUrl = `https://live-sunbird-select.ngrok-free.app/api/twilio/audio?url=${encodedUrl}`;
+  const proxyUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/twilio/audio?url=${encodedUrl}`;
 
   return (
     <div className={styles.container}>
