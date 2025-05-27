@@ -1,0 +1,42 @@
+.container {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 16px;
+  max-width: 500px;
+  margin: 20px auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.title {
+  color: #f0f0f0;
+  font-size: 24px;
+  margin: 10px 0;
+  font-weight: 500;
+}
+
+.audio {
+  width: 100%;
+  outline: none;
+  border-radius: 6px;
+  background-color: #222;
+}
+
+.loading {
+  color: #f0f0f0;
+  font-size: 14px;
+  margin-bottom: 10px;
+  font-weight: 400;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+@keyframes pulse {
+  0% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}

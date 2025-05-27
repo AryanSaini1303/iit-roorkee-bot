@@ -11,6 +11,8 @@ import ChatPlaceholder from '@/components/ChatPlaceholder';
 import ZenaLoading from '@/components/ZenaLoading';
 import { Howl } from 'howler';
 import { Base64 } from 'js-base64';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import RecordingPlayer from '@/components/RecordingPlayer';
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -21,7 +23,7 @@ export default function HomePage() {
   const eyesRef = useRef(null);
   const [upcomingEventsData, setUpcomingEventsData] = useState();
   const [weather, setWeather] = useState({});
-  const [voiceModeToggle, setVoiceModeToggle] = useState(true);
+  const [voiceModeToggle, setVoiceModeToggle] = useState(false);
   const [query, setQuery] = useState('');
   const menuRef = useRef(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -39,6 +41,8 @@ export default function HomePage() {
   const [emailData, setEmailData] = useState({});
   const [emailProcess, setEmailProcess] = useState(false);
   const [emailIsConfirm, setEmailIsConfirm] = useState(false);
+  const [callSid, setCallSid] = useState('');
+  const [recordingUrl, setRecordingUrl] = useState('');
 
   const playElevenLabsAudio = async (text, intent, cabUrl) => {
     try {
@@ -165,6 +169,15 @@ export default function HomePage() {
     e.preventDefault();
     setQuery(e.target.query.value);
     setValue('');
+  }
+
+  function validatePhoneNumber(number) {
+    try {
+      const parsed = parsePhoneNumberFromString(number);
+      return parsed.isValid() && parsed.number;
+    } catch {
+      return false;
+    }
   }
 
   useEffect(() => {
@@ -312,7 +325,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (
-      accessToken.length !== 0 &&
+      accessToken?.length !== 0 &&
       Object.values(emailData).length !== 0 &&
       emailData.missing.length === 0 &&
       emailIsConfirm
@@ -380,6 +393,8 @@ export default function HomePage() {
 
   useEffect(() => {
     if (query.length === 0) return;
+    // setRecordingUrl('');
+    // setCallSid('')
     setIsProcessing(true);
     setReply('');
     setAudioIsReady(false);
@@ -583,6 +598,60 @@ export default function HomePage() {
             playElevenLabsAudio(reply, 'book_cab', data1.url);
           }
         }
+      } else if (data.intent === 'make_call') {
+        const res = await fetch('/api/extractCallFields', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userInput: query,
+            name: session?.user?.user_metadata?.name || 'My Master',
+          }),
+        });
+        const data = await res.json();
+        // console.log(data);
+        if (data.error) {
+          const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          return;
+        }
+        if (!validatePhoneNumber(data.to)) {
+          const reply = `Please provide a valid phone number and try again!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          return;
+        }
+        const reply = `Calling ${data.to}...`;
+        setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+        setReply(reply);
+        setIsProcessing(false);
+        playElevenLabsAudio(reply);
+        const res1 = await fetch('/api/makeCall', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: data.to,
+            message: data.message,
+          }),
+        });
+        const data1 = await res1.json();
+        if (data1.error) {
+          const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          return;
+        }
+        setCallSid(data1.callSid);
       } else {
         setReply('');
         setIsProcessing(false);
@@ -590,6 +659,33 @@ export default function HomePage() {
     };
     processQuery();
   }, [query]);
+
+  useEffect(() => {
+    if (!callSid) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/get-recording`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ callSid }),
+        });
+        const data = await res.json();
+        if (
+          data.recordingUrl.length !== 0 &&
+          data.recordingUrl.endsWith('.mp3')
+        ) {
+          clearInterval(interval);
+          // console.log(data.recordingUrl);
+          setRecordingUrl(data.recordingUrl);
+        }
+      } catch (error) {
+        // console.error('Error fetching recording:', error);
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [callSid]);
 
   if (!loading && !session) return 'Unauthenticated';
 
@@ -668,14 +764,21 @@ export default function HomePage() {
                 <WeatherCard weatherData={weather} />
               </section>
             )}
-          {reply.length !== 0 && audioIsReady ? (
+          {reply.length !== 0 && audioIsReady && recordingUrl.length === 0 ? (
             <ChatResponse content={reply} />
           ) : reply.length === 0 &&
             sessionQuery.length !== 0 &&
-            !isProcessing ? (
+            !isProcessing &&
+            recordingUrl.length === 0 ? (
             <ChatPlaceholder />
           ) : isProcessing || (!audioIsReady && reply.length !== 0) ? (
             <ZenaLoading />
+          ) : recordingUrl.length !== 0? (
+            <RecordingPlayer
+              title="Your last call Recording"
+              recordingUrl={recordingUrl}
+              callSid={callSid}
+            />
           ) : null}
         </section>
         {voiceModeToggle ? (

@@ -12,33 +12,27 @@ export async function POST(req) {
       messages: [
         {
           role: 'system',
-          content: `You are an intent classifier. Classify the user's message as one of:
+          content: `You are an intent classifier. Classify the user's intent as one of:
 
-          - "chat" → questions, general talk, hypotheticals, or meta-discussion  
-          - "send_email" → if the user clearly wants to send or draft an email now  
-          - "book_cab" → if the user clearly wants to book a cab/ride now
-                  
-          ❗ Only classify as "send_email" or "book_cab" if the command is clear and actionable **right now**.
-                  
+          chat: general talk, questions, or hypotheticals
+
+          send_email: clear intent to send or draft an email now
+
+          book_cab: clear intent to book a cab or ride now
+
+          make_call: clear intent to call or talk to someone now
+
+          Treat indirect phrases like "talk to", "speak with", or "call [name]" as make_call.
+
           Examples:
-                  
-          ✅ send_email:  
-          - "Send an email to my boss" → send_email  
-          - "Draft a mail saying I'm sick" → send_email  
-                  
-          ❌ chat:  
-          - "How to send email?"  
-          - "Can you send emails?"
-                  
-          ✅ book_cab:  
-          - "Book a cab from Delhi to Gurgaon" → book_cab  
-          - "Call an Uber to my house" → book_cab  
-                  
-          ❌ chat:  
-          - "Can you book rides?"  
-          - "How do I book a cab?"
-                  
-          Respond with just: "chat", "send_email", or "book_cab"`,
+          ✅ "Call Aryan now" → make_call
+          ✅ "I want to talk to Aryan Saini" → make_call
+          ✅ "Send a mail to my professor" → send_email
+          ✅ "Book a cab to the airport" → book_cab
+          ❌ "Can you send emails?" → chat
+          ❌ "How do I call someone?" → chat
+
+          Respond with only: chat, send_email, book_cab, or make_call.`,
         },
         {
           role: 'user',
@@ -48,6 +42,7 @@ export async function POST(req) {
     });
 
     const intent = response.choices[0].message.content.trim().toLowerCase();
+    // console.log(intent);
     return intent && Response.json({ intent });
   } catch (error) {
     console.error('Intent classification error:', error);
