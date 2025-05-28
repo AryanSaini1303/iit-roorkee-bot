@@ -704,37 +704,7 @@ export default function HomePage() {
     }, 3000);
     return () => clearInterval(interval);
   }, [callSid]);
-
-  // useEffect(() => {
-  //   if (!callSid.length!==0) return;
-  //   const interval = setInterval(async () => {
-  //     try {
-  //       const result = await checkCallStatus(callSid);
-  //       console.log(result);
-  //       if (result.status === 'not-ready') {
-  //         // keep polling
-  //         return;
-  //       }
-  //       if (result.status === 'no-answer' || result.status === 'busy') {
-  //         setRecordingUrl('');
-  //         setIsProcessing(false);
-  //         const reply = `The call to ${callSid} was not answered or was busy. Please try again later.`;
-  //         setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-  //         setReply(reply);
-  //         playElevenLabsAudio(reply);
-  //         clearInterval(interval);
-  //       }
-  //       if (result.status === 'completed') {
-  //         // do nothing, probably already handled elsewhere
-  //         clearInterval(interval);
-  //       }
-  //     } catch (error) {
-  //       console.log('not-ready');
-  //     }
-  //   }, 2000);
-  //   return () => clearInterval(interval);
-  // }, [callSid]);
-
+  
   if (!loading && !session) return 'Unauthenticated';
 
   return (
