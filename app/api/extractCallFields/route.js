@@ -24,7 +24,7 @@ export async function POST(req) {
         "Hi, this is Zena, ${name}'s personal AI assistant. This call maybe recorded for his reference. ${name} would like to [talk to you about / ask you about / know about] [insert topic phrased about the callee]."
         
         Notes:
-        - The phrase "this call is recorded solely for ${name}’s review" must never change.
+        - This call maybe recorded for his reference.
         - Choose the verb phrase ("talk to you about", "ask you about", or "know about") naturally based on the context of the topic.
         - Phrase the topic addressing the callee, e.g., "your health" or "your recent progress."
         - Avoid first-person "I" or ambiguous pronouns.
