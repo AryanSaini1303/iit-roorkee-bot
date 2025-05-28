@@ -18,6 +18,9 @@ export async function POST(req) {
         process.env.NEXT_PUBLIC_BASE_URL
       }/api/twilio/voice?msg=${encodeURIComponent(message)}`,
       method: 'POST',
+      statusCallback: `${process.env.NEXT_PUBLIC_BASE_URL}/api/twilio/call-status`, // 👈 this will receive final call status
+      statusCallbackEvent: ['completed'],
+      statusCallbackMethod: 'POST',
     });
 
     return NextResponse.json({ success: true, callSid: call.sid });

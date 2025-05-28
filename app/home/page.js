@@ -13,6 +13,7 @@ import { Howl } from 'howler';
 import { Base64 } from 'js-base64';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import RecordingPlayer from '@/components/RecordingPlayer';
+import { checkCallStatus } from '@/lib/checkCallStatus';
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -394,7 +395,7 @@ export default function HomePage() {
   useEffect(() => {
     if (query.length === 0) return;
     setRecordingUrl('');
-    setCallSid('')
+    setCallSid('');
     setIsProcessing(true);
     setReply('');
     setAudioIsReady(false);
@@ -664,28 +665,75 @@ export default function HomePage() {
     if (!callSid) return;
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/get-recording`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ callSid }),
-        });
-        const data = await res.json();
-        if (
-          data.recordingUrl.length !== 0 &&
-          data.recordingUrl.endsWith('.mp3')
-        ) {
+        const result = await checkCallStatus(callSid);
+        // console.log(result);
+        if (result.callStatus === 'not-ready' || result.callStatus === 'unknown') {
+          return; // keep polling
+        }
+        if (result.callStatus === 'no-answer' || result.callStatus === 'busy') {
+          setRecordingUrl('');
+          setIsProcessing(false);
+          const reply = `The call was not answered or was busy. Please try again later.`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          playElevenLabsAudio(reply);
           clearInterval(interval);
-          // console.log(data.recordingUrl);
-          setRecordingUrl(data.recordingUrl);
+        }
+        if (result.callStatus === 'completed') {
+          const res = await fetch('/api/get-recording', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ callSid }),
+          });
+          const data = await res.json();
+          if (
+            data.recordingUrl.length !== 0 &&
+            data.recordingUrl.endsWith('.mp3')
+          ) {
+            clearInterval(interval);
+            setRecordingUrl(data.recordingUrl);
+            return;
+          }
         }
       } catch (error) {
-        // console.error('Error fetching recording:', error);
+        // console.warn('Polling error:', error);
+        return
       }
-    }, 2000);
+    }, 3000);
     return () => clearInterval(interval);
   }, [callSid]);
+
+  // useEffect(() => {
+  //   if (!callSid.length!==0) return;
+  //   const interval = setInterval(async () => {
+  //     try {
+  //       const result = await checkCallStatus(callSid);
+  //       console.log(result);
+  //       if (result.status === 'not-ready') {
+  //         // keep polling
+  //         return;
+  //       }
+  //       if (result.status === 'no-answer' || result.status === 'busy') {
+  //         setRecordingUrl('');
+  //         setIsProcessing(false);
+  //         const reply = `The call to ${callSid} was not answered or was busy. Please try again later.`;
+  //         setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+  //         setReply(reply);
+  //         playElevenLabsAudio(reply);
+  //         clearInterval(interval);
+  //       }
+  //       if (result.status === 'completed') {
+  //         // do nothing, probably already handled elsewhere
+  //         clearInterval(interval);
+  //       }
+  //     } catch (error) {
+  //       console.log('not-ready');
+  //     }
+  //   }, 2000);
+  //   return () => clearInterval(interval);
+  // }, [callSid]);
 
   if (!loading && !session) return 'Unauthenticated';
 
@@ -773,7 +821,7 @@ export default function HomePage() {
             <ChatPlaceholder />
           ) : isProcessing || (!audioIsReady && reply.length !== 0) ? (
             <ZenaLoading />
-          ) : recordingUrl.length !== 0? (
+          ) : recordingUrl.length !== 0 ? (
             <RecordingPlayer
               title="Your last call Recording"
               recordingUrl={recordingUrl}

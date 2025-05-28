@@ -21,7 +21,7 @@ export async function POST(req) {
         
         2. "message" → A polite, natural message phrased from Zena’s voice in third person, always following this template:
         
-        "Hi, this is Zena calling on behalf of ${name}. Just so you know, this call is recorded solely for ${name}’s review. ${name} would like to [talk to you about / ask you about / know about] [insert topic phrased about the callee]."
+        "Hi, this is Zena, ${name}'s personal AI assistant. This call maybe recorded for his reference. ${name} would like to [talk to you about / ask you about / know about] [insert topic phrased about the callee]."
         
         Notes:
         - The phrase "this call is recorded solely for ${name}’s review" must never change.
