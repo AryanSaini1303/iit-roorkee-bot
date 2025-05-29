@@ -44,7 +44,7 @@ export default function HomePage() {
   const [emailProcess, setEmailProcess] = useState(false);
   const [emailIsConfirm, setEmailIsConfirm] = useState(false);
   const [callSid, setCallSid] = useState('');
-  const [recordingUrl, setRecordingUrl] = useState('');
+  const [recordingUrls, setRecordingUrls] = useState([]);
   const [callConvo, setCallConvo] = useState([]);
 
   const playElevenLabsAudio = async (text, intent, cabUrl) => {
@@ -396,7 +396,8 @@ export default function HomePage() {
 
   useEffect(() => {
     if (query.length === 0) return;
-    setRecordingUrl('');
+    setRecordingUrls([]);
+    setCallConvo([]);
     setCallSid('');
     setIsProcessing(true);
     setReply('');
@@ -676,7 +677,7 @@ export default function HomePage() {
           return; // keep polling
         }
         if (result.callStatus === 'no-answer' || result.callStatus === 'busy') {
-          setRecordingUrl('');
+          setRecordingUrls([]);
           setIsProcessing(false);
           const reply = `The call was not answered or was busy. Please try again later.`;
           setMessages((prev) => [...prev, { role: 'system', content: reply }]);
@@ -685,32 +686,19 @@ export default function HomePage() {
           clearInterval(interval);
         }
         if (result.callStatus === 'completed') {
-          // const res = await fetch('/api/get-recording', {
-          //   method: 'POST',
-          //   headers: {
-          //     'Content-Type': 'application/json',
-          //   },
-          //   body: JSON.stringify({ callSid }),
-          // });
-          // const data = await res.json();
-          // if (
-          //   data.recordingUrl.length !== 0 &&
-          //   data.recordingUrl.endsWith('.mp3')
-          // ) {
-          //   clearInterval(interval);
-          //   setRecordingUrl(data.recordingUrl);
-          //   return;
-          // }
-          const res = await fetch(`/api/getCallConversation?sid=${callSid}`);
-          const convo = await res.json();
-          console.log(convo);
-          setCallConvo(convo);
-          const res1 = await fetch(`/api/clearCallConversation?sid=${callSid}`);
-          const data = await res1.json();
-          setMessages((prev) => [...prev, ...convo]);
-          console.log(data);
-          clearInterval(interval);
-          return;
+          const res2 = await fetch('/api/get-recording', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ callSid }),
+          });
+          const data2 = await res2.json();
+          if (data2.recordingUrls && data2.recordingUrls.length > 0) {
+            setRecordingUrls(data2.recordingUrls);
+            clearInterval(interval);
+            return;
+          }
         }
       } catch (error) {
         // console.warn('Polling error:', error);
@@ -719,6 +707,19 @@ export default function HomePage() {
     }, 3000);
     return () => clearInterval(interval);
   }, [callSid]);
+
+  useEffect(() => {
+    if (recordingUrls.length === 0) return;
+    const getCallConvo = async () => {
+      const res = await fetch(`/api/getCallConversation?sid=${callSid}`);
+      const convo = await res.json();
+      // console.log(convo);
+      setCallConvo(convo);
+      await fetch(`/api/clearCallConversation?sid=${callSid}`);
+      setMessages((prev) => [...prev, ...convo]);
+    };
+    getCallConvo();
+  }, [recordingUrls]);
 
   if (!loading && !session) return 'Unauthenticated';
 
@@ -812,7 +813,10 @@ export default function HomePage() {
             //   recordingUrl={recordingUrl}
             //   callSid={callSid}
             // />
-            <CallConversation messages={callConvo} />
+            <CallConversation
+              messages={callConvo}
+              recordingUrls={recordingUrls}
+            />
           ) : null}
         </section>
         {voiceModeToggle ? (
