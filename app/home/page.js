@@ -14,6 +14,7 @@ import { Base64 } from 'js-base64';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import RecordingPlayer from '@/components/RecordingPlayer';
 import { checkCallStatus } from '@/lib/checkCallStatus';
+import CallConversation from '@/components/CallConversation';
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -44,6 +45,7 @@ export default function HomePage() {
   const [emailIsConfirm, setEmailIsConfirm] = useState(false);
   const [callSid, setCallSid] = useState('');
   const [recordingUrl, setRecordingUrl] = useState('');
+  const [callConvo, setCallConvo] = useState([]);
 
   const playElevenLabsAudio = async (text, intent, cabUrl) => {
     try {
@@ -667,7 +669,10 @@ export default function HomePage() {
       try {
         const result = await checkCallStatus(callSid);
         // console.log(result);
-        if (result.callStatus === 'not-ready' || result.callStatus === 'unknown') {
+        if (
+          result.callStatus === 'not-ready' ||
+          result.callStatus === 'unknown'
+        ) {
           return; // keep polling
         }
         if (result.callStatus === 'no-answer' || result.callStatus === 'busy') {
@@ -680,31 +685,41 @@ export default function HomePage() {
           clearInterval(interval);
         }
         if (result.callStatus === 'completed') {
-          const res = await fetch('/api/get-recording', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ callSid }),
-          });
-          const data = await res.json();
-          if (
-            data.recordingUrl.length !== 0 &&
-            data.recordingUrl.endsWith('.mp3')
-          ) {
-            clearInterval(interval);
-            setRecordingUrl(data.recordingUrl);
-            return;
-          }
+          // const res = await fetch('/api/get-recording', {
+          //   method: 'POST',
+          //   headers: {
+          //     'Content-Type': 'application/json',
+          //   },
+          //   body: JSON.stringify({ callSid }),
+          // });
+          // const data = await res.json();
+          // if (
+          //   data.recordingUrl.length !== 0 &&
+          //   data.recordingUrl.endsWith('.mp3')
+          // ) {
+          //   clearInterval(interval);
+          //   setRecordingUrl(data.recordingUrl);
+          //   return;
+          // }
+          const res = await fetch(`/api/getCallConversation?sid=${callSid}`);
+          const convo = await res.json();
+          console.log(convo);
+          setCallConvo(convo);
+          const res1 = await fetch(`/api/clearCallConversation?sid=${callSid}`);
+          const data = await res1.json();
+          setMessages((prev) => [...prev, ...convo]);
+          console.log(data);
+          clearInterval(interval);
+          return;
         }
       } catch (error) {
         // console.warn('Polling error:', error);
-        return
+        return;
       }
     }, 3000);
     return () => clearInterval(interval);
   }, [callSid]);
-  
+
   if (!loading && !session) return 'Unauthenticated';
 
   return (
@@ -782,21 +797,22 @@ export default function HomePage() {
                 <WeatherCard weatherData={weather} />
               </section>
             )}
-          {reply.length !== 0 && audioIsReady && recordingUrl.length === 0 ? (
+          {reply.length !== 0 && audioIsReady && callConvo.length === 0 ? (
             <ChatResponse content={reply} />
           ) : reply.length === 0 &&
             sessionQuery.length !== 0 &&
             !isProcessing &&
-            recordingUrl.length === 0 ? (
+            callConvo.length === 0 ? (
             <ChatPlaceholder />
           ) : isProcessing || (!audioIsReady && reply.length !== 0) ? (
             <ZenaLoading />
-          ) : recordingUrl.length !== 0 ? (
-            <RecordingPlayer
-              title="Your last call Recording"
-              recordingUrl={recordingUrl}
-              callSid={callSid}
-            />
+          ) : callConvo.length !== 0 ? (
+            // <RecordingPlayer
+            //   title="Your last call Recording"
+            //   recordingUrl={recordingUrl}
+            //   callSid={callSid}
+            // />
+            <CallConversation messages={callConvo} />
           ) : null}
         </section>
         {voiceModeToggle ? (
