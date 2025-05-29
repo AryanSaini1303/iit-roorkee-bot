@@ -726,7 +726,7 @@ export default function HomePage() {
     <div className={`${'wrapper'} ${'container'}`}>
       <ul className={styles.header}>
         <li className={styles.headerElement}>
-          <h1>Zena</h1>
+          <h1>Eva</h1>
         </li>
         <li className={styles.headerElement} ref={menuRef}>
           <svg

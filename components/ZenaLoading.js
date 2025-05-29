@@ -9,7 +9,7 @@ export default function ZenaLoading() {
         <span></span>
         <span></span>
       </div>
-      <p className={styles.text}>Zena is thinking...</p>
+      <p className={styles.text}>Eva is thinking...</p>
     </div>
   );
 }

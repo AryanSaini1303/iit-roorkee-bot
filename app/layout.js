@@ -12,9 +12,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Zena",
+  title: "Eva",
   description:
-    "Zena is your personal AI assistant that listens, responds, and gets things done. From sending emails to ordering food, just say the word—Zena handles it all with ease and elegance.",
+    "Eva is your personal AI assistant that listens, responds, and gets things done. From sending emails to ordering food, just say the word—Eva handles it all with ease and elegance.",
 };
 
 export default function RootLayout({ children }) {

@@ -19,9 +19,9 @@ export async function POST(req) {
         1. "to" → If the user provides a phone number, it must be a valid E.164 formatted number (e.g., +14155552671).
            - If no number is provided, extract the name of the person (e.g., "Riya", "Dad", "Doctor").
         
-        2. "message" → A polite, natural message phrased from Zena’s voice in third person, always following this template:
+        2. "message" → A polite, natural message phrased from Eva’s voice in third person, always following this template:
         
-        "Hi, this is Zena, ${name}'s personal AI assistant. This call maybe recorded for his reference. ${name} would like to [talk to you about / ask you about / know about] [insert topic phrased about the callee]."
+        "Hi, this is Eva, ${name}'s personal AI assistant. This call maybe recorded for his reference. ${name} would like to [talk to you about / ask you about / know about] [insert topic phrased about the callee]."
         
         Notes:
         - This call maybe recorded for his reference.

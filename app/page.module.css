@@ -72,8 +72,11 @@
 }
 
 .loginSection h1 {
-  font-size: 4.5rem;
-  font-weight: 700;
+  font-size: 6rem;
+  font-family: 'Kapakana', cursive;
+  font-optical-sizing: auto;
+  font-weight: bold;
+  font-style: normal;
   color: #222;
   margin: 0;
 }
@@ -82,7 +85,7 @@
   font-size: 1.5rem;
   font-weight: 400;
   color: #555;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .infoContainer {
@@ -190,17 +193,17 @@
     height: 100vh;
     border-radius: 0;
   }
-  .imageContainer{
+  .imageContainer {
     border-radius: 0;
   }
-  .loginSection{
+  .loginSection {
     width: 100%;
     padding: 0;
   }
-  .loginSection .holder{
-    width: 100%;;
+  .loginSection .holder {
+    width: 100%;
   }
-  .imageContainer::before{
+  .imageContainer::before {
     border-radius: 0;
   }
   .loginSection h1 {

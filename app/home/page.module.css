@@ -14,13 +14,16 @@
 
 /* LEFT HEADER ELEMENT */
 .header .headerElement:nth-child(1) {
-  font-family: 'Rubik', sans-serif;
-  /* font-weight: 600; */
-  font-size: 1.2rem;
+  font-family: "Kapakana", cursive;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+  font-size: 2rem;
+  margin: 0;
 }
 
 .header .headerElement:nth-child(1) h1 {
-  margin: 1.2rem 0;
+  margin: 1rem 0;
 }
 
 /* RIGHT HEADER ELEMENT (ICON / BUTTON) */
@@ -451,7 +454,7 @@
     display: flex;
     justify-content: space-between;
   }
-  .textInput .buttonContainer button:nth-child(1){
+  .textInput .buttonContainer button:nth-child(1) {
     order: 2;
   }
   .textInput form input {
@@ -473,7 +476,7 @@
     width: 1.8rem;
     height: 1.8rem;
   }
-  .options{
+  .options {
     padding: 0.5rem;
   }
   .options li {

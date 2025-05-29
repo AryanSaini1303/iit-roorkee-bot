@@ -7,10 +7,10 @@ export default function ChatPlaceholder() {
     <div className={styles.placeholderContainer}>
       <Sparkles size={28} className={styles.icon} />
       <h2 className={styles.title}>
-        Zena is ready to continue your conversation
+        Eva is ready to continue your conversation
       </h2>
       <p className={styles.subtitle}>
-        Talk to Zena with a tap — or double tap to type. She remembers your
+        Talk to Eva with a tap — or double tap to type. She remembers your
         conversation, so just pick up where you left off!
       </p>
     </div>

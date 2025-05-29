@@ -40,7 +40,7 @@ export default function Home() {
       </div>
       <section className={styles.loginSection}>
         <div className={styles.holder}>
-          <h1>Zena</h1>
+          <h1>Eva</h1>
         </div>
         <div className={styles.holder}>
           <div className={styles.infoContainer}>

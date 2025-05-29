@@ -7,10 +7,10 @@ export async function POST(req) {
   const form = await req.formData();
   const { searchParams } = new URL(req.url);
   const callSid=form.get("CallSid");
-  const msg = searchParams.get('msg') || 'Hello from Zena-AI';
+  const msg = searchParams.get('msg') || 'Hello from Eva-AI';
   await appendMessage(callSid, {role:"system", content:msg});
   const voiceBuffer = await generateVoiceBuffer(msg);
-  // const fileName = `zena-ai-${Date.now()}.mp3`;
+  // const fileName = `eva-ai-${Date.now()}.mp3`;
   // const publicUrl = await uploadToVercelBlob(voiceBuffer, fileName);
   const publicUrl = await uploadToVercelBlob(voiceBuffer);
 
