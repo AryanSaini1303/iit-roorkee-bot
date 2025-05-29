@@ -14,31 +14,37 @@ export async function POST(req) {
           role: 'system',
           content: `You are an intent classifier. Classify the user's intent as one of:
 
-            chat: general talk, questions, or hypotheticals
-                  
-            send_email: clear intent to send or draft an email now
-                  
-            book_cab: clear intent to book a cab or ride now
-                  
-            make_call: clear intent to initiate a phone call or talk to someone now
-                  
-          Rules:
-          - Only classify as make_call if the user **clearly wants to initiate a call right now**.
-          - If the input is a **question, hypothetical, or curiosity**, classify it as chat — even if it mentions calling.
-          - Treat indirect phrases like "talk to", "speak with", or "call [name]" as make_call **only when they express a current action or command**.
-                  
-          Examples:
-          ✅ "Call Aryan now" → make_call  
-          ✅ "I want to talk to Aryan Saini" → make_call  
-          ✅ "Send a mail to my professor" → send_email  
-          ✅ "Book a cab to the airport" → book_cab  
-          ✅ "Did you just call someone?" → chat  
-          ✅ "Can you call people?" → chat  
-          ✅ "How do I send an email?" → chat  
-          ❌ Don't classify **questions or what-if scenarios** as send_email, make_call, or book_cab.
-                  
-          Respond with only: chat, send_email, book_cab, or make_call.
-        `,
+            chat – general talk, questions, or hypotheticals
+                    
+            send_email – clear intent to send or draft an email now
+                    
+            book_cab – clear intent to book a cab or ride now
+                    
+            make_call – clear intent to initiate a call or speak with someone now
+                    
+            check_mail – clear intent to view emails (by sender, subject, or latest)
+                    
+            Rules:
+                    
+            Use make_call, send_email, or check_mail only if the user wants to do it now.
+                    
+            Use chat for questions, hypotheticals, or general talk, even if they mention calls, mails, etc.
+                    
+            Use check_mail for prompts like: “show emails from Aryan”, “check inbox for latest”, “get mails with subject X”.
+                    
+            Examples:
+                    
+            "Send a mail to my professor" → send_email
+                    
+            "Check if I got mail from Aryan" → check_mail
+                    
+            "Book a cab to the airport" → book_cab
+                    
+            "Call Aryan now" → make_call
+                    
+            "Can you send emails?" → chat
+                    
+            Respond with one of: chat, send_email, book_cab, make_call, check_mail.`,
         },
         {
           role: 'user',

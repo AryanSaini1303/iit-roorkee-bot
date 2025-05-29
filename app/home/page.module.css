@@ -467,7 +467,7 @@
     font-size: clamp(0.8rem, 2vw + 0.8rem, 1.4rem);
   }
   .header .headerElement:nth-child(1) {
-    font-size: 1rem;
+    font-size: 1.3rem;
   }
   .header .headerElement:nth-child(2) {
     padding: 0.3rem;

@@ -15,6 +15,7 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 // import RecordingPlayer from '@/components/RecordingPlayer';
 import { checkCallStatus } from '@/lib/checkCallStatus';
 import CallConversation from '@/components/CallConversation';
+import MailViewer from '@/components/MailsViewer';
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -46,6 +47,8 @@ export default function HomePage() {
   const [callSid, setCallSid] = useState('');
   const [recordingUrls, setRecordingUrls] = useState([]);
   const [callConvo, setCallConvo] = useState([]);
+  const [mails, setMails] = useState([]);
+  const [mailQuery, setMailQuery] = useState({});
 
   const playElevenLabsAudio = async (text, intent, cabUrl) => {
     try {
@@ -394,8 +397,37 @@ export default function HomePage() {
     }
   }, [accessToken, emailData, emailIsConfirm]);
 
+  function buildGmailQueryURL({ time, subject, from, to, before, after }) {
+    const baseUrl =
+      'https://gmail.googleapis.com/gmail/v1/users/me/messages?q=';
+    const queryParts = [];
+    // Handle time
+    if (time === 'latest') {
+      const oneDayAgo = Math.floor(Date.now() / 1000) - 24 * 60 * 60;
+      queryParts.push(`after:${oneDayAgo}`);
+    } else if (typeof time === 'number') {
+      const since = Math.floor(Date.now() / 1000) - time * 24 * 60 * 60;
+      queryParts.push(`after:${since}`);
+    }
+    if (subject) queryParts.push(`subject:(${subject})`);
+    if (from) queryParts.push(`from:(${from})`);
+    if (to) queryParts.push(`to:(${to})`);
+    if (before) {
+      const beforeUnix = Math.floor(new Date(before).getTime() / 1000);
+      queryParts.push(`before:${beforeUnix}`);
+    }
+    if (after) {
+      const afterUnix = Math.floor(new Date(after).getTime() / 1000);
+      queryParts.push(`after:${afterUnix}`);
+    }
+    const finalQuery = encodeURIComponent(queryParts.join(' '));
+    return `${baseUrl}${finalQuery}`;
+  }
+
   useEffect(() => {
     if (query.length === 0) return;
+    setMailQuery({});
+    setMails([]);
     setRecordingUrls([]);
     setCallConvo([]);
     setCallSid('');
@@ -464,11 +496,13 @@ export default function HomePage() {
       setQuery('');
       // console.log(data.intent);
       if (data.intent === 'chat') {
+        const date = new Date();
         const chatRes = await fetch('/api/chat', {
           method: 'POST',
           body: JSON.stringify({
             query,
             messages,
+            currentDate: date.toLocaleDateString(),
           }),
         });
         const { reply } = await chatRes.json();
@@ -656,13 +690,86 @@ export default function HomePage() {
           return;
         }
         setCallSid(data1.callSid);
+      } else if (data.intent === 'check_mail') {
+        const date = new Date();
+        const res = await fetch('/api/extractEmailFetchingFields', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userInput: query,
+            currentDate: date.toLocaleDateString(),
+          }),
+        });
+        const { fields } = await res.json();
+        // console.log(fields);
+        setMailQuery({
+          time: fields.time || null,
+          subject: fields.subject || null,
+          from: fields.from || null,
+          to: fields.to || null,
+          before: fields.before || null,
+          after: fields.after || null,
+        });
+        const url = buildGmailQueryURL({
+          time: fields.time || null,
+          subject: fields.subject || null,
+          from: fields.from || null,
+          to: fields.to || null,
+          before: fields.before || null,
+          after: fields.after || null,
+        });
+        // console.log(url);
+        const res1 = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${session?.provider_token}`,
+          },
+        });
+        const { messages } = await res1.json();
+        // console.log(messages);
+        const mailIds = messages?.map((message) => message.id);
+        // console.log(mailIds);
+        if (!mailIds) {
+          const reply = `No Emails found with your particular query!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          return;
+        }
+        const response = await fetch('/api/getMails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session?.provider_token}`,
+          },
+          body: JSON.stringify({
+            messageIds: mailIds,
+          }),
+        });
+        const result = await response.json();
+        // console.log(result.messages);
+        if (result.error) {
+          const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          return;
+        }
+        const mailsData = result.messages.map((mail) => mail.data);
+        // console.log(mailsData);
+        setMails(mailsData);
+        setReply('');
+        setIsProcessing(false);
       } else {
         setReply('');
         setIsProcessing(false);
       }
     };
     processQuery();
-  }, [query]);
+  }, [query, session]);
 
   useEffect(() => {
     if (!callSid) return;
@@ -798,16 +905,20 @@ export default function HomePage() {
                 <WeatherCard weatherData={weather} />
               </section>
             )}
-          {reply.length !== 0 && audioIsReady && callConvo.length === 0 ? (
+          {reply.length !== 0 &&
+          audioIsReady &&
+          callConvo.length === 0 &&
+          mails.length === 0 ? (
             <ChatResponse content={reply} />
           ) : reply.length === 0 &&
             sessionQuery.length !== 0 &&
             !isProcessing &&
-            callConvo.length === 0 ? (
+            callConvo.length === 0 &&
+            mails.length === 0 ? (
             <ChatPlaceholder />
           ) : isProcessing || (!audioIsReady && reply.length !== 0) ? (
             <ZenaLoading />
-          ) : callConvo.length !== 0 ? (
+          ) : callConvo.length !== 0 && mails.length === 0 ? (
             // <RecordingPlayer
             //   title="Your last call Recording"
             //   recordingUrl={recordingUrl}
@@ -817,6 +928,8 @@ export default function HomePage() {
               messages={callConvo}
               recordingUrls={recordingUrls}
             />
+          ) : mails.length !== 0 ? (
+            <MailViewer emails={mails} queryParams={mailQuery} />
           ) : null}
         </section>
         {voiceModeToggle ? (
