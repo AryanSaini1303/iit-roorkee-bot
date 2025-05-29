@@ -1,4 +1,3 @@
-// app/api/chat/route.js or route.ts
 import { OpenAI } from "openai";
 import { NextResponse } from "next/server";
 

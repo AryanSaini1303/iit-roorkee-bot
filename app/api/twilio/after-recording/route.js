@@ -1,7 +1,6 @@
 import { uploadToVercelBlob } from '@/lib/blobUploader';
 import {
   appendMessage,
-  clearConversation,
   getConversation,
 } from '@/lib/convoStore';
 import { generateVoiceBuffer } from '@/lib/elevenLabs';
@@ -27,7 +26,6 @@ export async function POST(req) {
       'https://x8kvogjfhjihtrrx.public.blob.vercel-storage.com/thankYou-Ns1PPq5miOzZ1BT13wTTN2h8dONtZy.mp3',
     );
     response.hangup();
-    // clearConversation(callSid);
     return new Response(response.toString(), {
       headers: { 'Content-Type': 'text/xml' },
     });
@@ -51,7 +49,6 @@ export async function POST(req) {
       'https://x8kvogjfhjihtrrx.public.blob.vercel-storage.com/thankYou-Ns1PPq5miOzZ1BT13wTTN2h8dONtZy.mp3',
     );
     response.hangup();
-    // clearConversation(callSid);
     return new Response(response.toString(), {
       headers: { 'Content-Type': 'text/xml' },
     });
