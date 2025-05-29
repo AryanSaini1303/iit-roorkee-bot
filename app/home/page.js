@@ -12,7 +12,7 @@ import ZenaLoading from '@/components/ZenaLoading';
 import { Howl } from 'howler';
 import { Base64 } from 'js-base64';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
-import RecordingPlayer from '@/components/RecordingPlayer';
+// import RecordingPlayer from '@/components/RecordingPlayer';
 import { checkCallStatus } from '@/lib/checkCallStatus';
 import CallConversation from '@/components/CallConversation';
 
@@ -713,7 +713,7 @@ export default function HomePage() {
     const getCallConvo = async () => {
       const res = await fetch(`/api/getCallConversation?sid=${callSid}`);
       const convo = await res.json();
-      // console.log(convo);
+      //console.log(convo);
       setCallConvo(convo);
       await fetch(`/api/clearCallConversation?sid=${callSid}`);
       setMessages((prev) => [...prev, ...convo]);

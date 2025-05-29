@@ -19,8 +19,7 @@
   line-height: 1.4;
   word-break: break-word;
   transition: all 0.3s ease-in-out;
-  display: flex;
-  flex-direction: column;
+  position: relative;
 }
 
 .user {
@@ -33,4 +32,27 @@
   background-color: #dbeafe;
   color: #1e3a8a;
   align-self: flex-end;
+}
+
+.playIcon {
+  position: absolute;
+  left: 1.5rem;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: black;
+  transition: all 0.2s ease;
+}
+
+/* .playIcon:hover {
+  transform: translate(-50%, -50%);
+  color: #0070f3;
+  cursor: pointer;
+} */
+
+.playIcon:active {
+  transform: scale(0.98) translate(-50%, -50%);
+  filter: contrast(150%) brightness(150%);
+  color: #0070f3;
+  cursor: pointer;
+  opacity: 0.8;
 }
