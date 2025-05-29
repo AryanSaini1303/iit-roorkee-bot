@@ -761,8 +761,11 @@ export default function HomePage() {
         const mailsData = result.messages.map((mail) => mail.data);
         // console.log(mailsData);
         setMails(mailsData);
-        setReply('');
+        const reply = `Here's the list of mails just like you asked`;
+        setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+        setReply(reply);
         setIsProcessing(false);
+        playElevenLabsAudio(reply);
       } else {
         setReply('');
         setIsProcessing(false);
