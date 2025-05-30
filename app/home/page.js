@@ -54,6 +54,8 @@ export default function HomePage() {
   const [callData, setCallData] = useState({});
   const [callProcess, setCallProcess] = useState(false);
   const [mailContactsProcessing, setMailContactsProcessing] = useState(true);
+  const [whatsappData, setWhatsappData] = useState({});
+  const [whatsappProcess, setWhatsappProcess] = useState(false);
 
   const playElevenLabsAudio = async (text, intent, cabUrl) => {
     try {
@@ -487,7 +489,7 @@ export default function HomePage() {
           body: JSON.stringify({ userInput: query }),
         });
         const data = await res.json();
-        console.log(data); // { result: true } or { result: false }
+        // console.log(data);
         if (data.error) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
           setMessages((prev) => [...prev, { role: 'system', content: reply }]);
@@ -499,7 +501,7 @@ export default function HomePage() {
           return;
         }
         if (data.result) {
-          console.log(callData);
+          // console.log(callData);
           const reply = `Calling ${callData.name}...`;
           setMessages((prev) => [...prev, { role: 'system', content: reply }]);
           setReply(reply);
@@ -541,6 +543,37 @@ export default function HomePage() {
           playElevenLabsAudio(reply);
           setCallProcess(false);
           setCallData({});
+          return;
+        }
+      } else if (whatsappProcess) {
+        const res = await fetch('/api/getWhatsappIntent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userInput: query }),
+        });
+        const data = await res.json();
+        // console.log(data);
+        if (data.error) {
+          const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          setWhatsappData({});
+          setWhatsappProcess(false);
+          return;
+        }
+        if (data.result) {
+          // console.log(whatsappData);
+          const reply = `Sending message to ${whatsappData.name}...`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          const url = `https://wa.me/${whatsappData.to}?text=${whatsappData.message}`;
+          window.open(url, '_blank');
+          setWhatsappData({});
+          setWhatsappProcess(false);
           return;
         }
       }
@@ -908,6 +941,105 @@ export default function HomePage() {
         setReply(reply);
         setIsProcessing(false);
         playElevenLabsAudio(reply);
+      } else if (data.intent === 'send_whatsapp_message') {
+        const res = await fetch('/api/extractWhatsappDetails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userInput: query }),
+        });
+        const data = await res.json();
+        // console.log(data);
+        if (!data.success) {
+          const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          setEmailProcess(false);
+          playElevenLabsAudio(reply);
+          return;
+        }
+        if (data.data.to && data.data.message) {
+          let number = '';
+          let name = '';
+          if (parseInt(data.data.to)) {
+            if (!validatePhoneNumber(data.to)) {
+              const reply = `Please provide a valid phone number and try again!`;
+              setMessages((prev) => [
+                ...prev,
+                { role: 'system', content: reply },
+              ]);
+              setReply(reply);
+              setIsProcessing(false);
+              playElevenLabsAudio(reply);
+              return;
+            } else {
+              number = data.data.to;
+              name = data.data.to;
+            }
+          } else {
+            if (contacts?.length === 0) {
+              const reply = `Your contacts are'nt synced yet, please try again later!`;
+              setMessages((prev) => [
+                ...prev,
+                { role: 'system', content: reply },
+              ]);
+              setReply(reply);
+              setIsProcessing(false);
+              playElevenLabsAudio(reply);
+              return;
+            } else {
+              const results = contacts.filter((contact) =>
+                contact.name
+                  ?.toLowerCase()
+                  .includes(data.data.to.toLowerCase()),
+              );
+              // console.log(results);
+              if (results.length > 0) {
+                number = results[0].phone;
+                name = results[0].name;
+              } else {
+                const reply = `No contact found named ${data.to}`;
+                setMessages((prev) => [
+                  ...prev,
+                  { role: 'system', content: reply },
+                ]);
+                setReply(reply);
+                setIsProcessing(false);
+                playElevenLabsAudio(reply);
+                return;
+              }
+            }
+            setWhatsappData({
+              to: number,
+              message: data.data.message,
+              name: name,
+            });
+            setWhatsappProcess(true);
+            const reply = `Are you sure you want to send message "${data.data.message}" to ${name}`;
+            setMessages((prev) => [
+              ...prev,
+              { role: 'system', content: reply },
+            ]);
+            setReply(reply);
+            setIsProcessing(false);
+            playElevenLabsAudio(reply);
+            return;
+          }
+        } else {
+          const reply = `Your query is missing required field: ${
+            !data.data.to ? 'to' : 'message'
+          }`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          setEmailProcess(false);
+          playElevenLabsAudio(reply);
+          return;
+        }
+        setReply('');
+        setIsProcessing(false);
       } else {
         setReply('');
         setIsProcessing(false);
@@ -993,7 +1125,7 @@ export default function HomePage() {
         ...e,
         user_id: session?.user.id,
       }));
-      console.log(emailsWithUser);
+      // console.log(emailsWithUser);
       const { data, error } = await supabase
         .from('email_contacts')
         .insert(emailsWithUser);
