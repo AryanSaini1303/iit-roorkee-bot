@@ -53,6 +53,7 @@ export default function HomePage() {
   const [mailContacts, setMailContacts] = useState([]);
   const [callData, setCallData] = useState({});
   const [callProcess, setCallProcess] = useState(false);
+  const [mailContactsProcessing, setMailContactsProcessing] = useState(true);
 
   const playElevenLabsAudio = async (text, intent, cabUrl) => {
     try {
@@ -586,6 +587,7 @@ export default function HomePage() {
           body: JSON.stringify({ userInput: query }),
         });
         const data = await res.json();
+        // console.log(data);
         if (!data.success) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
           setMessages((prev) => [...prev, { role: 'system', content: reply }]);
@@ -605,9 +607,39 @@ export default function HomePage() {
           setIsProcessing(false);
           playElevenLabsAudio(reply);
         } else {
+          let email = data.data.to;
           const isValidEmail = (email) =>
             /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
-          if (!data.data.to || !isValidEmail(data.data.to)) {
+          // console.log(mailContacts);
+          let match =
+            contacts.find((contact) =>
+              contact.name?.toLowerCase().includes(data.data.to),
+            ) || null;
+          if (!match || !match?.email) {
+            if (!mailContactsProcessing) {
+              match = mailContacts
+                ? mailContacts.find((contact) =>
+                    contact.name?.toLowerCase().includes(data.data.to),
+                  )
+                : null;
+            } else {
+              const reply = `Your email contacts sync is still in process, please try again later`;
+              setMessages((prev) => [
+                ...prev,
+                { role: 'system', content: reply },
+              ]);
+              setReply(reply);
+              setIsProcessing(false);
+              setEmailProcess(false);
+              playElevenLabsAudio(reply);
+              return;
+            }
+          }
+          console.log(match);
+          if (
+            !data.data.to ||
+            (data.data.to && !isValidEmail(data.data.to) && !match?.email)
+          ) {
             const reply = `Please provide a valid email address and try again!`;
             setMessages((prev) => [
               ...prev,
@@ -618,11 +650,13 @@ export default function HomePage() {
             setEmailProcess(false);
             playElevenLabsAudio(reply);
             return;
+          } else if (match?.email) {
+            email = match?.email;
           }
           setEmailProcess(true);
           let reply = `📨 Here's the email you've asked me to draft:
 
-            To: ${data.data.to}
+            To: ${email}
             Subject: ${data.data.subject}
 
             ${data.data.body}
@@ -633,7 +667,12 @@ export default function HomePage() {
           playElevenLabsAudio(
             "Here's the email you've asked me to draft. Would you like me to go ahead and send this email?",
           );
-          setEmailData(data.data);
+          setEmailData({
+            to: email,
+            subject: data.data.subject,
+            body: data.data.body,
+            missing: data.data.missing,
+          });
         }
       } else if (data.intent === 'book_cab') {
         const res = await fetch('/api/extractCabFields', {
@@ -876,6 +915,7 @@ export default function HomePage() {
     };
     processQuery();
   }, [query, session]);
+  // console.log(session);
 
   useEffect(() => {
     if (!callSid) return;
@@ -936,6 +976,31 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!session) return;
+    const saveContacts = async (contacts) => {
+      const contactsWithUser = contacts.map((c) => ({
+        ...c,
+        user_id: session?.user.id,
+      }));
+      const { data, error } = await supabase
+        .from('contacts')
+        .insert(contactsWithUser);
+      if (error) {
+        console.log(`Error saving contacts ${error.message}`);
+      }
+    };
+    const saveEmailContacts = async (emailContacts) => {
+      const emailsWithUser = emailContacts.map((e) => ({
+        ...e,
+        user_id: session?.user.id,
+      }));
+      console.log(emailsWithUser);
+      const { data, error } = await supabase
+        .from('email_contacts')
+        .insert(emailsWithUser);
+      if (error) {
+        console.log(`Error saving email contacts ${error.message}`);
+      }
+    };
     const fetchContactsFromPeopleAPI = async () => {
       let nextPageToken = null;
       let allContacts = [];
@@ -964,7 +1029,9 @@ export default function HomePage() {
         allContacts = [...allContacts, ...connections];
         nextPageToken = data.nextPageToken;
       } while (nextPageToken);
+      // console.log(allContacts);
       setContacts(allContacts);
+      saveContacts(allContacts);
     };
     const fetchEmailContactsFromGmailAPI = async () => {
       const res = await fetch(
@@ -979,7 +1046,7 @@ export default function HomePage() {
       const messages = messageList.messages || [];
       const uniqueEmails = new Map();
       for (let i = 0; i < messages.length; i++) {
-        // console.log(messages[i]);
+        console.log(Math.floor((i / messages.length) * 100) + '%');
         const msgId = messages[i].id;
         const msgRes = await fetch(
           `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgId}?format=metadata&metadataHeaders=From`,
@@ -1001,11 +1068,45 @@ export default function HomePage() {
             uniqueEmails.set(email, { name, email });
           }
         }
+        await new Promise((r) => setTimeout(r, 200));
       }
       setMailContacts(Array.from(uniqueEmails.values()));
+      saveEmailContacts(Array.from(uniqueEmails.values()));
+      setMailContactsProcessing(false);
     };
-    fetchContactsFromPeopleAPI();
-    fetchEmailContactsFromGmailAPI();
+    const getContacts = async () => {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('*')
+        .eq('user_id', session?.user.id);
+      if (data?.length > 0) {
+        setContacts(data);
+      } else {
+        fetchContactsFromPeopleAPI();
+      }
+      if (error) {
+        console.log(`Error fetching contacts ${error.message}`);
+        fetchContactsFromPeopleAPI();
+      }
+    };
+    getContacts();
+    const getEmailContacts = async () => {
+      const { data, error } = await supabase
+        .from('email_contacts')
+        .select('*')
+        .eq('user_id', session?.user.id);
+      if (data?.length > 0) {
+        setMailContacts(data);
+        setMailContactsProcessing(false);
+      } else {
+        fetchEmailContactsFromGmailAPI();
+      }
+      if (error) {
+        console.log(`Error fetching email contacts ${error.message}`);
+        fetchEmailContactsFromGmailAPI();
+      }
+    };
+    getEmailContacts();
   }, [session]);
 
   // useEffect(() => {

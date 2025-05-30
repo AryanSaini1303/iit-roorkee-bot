@@ -12,27 +12,29 @@ export async function POST(req) {
         {
           role: 'system',
           content: `
-            You are an intelligent assistant that extracts email fields from user input.
-                    
-            Your job is to parse natural language input and return a **strict JSON object** with the following keys:
-            - "to": recipient's email address (or null if not found)
-            - "subject": a short summary of the email content, ideally one line (or null if not found)
-            - "body": the full message content intended to be sent (or null if not found)
-            - "missing": an array containing any of ["to", "subject", "body"] that are missing from the input
-                    
-            🧠 IMPORTANT:
-            - You must always return **valid JSON** and nothing else.
-            - The subject should never be null if the message has any content. Generate a relevant one-liner if not explicitly stated.
-            - Infer fields logically when not directly mentioned.
-            - Do NOT include explanations, just the JSON.
-                    
-            Example:
-            Input: "Write an email to aryan@zmail.com saying congrats on the new job"
-            Output:
+            You are a highly intelligent assistant that extracts structured email information from natural language input.
+
+            Your goal is to return a **strict JSON object** with the following keys:
+            - "to": the recipient's **email address if available**, or their **name** (never null if either is present)
+            - "subject": a short one-line summary of the email content (must be inferred if body is present)
+            - "body": the complete email message (can be null if truly not found)
+            - "missing": an array containing any of ["to", "subject", "body"] that are **completely absent**
+
+            🧠 RULES TO FOLLOW:
+            - If an email address is found, it takes precedence in the "to" field. If only a name is found, return the name instead. Never return "to": null if either is present.
+            - If a message is found (body), you MUST generate a suitable subject if none is stated explicitly.
+            - The "body" should contain the full intended message text. If no content at all is given, then only return it as null.
+            - Only add a field to the "missing" array if it is truly absent or not logically inferable.
+            - Always return a **valid JSON object with no extra commentary or text**.
+
+            🔍 Example Input:
+            "Email Aryan to tell him great work on the internship"
+
+            ✅ Example Output:
             {
-              "to": "aryan@zmail.com",
-              "subject": "Congratulations on your new job",
-              "body": "Hey Aryan, congratulations on your new job! Wishing you all the best.",
+              "to": "Aryan",
+              "subject": "Great job on the internship",
+              "body": "Hey Aryan, just wanted to say great work on your internship!",
               "missing": []
             }
           `.trim(),
