@@ -49,6 +49,10 @@ export default function HomePage() {
   const [callConvo, setCallConvo] = useState([]);
   const [mails, setMails] = useState([]);
   const [mailQuery, setMailQuery] = useState({});
+  const [contacts, setContacts] = useState([]);
+  const [mailContacts, setMailContacts] = useState([]);
+  const [callData, setCallData] = useState({});
+  const [callProcess, setCallProcess] = useState(false);
 
   const playElevenLabsAudio = async (text, intent, cabUrl) => {
     try {
@@ -475,6 +479,69 @@ export default function HomePage() {
         }
         setQuery('');
         return;
+      } else if (callProcess) {
+        const res = await fetch('/api/getCallIntent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userInput: query }),
+        });
+        const data = await res.json();
+        console.log(data); // { result: true } or { result: false }
+        if (data.error) {
+          const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          setCallProcess(false);
+          setCallData({});
+          return;
+        }
+        if (data.result) {
+          console.log(callData);
+          const reply = `Calling ${callData.name}...`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          const res1 = await fetch('/api/makeCall', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              to: callData.to,
+              message: callData.message,
+            }),
+          });
+          const data1 = await res1.json();
+          if (data1.error) {
+            const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
+            setMessages((prev) => [
+              ...prev,
+              { role: 'system', content: reply },
+            ]);
+            setReply(reply);
+            setIsProcessing(false);
+            playElevenLabsAudio(reply);
+            setCallProcess(false);
+            setCallData({});
+            return;
+          }
+          setCallSid(data1.callSid);
+          setCallProcess(false);
+          setCallData({});
+          return;
+        } else {
+          const reply = `Okay i won't make the call`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          setCallProcess(false);
+          setCallData({});
+          return;
+        }
       }
       const res = await fetch('/api/getIntent', {
         method: 'POST',
@@ -648,7 +715,7 @@ export default function HomePage() {
           }),
         });
         const data = await res.json();
-        // console.log(data);
+        // console.log(parseInt(data.to));
         if (data.error) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
           setMessages((prev) => [...prev, { role: 'system', content: reply }]);
@@ -657,39 +724,75 @@ export default function HomePage() {
           playElevenLabsAudio(reply);
           return;
         }
-        if (!validatePhoneNumber(data.to)) {
-          const reply = `Please provide a valid phone number and try again!`;
+        if (!data.to) {
+          const reply = `Please specify the number or the person's name you want to call and try again!`;
           setMessages((prev) => [...prev, { role: 'system', content: reply }]);
           setReply(reply);
           setIsProcessing(false);
           playElevenLabsAudio(reply);
           return;
         }
-        const reply = `Calling ${data.to}...`;
+        let name = '';
+        let phoneNumber = '';
+        if (parseInt(data.to)) {
+          if (!validatePhoneNumber(data.to)) {
+            const reply = `Please provide a valid phone number and try again!`;
+            setMessages((prev) => [
+              ...prev,
+              { role: 'system', content: reply },
+            ]);
+            setReply(reply);
+            setIsProcessing(false);
+            playElevenLabsAudio(reply);
+            return;
+          } else {
+            phoneNumber = data.to;
+            name = data.to;
+          }
+        } else {
+          if (contacts?.length === 0) {
+            const reply = `Your contacts are'nt synced yet, please try again later!`;
+            setMessages((prev) => [
+              ...prev,
+              { role: 'system', content: reply },
+            ]);
+            setReply(reply);
+            setIsProcessing(false);
+            playElevenLabsAudio(reply);
+            return;
+          } else {
+            const results = contacts.filter((contact) =>
+              contact.name?.toLowerCase().includes(data.to.toLowerCase()),
+            );
+            // console.log(results);
+            if (results.length > 0) {
+              phoneNumber = results[0].phone;
+              name = results[0].name;
+            } else {
+              const reply = `No contact found named ${data.to}`;
+              setMessages((prev) => [
+                ...prev,
+                { role: 'system', content: reply },
+              ]);
+              setReply(reply);
+              setIsProcessing(false);
+              playElevenLabsAudio(reply);
+              return;
+            }
+          }
+        }
+        setCallData({
+          to: phoneNumber,
+          message: data.message,
+          name: name,
+        });
+        setCallProcess(true);
+        const reply = `Are you sure you want to call ${name}`;
         setMessages((prev) => [...prev, { role: 'system', content: reply }]);
         setReply(reply);
         setIsProcessing(false);
         playElevenLabsAudio(reply);
-        const res1 = await fetch('/api/makeCall', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            to: data.to,
-            message: data.message,
-          }),
-        });
-        const data1 = await res1.json();
-        if (data1.error) {
-          const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
-          setIsProcessing(false);
-          playElevenLabsAudio(reply);
-          return;
-        }
-        setCallSid(data1.callSid);
+        return;
       } else if (data.intent === 'check_mail') {
         const date = new Date();
         const res = await fetch('/api/extractEmailFetchingFields', {
@@ -830,6 +933,86 @@ export default function HomePage() {
     };
     getCallConvo();
   }, [recordingUrls]);
+
+  useEffect(() => {
+    if (!session) return;
+    const fetchContactsFromPeopleAPI = async () => {
+      let nextPageToken = null;
+      let allContacts = [];
+      do {
+        const res = await fetch(
+          `https://people.googleapis.com/v1/people/me/connections?personFields=names,emailAddresses,phoneNumbers&pageSize=1000${
+            nextPageToken ? `&pageToken=${nextPageToken}` : ''
+          }`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session?.provider_token}`,
+            },
+          },
+        );
+        const data = await res.json();
+        // console.log(data.connections);
+        const connections = (data.connections || []).map((connection) => ({
+          name: connection.names?.[0]?.displayName || null,
+          phone:
+            connection.phoneNumbers?.[0]?.canonicalForm ||
+            connection.phoneNumbers?.[0]?.value ||
+            null,
+          email: connection.emailAddresses?.[0]?.value || null,
+        }));
+        allContacts = [...allContacts, ...connections];
+        nextPageToken = data.nextPageToken;
+      } while (nextPageToken);
+      setContacts(allContacts);
+    };
+    const fetchEmailContactsFromGmailAPI = async () => {
+      const res = await fetch(
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=200&q=is:inbox`,
+        {
+          headers: {
+            Authorization: `Bearer ${session?.provider_token}`,
+          },
+        },
+      );
+      const messageList = await res.json();
+      const messages = messageList.messages || [];
+      const uniqueEmails = new Map();
+      for (let i = 0; i < messages.length; i++) {
+        // console.log(messages[i]);
+        const msgId = messages[i].id;
+        const msgRes = await fetch(
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgId}?format=metadata&metadataHeaders=From`,
+          {
+            headers: {
+              Authorization: `Bearer ${session?.provider_token}`,
+            },
+          },
+        );
+        const msgData = await msgRes.json();
+        const headers = msgData.payload?.headers || [];
+        const fromHeader = headers.find((h) => h.name === 'From');
+        if (fromHeader) {
+          const raw = fromHeader.value;
+          const match = raw.match(/(.*)<(.*)>/);
+          const name = match?.[1]?.trim().replace(/"/g, '') || null;
+          const email = match?.[2]?.trim() || null;
+          if (email && !uniqueEmails.has(email)) {
+            uniqueEmails.set(email, { name, email });
+          }
+        }
+      }
+      setMailContacts(Array.from(uniqueEmails.values()));
+    };
+    fetchContactsFromPeopleAPI();
+    fetchEmailContactsFromGmailAPI();
+  }, [session]);
+
+  // useEffect(() => {
+  //   if (contacts.length === 0 || mailContacts.length === 0) return;
+  //   console.log(contacts[0]);
+  //   console.log(mailContacts);
+  // }, [contacts, mailContacts]);
 
   if (!loading && !session) return 'Unauthenticated';
 
