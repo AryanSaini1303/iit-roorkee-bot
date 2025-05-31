@@ -32,9 +32,9 @@ export async function POST(req) {
           - Infer the subject from the body if it's not clearly stated.
           - Don't fabricate data. Only include what's stated or logically inferable.
           - Always return a valid JSON object with no extra commentary.
+          - Interpret pronouns like "him" or "her" based on prior context (e.g., if a name was mentioned earlier).
         `.trim(),
       },
-      { role: 'user', content: userInput },
       ...recentMessages,
     ];
 

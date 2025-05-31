@@ -431,6 +431,46 @@ export default function HomePage() {
     return `${baseUrl}${finalQuery}`;
   }
 
+  function findMailInContacts(email) {
+    if (!email) return;
+    const isValidEmail = (email) =>
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+    // console.log(contacts[291]);
+    let match =
+      contacts.find((contact) =>
+        contact.name?.toLowerCase().includes(email.toLowerCase()),
+      ) || null;
+    // console.log(match);
+    if (!match || !match?.email) {
+      if (!mailContactsProcessing) {
+        match = mailContacts
+          ? mailContacts.find((contact) =>
+              contact.name?.toLowerCase().includes(email.toLowerCase()),
+            )
+          : null;
+      } else {
+        const reply = `Your email contacts sync is still in process, please try again later`;
+        setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+        setReply(reply);
+        setIsProcessing(false);
+        setEmailProcess(false);
+        playElevenLabsAudio(reply);
+        return;
+      }
+    }
+    if (!email || (email && !isValidEmail(email) && !match?.email)) {
+      const reply = `Please provide a valid email address and try again!`;
+      setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+      setReply(reply);
+      setIsProcessing(false);
+      setEmailProcess(false);
+      playElevenLabsAudio(reply);
+      return;
+    } else if (match?.email) {
+      return match?.email;
+    }
+  }
+
   useEffect(() => {
     if (query.length === 0) return;
     setMailQuery({});
@@ -606,7 +646,7 @@ export default function HomePage() {
           method: 'POST',
           body: JSON.stringify({
             query,
-            messages,
+            messages: [...convo, { role: 'user', content: query }],
             currentDate: date.toLocaleDateString(),
           }),
         });
@@ -721,7 +761,10 @@ export default function HomePage() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ message: query }),
+          body: JSON.stringify({
+            message: query,
+            convo: [...convo, { role: 'user', content: query }],
+          }),
         });
         const data = await res.json();
         // console.log(data);
@@ -885,25 +928,39 @@ export default function HomePage() {
           body: JSON.stringify({
             userInput: query,
             currentDate: date.toLocaleDateString(),
+            convo: [...convo, { role: 'user', content: query }],
           }),
         });
-        const { fields } = await res.json();
-        // console.log(fields);
+        const data = await res.json();
+        // console.log(data);
+        if (data.error) {
+          console.log(data.error);
+          const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          setEmailProcess(false);
+          playElevenLabsAudio(reply);
+          return;
+        }
+        let emails = { to: data.fields.to, from: data.fields.from };
+        let to = findMailInContacts(emails.to);
+        let from = findMailInContacts(emails.from);
         setMailQuery({
-          time: fields.time || null,
-          subject: fields.subject || null,
-          from: fields.from || null,
-          to: fields.to || null,
-          before: fields.before || null,
-          after: fields.after || null,
+          time: data.fields.time || null,
+          subject: data.fields.subject || null,
+          from: from || null,
+          to: to || null,
+          before: data.fields.before || null,
+          after: data.fields.after || null,
         });
         const url = buildGmailQueryURL({
-          time: fields.time || null,
-          subject: fields.subject || null,
-          from: fields.from || null,
-          to: fields.to || null,
-          before: fields.before || null,
-          after: fields.after || null,
+          time: data.fields.time || null,
+          subject: data.fields.subject || null,
+          from: from || null,
+          to: to || null,
+          before: data.fields.before || null,
+          after: data.fields.after || null,
         });
         // console.log(url);
         const res1 = await fetch(url, {
@@ -957,7 +1014,10 @@ export default function HomePage() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ userInput: query }),
+          body: JSON.stringify({
+            userInput: query,
+            convo: [...convo, { role: 'user', content: query }],
+          }),
         });
         const data = await res.json();
         // console.log(data);

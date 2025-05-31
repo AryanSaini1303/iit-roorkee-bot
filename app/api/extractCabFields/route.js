@@ -1,3 +1,4 @@
+import { getRecentMessages } from '@/lib/getRecentMessages';
 import { OpenAI } from 'openai';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -6,34 +7,47 @@ const vagueTerms = ['my home', 'current location', 'here', 'my place'];
 
 export async function POST(req) {
   try {
-    const { message } = await req.json();
-    const prompt = `
-        Extract origin and destination from this text for a cab booking.
-        If origin or destination is vague (e.g. ${vagueTerms.join(
-          ', ',
-        )}), treat it as missing.
+    const { convo } = await req.json();
 
-        Reply ONLY with JSON:
-        {
-          "origin": string|null,
-          "destination": string|null,
-          "missing": [ "origin" | "destination" ]
-        }
+    if (!convo || !Array.isArray(convo) || convo.length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Missing or invalid convo array',
+        }),
+        { status: 400 },
+      );
+    }
 
-        Text: """${message}"""
-        `;
+    const systemPrompt = `
+      You are a cab booking assistant.
+
+      Your task is to extract two fields from the user conversation:
+      - "origin": where the ride starts
+      - "destination": where the ride ends
+
+      Instructions:
+      - Prioritize the latest message in the conversation.
+      - If origin or destination is vague (e.g., ${vagueTerms.join(
+        ', ',
+      )}), treat it as missing.
+      - Use earlier messages only if the latest message lacks clarity.
+      - Do not fabricate or guess unclear values.
+
+      Return JSON in this exact format:
+      {
+        "origin": string | null,
+        "destination": string | null,
+        "missing": [ "origin" | "destination" ]
+      }
+    `;
+
     const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You extract origin and destination for cab bookings. Vague locations are missing.',
-        },
-        { role: 'user', content: prompt },
-      ],
+      model: 'gpt-4.1',
+      messages: [{ role: 'system', content: systemPrompt }, ...getRecentMessages(convo)],
       temperature: 0,
     });
+
     let data;
     try {
       data = JSON.parse(response.choices[0].message.content.trim());
@@ -44,6 +58,7 @@ export async function POST(req) {
         missing: ['origin', 'destination'],
       };
     }
+
     return new Response(JSON.stringify({ success: true, data }), {
       headers: { 'Content-Type': 'application/json' },
     });

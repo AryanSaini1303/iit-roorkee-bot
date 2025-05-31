@@ -30,6 +30,7 @@ export async function POST(req) {
       - Phrase the topic addressing the callee, e.g., "your health" or "your recent progress."
       - Do not fabricate phone numbers or country codes.
       - If the number format is invalid, return "to": null and include an "error" field describing the issue.
+      - Interpret pronouns like "him" or "her" based on prior context (e.g., if a name was mentioned earlier).
       
       Return JSON only, like this:
       
