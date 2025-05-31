@@ -1193,7 +1193,7 @@ export default function HomePage() {
           }),
         });
         const data = await res.json();
-        console.log(data);
+        // console.log(data);
         if (!data.success) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
           let translatedReply = await translateReply(lang, reply);
@@ -1211,7 +1211,7 @@ export default function HomePage() {
           let number = '';
           let name = '';
           if (parseInt(data.data.to)) {
-            if (!validatePhoneNumber(data.to)) {
+            if (!validatePhoneNumber(data.data.to)) {
               const reply = `Please provide a valid phone number and try again!`;
               let translatedReply = await translateReply(lang, reply);
               setMessages((prev) => [
@@ -1249,7 +1249,7 @@ export default function HomePage() {
                 number = results[0].phone;
                 name = results[0].name;
               } else {
-                const reply = `No contact found named ${data.to}`;
+                const reply = `No contact found named ${data.data.to}`;
                 let translatedReply = await translateReply(lang, reply);
                 setMessages((prev) => [
                   ...prev,
