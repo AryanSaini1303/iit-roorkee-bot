@@ -9,18 +9,18 @@ export async function POST(req) {
     const { query, messages, currentDate } = body;
     // console.log(messages);
     const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4.1',
       messages: [
-        {
-          role: 'user',
-          content: `Just for your reference, current date is ${currentDate}`,
-        },
         {
           role: 'system',
           content: `Your name is Eva. You are a concise and intelligent AI assistant.
           Only respond with the most essential information needed to help the user. Avoid any repetition, filler, or elaboration unless explicitly asked.
           Keep responses extremely short and efficient, but never omit critical facts.
           Use natural, human-like tone, but prioritize clarity and directness.`,
+        },
+        {
+          role: 'user',
+          content: `Just for your reference, current date is ${currentDate}`,
         },
         ...messages,
         { role: 'user', content: query },

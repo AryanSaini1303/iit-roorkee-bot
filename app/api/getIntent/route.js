@@ -34,7 +34,7 @@ export async function POST(req) {
             book_cab – user wants a ride or cab now  
             make_call – user wants to call someone now  
             check_mail – user wants to check inbox, read or filter emails now  
-            send_whatsapp_message – user wants to send a WhatsApp message now
+            send_whatsapp_message – user wants to send a WhatsApp message or text someone now
 
             ✅ Use action intents (send_email, make_call, etc.) **only if the user clearly wants to do it now**  
             ❌ Do NOT respond to the user's message. Only classify intent.

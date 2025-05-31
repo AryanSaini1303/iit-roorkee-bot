@@ -57,7 +57,9 @@ export default function HomePage() {
   const [whatsappData, setWhatsappData] = useState({});
   const [whatsappProcess, setWhatsappProcess] = useState(false);
   const [voiceId, setVoiceId] = useState('');
+  const [lang, setLang] = useState('');
   const [showVoices, setShowVoices] = useState(false);
+  const [showLangs, setShowLangs] = useState(false);
 
   const playElevenLabsAudio = async (text, intent, cabUrl) => {
     try {
@@ -72,7 +74,7 @@ export default function HomePage() {
           },
           body: JSON.stringify({
             text,
-            model_id: 'eleven_monolingual_v1',
+            model_id: 'eleven_multilingual_v2',
             voice_settings: {
               stability: 0.5,
               similarity_boost: 0.75,
@@ -194,6 +196,27 @@ export default function HomePage() {
       return false;
     }
   }
+
+  const translateReply = async (lang, reply) => {
+    if (lang === 'English') return reply;
+    const res = await fetch('/api/translateReply', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        reply,
+        lang,
+      }),
+    });
+    const data = await res.json();
+    // console.log(data.translatedReply);
+    if (data.error) {
+      return reply;
+    } else {
+      return data.translatedReply;
+    }
+  };
 
   useEffect(() => {
     // console.log(messages);
@@ -332,6 +355,7 @@ export default function HomePage() {
     setMessages(JSON.parse(sessionStorage.getItem('messages')) || []);
     if (typeof window !== undefined) {
       setVoiceId(localStorage.getItem('voiceId') || 'KoVIHoyLDrQyd4pGalbs');
+      setLang(localStorage.getItem('lang') || 'English');
     }
   }, []);
 
@@ -388,19 +412,27 @@ export default function HomePage() {
         if (data.id) {
           const reply =
             "Your email has been sent successfully! Let me know if there's anything else I can help you with.";
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
           setEmailData({});
           setEmailIsConfirm(false);
         } else {
           const reply =
             'Unfortunately, the email could not be sent due to an error. Please verify the information and try again.';
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
           setEmailData({});
           setEmailIsConfirm(false);
         }
@@ -437,7 +469,7 @@ export default function HomePage() {
     return `${baseUrl}${finalQuery}`;
   }
 
-  function findMailInContacts(email) {
+  const findMailInContacts = async (email) => {
     if (!email) return;
     const isValidEmail = (email) =>
       /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
@@ -456,26 +488,34 @@ export default function HomePage() {
           : null;
       } else {
         const reply = `Your email contacts sync is still in process, please try again later`;
-        setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-        setReply(reply);
+        let translatedReply = await translateReply(lang, reply);
+        setMessages((prev) => [
+          ...prev,
+          { role: 'system', content: translatedReply },
+        ]);
+        setReply(translatedReply);
         setIsProcessing(false);
+        playElevenLabsAudio(translatedReply);
         setEmailProcess(false);
-        playElevenLabsAudio(reply);
         return;
       }
     }
     if (!email || (email && !isValidEmail(email) && !match?.email)) {
       const reply = `Please provide a valid email address and try again!`;
-      setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-      setReply(reply);
+      let translatedReply = await translateReply(lang, reply);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'system', content: translatedReply },
+      ]);
+      setReply(translatedReply);
       setIsProcessing(false);
+      playElevenLabsAudio(translatedReply);
       setEmailProcess(false);
-      playElevenLabsAudio(reply);
       return;
     } else if (match?.email) {
       return match?.email;
     }
-  }
+  };
 
   useEffect(() => {
     if (query.length === 0) return;
@@ -508,20 +548,28 @@ export default function HomePage() {
         // console.log('Email confirmation intent:', data.intent);
         if (data.error) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
+          playElevenLabsAudio(translatedReply);
           setEmailProcess(false);
-          playElevenLabsAudio(reply);
           return;
         }
         if (data.intent === 'decline' || data.intent === 'unknown') {
           const reply = 'Alright, I won’t send the email.';
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
+          playElevenLabsAudio(translatedReply);
           setEmailProcess(false); // exit email flow
-          playElevenLabsAudio(reply);
         } else if (data.intent === 'confirm') {
           setEmailData((prev) => prev); // keeps the data, or send directly if you prefer
           setEmailProcess(false);
@@ -539,10 +587,14 @@ export default function HomePage() {
         // console.log(data);
         if (data.error) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
           setCallProcess(false);
           setCallData({});
           return;
@@ -550,10 +602,18 @@ export default function HomePage() {
         if (data.result) {
           // console.log(callData);
           const reply = `Calling ${callData.name}...`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
+          const translatedMessage = await translateReply(
+            lang,
+            callData.message,
+          );
           const res1 = await fetch('/api/makeCall', {
             method: 'POST',
             headers: {
@@ -561,20 +621,21 @@ export default function HomePage() {
             },
             body: JSON.stringify({
               to: callData.to,
-              message: callData.message,
+              message: translatedMessage,
               voiceId: voiceId,
             }),
           });
           const data1 = await res1.json();
           if (data1.error) {
             const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
+            let translatedReply = await translateReply(lang, reply);
             setMessages((prev) => [
               ...prev,
-              { role: 'system', content: reply },
+              { role: 'system', content: translatedReply },
             ]);
-            setReply(reply);
+            setReply(translatedReply);
             setIsProcessing(false);
-            playElevenLabsAudio(reply);
+            playElevenLabsAudio(translatedReply);
             setCallProcess(false);
             setCallData({});
             return;
@@ -585,10 +646,14 @@ export default function HomePage() {
           return;
         } else {
           const reply = `Okay i won't make the call`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
           setCallProcess(false);
           setCallData({});
           return;
@@ -603,10 +668,14 @@ export default function HomePage() {
         // console.log(data);
         if (data.error) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
           setWhatsappData({});
           setWhatsappProcess(false);
           return;
@@ -614,10 +683,14 @@ export default function HomePage() {
         if (data.result) {
           // console.log(whatsappData);
           const reply = `Sending message to ${whatsappData.name}...`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
           const url = `https://wa.me/${whatsappData.to}?text=${whatsappData.message}`;
           window.open(url, '_blank');
           setWhatsappData({});
@@ -638,11 +711,15 @@ export default function HomePage() {
       const data = await res.json();
       if (data.error) {
         const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
-        setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-        setReply(reply);
+        let translatedReply = await translateReply(lang, reply);
+        setMessages((prev) => [
+          ...prev,
+          { role: 'system', content: translatedReply },
+        ]);
+        setReply(translatedReply);
         setIsProcessing(false);
+        playElevenLabsAudio(translatedReply);
         setEmailProcess(false);
-        playElevenLabsAudio(reply);
         return;
       }
       setQuery('');
@@ -677,11 +754,15 @@ export default function HomePage() {
         // console.log(data);
         if (!data.success) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
+          playElevenLabsAudio(translatedReply);
           setEmailProcess(false);
-          playElevenLabsAudio(reply);
           return;
         }
         // console.log(data.data);
@@ -689,10 +770,14 @@ export default function HomePage() {
           const reply = `It looks like your email request is missing the following required field${
             data.data.missing.length > 1 ? 's' : ''
           }: ${data.data.missing.join(', ')}.\nPlease try again!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
         } else {
           let email = data.data.to;
           // console.log(email);
@@ -713,14 +798,15 @@ export default function HomePage() {
                 : null;
             } else {
               const reply = `Your email contacts sync is still in process, please try again later`;
+              let translatedReply = await translateReply(lang, reply);
               setMessages((prev) => [
                 ...prev,
-                { role: 'system', content: reply },
+                { role: 'system', content: translatedReply },
               ]);
-              setReply(reply);
+              setReply(translatedReply);
               setIsProcessing(false);
+              playElevenLabsAudio(translatedReply);
               setEmailProcess(false);
-              playElevenLabsAudio(reply);
               return;
             }
           }
@@ -729,14 +815,15 @@ export default function HomePage() {
             (data.data.to && !isValidEmail(data.data.to) && !match?.email)
           ) {
             const reply = `Please provide a valid email address and try again!`;
+            let translatedReply = await translateReply(lang, reply);
             setMessages((prev) => [
               ...prev,
-              { role: 'system', content: reply },
+              { role: 'system', content: translatedReply },
             ]);
-            setReply(reply);
+            setReply(translatedReply);
             setIsProcessing(false);
+            playElevenLabsAudio(translatedReply);
             setEmailProcess(false);
-            playElevenLabsAudio(reply);
             return;
           } else if (match?.email) {
             email = match?.email;
@@ -749,12 +836,18 @@ export default function HomePage() {
 
             ${data.data.body}
           `.trim();
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(
+          const tranlatedReplyForAudio = await translateReply(
+            lang,
             "Here's the email you've asked me to draft. Would you like me to go ahead and send this email?",
           );
+          playElevenLabsAudio(tranlatedReplyForAudio);
           setEmailData({
             to: email,
             subject: data.data.subject,
@@ -777,10 +870,14 @@ export default function HomePage() {
         // console.log(data);
         if (data.error) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
           return;
         } else if (data.success) {
           if (data.data.missing.length !== 0) {
@@ -789,13 +886,14 @@ export default function HomePage() {
             }: ${data.data.missing.join(
               ', ',
             )}.\nPlease try again with specific locations!`;
+            let translatedReply = await translateReply(lang, reply);
             setMessages((prev) => [
               ...prev,
-              { role: 'system', content: reply },
+              { role: 'system', content: translatedReply },
             ]);
-            setReply(reply);
+            setReply(translatedReply);
             setIsProcessing(false);
-            playElevenLabsAudio(reply);
+            playElevenLabsAudio(translatedReply);
             return;
           }
           const response = await fetch('/api/cabDeepLink', {
@@ -814,23 +912,25 @@ export default function HomePage() {
               data1.message === 'Something went wrong'
                 ? `Looks like there is an issue in interpreting your request, please try again later!`
                 : 'Your specified location is invalid, please try again with correct location!';
+            let translatedReply = await translateReply(lang, reply);
             setMessages((prev) => [
               ...prev,
-              { role: 'system', content: reply },
+              { role: 'system', content: translatedReply },
             ]);
-            setReply(reply);
+            setReply(translatedReply);
             setIsProcessing(false);
-            playElevenLabsAudio(reply);
+            playElevenLabsAudio(translatedReply);
             return;
           } else {
             const reply = `🚗 Redirecting you to the cab booking page with your selected pickup and destination.`;
+            let translatedReply = await translateReply(lang, reply);
             setMessages((prev) => [
               ...prev,
-              { role: 'system', content: reply },
+              { role: 'system', content: translatedReply },
             ]);
-            setReply(reply);
+            setReply(translatedReply);
             setIsProcessing(false);
-            playElevenLabsAudio(reply, 'book_cab', data1.url);
+            playElevenLabsAudio(translatedReply, 'book_cab', data1.url);
           }
         }
       } else if (data.intent === 'make_call') {
@@ -850,18 +950,26 @@ export default function HomePage() {
         // console.log(data);
         if (data.error) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
           return;
         }
         if (!data.to) {
           const reply = `Please specify the number or the person's name you want to call and try again!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
           return;
         }
         let name = '';
@@ -869,13 +977,14 @@ export default function HomePage() {
         if (parseInt(data.to)) {
           if (!validatePhoneNumber(data.to)) {
             const reply = `Please provide a valid phone number and try again!`;
+            let translatedReply = await translateReply(lang, reply);
             setMessages((prev) => [
               ...prev,
-              { role: 'system', content: reply },
+              { role: 'system', content: translatedReply },
             ]);
-            setReply(reply);
+            setReply(translatedReply);
             setIsProcessing(false);
-            playElevenLabsAudio(reply);
+            playElevenLabsAudio(translatedReply);
             return;
           } else {
             phoneNumber = data.to;
@@ -884,13 +993,14 @@ export default function HomePage() {
         } else {
           if (contacts?.length === 0) {
             const reply = `Your contacts are'nt synced yet, please try again later!`;
+            let translatedReply = await translateReply(lang, reply);
             setMessages((prev) => [
               ...prev,
-              { role: 'system', content: reply },
+              { role: 'system', content: translatedReply },
             ]);
-            setReply(reply);
+            setReply(translatedReply);
             setIsProcessing(false);
-            playElevenLabsAudio(reply);
+            playElevenLabsAudio(translatedReply);
             return;
           } else {
             const results = contacts.filter((contact) =>
@@ -902,13 +1012,14 @@ export default function HomePage() {
               name = results[0].name;
             } else {
               const reply = `No contact found named ${data.to}`;
+              let translatedReply = await translateReply(lang, reply);
               setMessages((prev) => [
                 ...prev,
-                { role: 'system', content: reply },
+                { role: 'system', content: translatedReply },
               ]);
-              setReply(reply);
+              setReply(translatedReply);
               setIsProcessing(false);
-              playElevenLabsAudio(reply);
+              playElevenLabsAudio(translatedReply);
               return;
             }
           }
@@ -922,10 +1033,14 @@ export default function HomePage() {
         const reply = `Are you sure you want to call ${data.to}${
           !parseInt(data.to) ? `, his number is ${phoneNumber}` : ''
         }`;
-        setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-        setReply(reply);
+        let translatedReply = await translateReply(lang, reply);
+        setMessages((prev) => [
+          ...prev,
+          { role: 'system', content: translatedReply },
+        ]);
+        setReply(translatedReply);
         setIsProcessing(false);
-        playElevenLabsAudio(reply);
+        playElevenLabsAudio(translatedReply);
         return;
       } else if (data.intent === 'check_mail') {
         const date = new Date();
@@ -945,11 +1060,15 @@ export default function HomePage() {
         if (data.error) {
           console.log(data.error);
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
+          playElevenLabsAudio(translatedReply);
           setEmailProcess(false);
-          playElevenLabsAudio(reply);
           return;
         }
         const isValidEmail = (email) =>
@@ -960,7 +1079,7 @@ export default function HomePage() {
           if (isValidEmail(data.fields.to)) {
             to = data.fields.to;
           } else {
-            to = findMailInContacts(data.fields.to);
+            to = await findMailInContacts(data.fields.to);
             if (!to) {
               return;
             }
@@ -970,7 +1089,7 @@ export default function HomePage() {
           if (isValidEmail(data.fields.from)) {
             from = data.fields.from;
           } else {
-            from = findMailInContacts(data.fields.from);
+            from = await findMailInContacts(data.fields.from);
             if (!from) {
               return;
             }
@@ -995,10 +1114,14 @@ export default function HomePage() {
         // console.log(url);
         if (!url) {
           const reply = `Looks like there is an issue in interpreting your request, make sure you provided valids parameters and try again later!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
           return;
         }
         const res1 = await fetch(url, {
@@ -1012,10 +1135,14 @@ export default function HomePage() {
         // console.log(mailIds);
         if (!mailIds) {
           const reply = `No Emails found with your particular query!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
           return;
         }
         const response = await fetch('/api/getMails', {
@@ -1032,20 +1159,28 @@ export default function HomePage() {
         // console.log(result.messages);
         if (result.error) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
           return;
         }
         const mailsData = result.messages.map((mail) => mail.data);
         // console.log(mailsData);
         setMails(mailsData);
         const reply = `Here's the list of mails just like you asked`;
-        setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-        setReply(reply);
+        let translatedReply = await translateReply(lang, reply);
+        setMessages((prev) => [
+          ...prev,
+          { role: 'system', content: translatedReply },
+        ]);
+        setReply(translatedReply);
         setIsProcessing(false);
-        playElevenLabsAudio(reply);
+        playElevenLabsAudio(translatedReply);
       } else if (data.intent === 'send_whatsapp_message') {
         const res = await fetch('/api/extractWhatsappDetails', {
           method: 'POST',
@@ -1061,11 +1196,15 @@ export default function HomePage() {
         console.log(data);
         if (!data.success) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
+          playElevenLabsAudio(translatedReply);
           setEmailProcess(false);
-          playElevenLabsAudio(reply);
           return;
         }
         if (data.data.to && data.data.message) {
@@ -1074,13 +1213,14 @@ export default function HomePage() {
           if (parseInt(data.data.to)) {
             if (!validatePhoneNumber(data.to)) {
               const reply = `Please provide a valid phone number and try again!`;
+              let translatedReply = await translateReply(lang, reply);
               setMessages((prev) => [
                 ...prev,
-                { role: 'system', content: reply },
+                { role: 'system', content: translatedReply },
               ]);
-              setReply(reply);
+              setReply(translatedReply);
               setIsProcessing(false);
-              playElevenLabsAudio(reply);
+              playElevenLabsAudio(translatedReply);
               return;
             } else {
               number = data.data.to;
@@ -1089,13 +1229,14 @@ export default function HomePage() {
           } else {
             if (contacts?.length === 0) {
               const reply = `Your contacts are'nt synced yet, please try again later!`;
+              let translatedReply = await translateReply(lang, reply);
               setMessages((prev) => [
                 ...prev,
-                { role: 'system', content: reply },
+                { role: 'system', content: translatedReply },
               ]);
-              setReply(reply);
+              setReply(translatedReply);
               setIsProcessing(false);
-              playElevenLabsAudio(reply);
+              playElevenLabsAudio(translatedReply);
               return;
             } else {
               const results = contacts.filter((contact) =>
@@ -1109,13 +1250,14 @@ export default function HomePage() {
                 name = results[0].name;
               } else {
                 const reply = `No contact found named ${data.to}`;
+                let translatedReply = await translateReply(lang, reply);
                 setMessages((prev) => [
                   ...prev,
-                  { role: 'system', content: reply },
+                  { role: 'system', content: translatedReply },
                 ]);
-                setReply(reply);
+                setReply(translatedReply);
                 setIsProcessing(false);
-                playElevenLabsAudio(reply);
+                playElevenLabsAudio(translatedReply);
                 return;
               }
             }
@@ -1130,24 +1272,29 @@ export default function HomePage() {
             }" to ${data.data.to}?${
               !parseInt(data.data.to) ? ` His number is ${number}` : ''
             }`;
+            let translatedReply = await translateReply(lang, reply);
             setMessages((prev) => [
               ...prev,
-              { role: 'system', content: reply },
+              { role: 'system', content: translatedReply },
             ]);
-            setReply(reply);
+            setReply(translatedReply);
             setIsProcessing(false);
-            playElevenLabsAudio(reply);
+            playElevenLabsAudio(translatedReply);
             return;
           }
         } else {
           const reply = `Your query is missing required field: ${
             !data.data.to ? 'to' : 'message'
           }`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
+          playElevenLabsAudio(translatedReply);
           setEmailProcess(false);
-          playElevenLabsAudio(reply);
           return;
         }
         setReply('');
@@ -1170,10 +1317,14 @@ export default function HomePage() {
         if (retryCount >= maxRetries) {
           clearInterval(interval);
           const reply = `The call was declined before i could record a response!`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
           setIsProcessing(false);
-          playElevenLabsAudio(reply);
+          playElevenLabsAudio(translatedReply);
           return;
         }
         const result = await checkCallStatus(callSid);
@@ -1185,11 +1336,15 @@ export default function HomePage() {
         }
         if (result.callStatus === 'no-answer' || result.callStatus === 'busy') {
           setRecordingUrls([]);
-          setIsProcessing(false);
           const reply = `The call was not answered or was busy. Please try again later.`;
-          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
-          setReply(reply);
-          playElevenLabsAudio(reply);
+          let translatedReply = await translateReply(lang, reply);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', content: translatedReply },
+          ]);
+          setReply(translatedReply);
+          setIsProcessing(false);
+          playElevenLabsAudio(translatedReply);
           clearInterval(interval);
         }
         if (result.callStatus === 'completed') {
@@ -1408,73 +1563,123 @@ export default function HomePage() {
             <ul className={styles.options}>
               {/* <li>Preferences</li> */}
               {/* <li>Chat History</li> */}
-              <li
-                onClick={() => setShowVoices(!showVoices)}
-                style={
-                  showVoices
-                    ? {
-                        border: '1px dashed black',
-                      }
-                    : null
-                }
-              >
-                Voices
-              </li>
-              {
-                showVoices && (
-                  // <ul className={styles.options}>
-                  <>
-                    <li
-                      style={
-                        voiceId === 'ErXwobaYiN019PkySvjV'
-                          ? {
-                              backgroundColor: '#00BFFF',
-                              color: 'white',
-                            }
-                          : null
-                      }
-                      onClick={() => {
-                        setVoiceId('ErXwobaYiN019PkySvjV');
-                        if (typeof window !== 'undefined') {
-                          localStorage.setItem(
-                            'voiceId',
-                            'ErXwobaYiN019PkySvjV',
-                          );
+              {!showLangs && (
+                <li
+                  onClick={() => setShowVoices(!showVoices)}
+                  style={
+                    showVoices
+                      ? {
+                          border: '1px dashed black',
                         }
-                        setSettingsFlag(false);
-                        setShowVoices(false);
-                      }}
-                    >
-                      Male
-                    </li>
-                    <li
-                      style={
-                        voiceId === 'KoVIHoyLDrQyd4pGalbs'
-                          ? {
-                              backgroundColor: '#900C3F ',
-                              color: 'white',
-                            }
-                          : null
+                      : null
+                  }
+                >
+                  Voices
+                </li>
+              )}
+              {showVoices && !showLangs && (
+                <>
+                  <li
+                    style={
+                      voiceId === 'ErXwobaYiN019PkySvjV'
+                        ? {
+                            backgroundColor: '#00BFFF',
+                            color: 'white',
+                          }
+                        : null
+                    }
+                    onClick={() => {
+                      setVoiceId('ErXwobaYiN019PkySvjV');
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('voiceId', 'ErXwobaYiN019PkySvjV');
                       }
-                      onClick={() => {
-                        setVoiceId('KoVIHoyLDrQyd4pGalbs');
-                        if (typeof window !== 'undefined') {
-                          localStorage.setItem(
-                            'voiceId',
-                            'KoVIHoyLDrQyd4pGalbs',
-                          );
-                        }
-                        setSettingsFlag(false);
-                        setShowVoices(false);
-                      }}
-                    >
-                      Female
-                    </li>
-                  </>
-                )
-                //</ul>
-              }
+                      setSettingsFlag(false);
+                      setShowVoices(false);
+                    }}
+                  >
+                    Male
+                  </li>
+                  <li
+                    style={
+                      voiceId === 'KoVIHoyLDrQyd4pGalbs'
+                        ? {
+                            backgroundColor: '#900C3F ',
+                            color: 'white',
+                          }
+                        : null
+                    }
+                    onClick={() => {
+                      setVoiceId('KoVIHoyLDrQyd4pGalbs');
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('voiceId', 'KoVIHoyLDrQyd4pGalbs');
+                      }
+                      setSettingsFlag(false);
+                      setShowVoices(false);
+                    }}
+                  >
+                    Female
+                  </li>
+                </>
+              )}
               {!showVoices && (
+                <li
+                  onClick={() => setShowLangs(!showLangs)}
+                  style={
+                    showLangs
+                      ? {
+                          border: '1px dashed black',
+                        }
+                      : null
+                  }
+                >
+                  Languages
+                </li>
+              )}
+              {showLangs && !showVoices && (
+                <>
+                  <li
+                    style={
+                      lang === 'English'
+                        ? {
+                            backgroundColor: 'green',
+                            color: 'white',
+                          }
+                        : null
+                    }
+                    onClick={() => {
+                      setLang('Engligh');
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('lang', 'English');
+                      }
+                      setSettingsFlag(false);
+                      setShowLangs(false);
+                    }}
+                  >
+                    English
+                  </li>
+                  <li
+                    style={
+                      lang === 'Malay'
+                        ? {
+                            backgroundColor: 'green',
+                            color: 'white',
+                          }
+                        : null
+                    }
+                    onClick={() => {
+                      setLang('Malay');
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('lang', 'Malay');
+                      }
+                      setSettingsFlag(false);
+                      setShowLangs(false);
+                    }}
+                  >
+                    Malay
+                  </li>
+                </>
+              )}
+              {!showVoices && !showLangs && (
                 <li onClick={() => signOut()} className={styles.lastChild}>
                   {signOutFlag ? 'Signing out...' : 'Sign Out'}
                 </li>
