@@ -599,7 +599,7 @@ export default function HomePage() {
         return;
       }
       setQuery('');
-      // console.log(data.intent);
+      console.log(data.intent);
       if (data.intent === 'chat') {
         const date = new Date();
         const chatRes = await fetch('/api/chat', {
@@ -791,7 +791,9 @@ export default function HomePage() {
           },
           body: JSON.stringify({
             userInput: query,
-            name: session?.user?.user_metadata?.name || 'My Master',
+            name:
+              session?.user?.user_metadata?.name.split(' ')[0] || 'My Master',
+            convo: [...convo, { role: 'user', content: query }],
           }),
         });
         const data = await res.json();
