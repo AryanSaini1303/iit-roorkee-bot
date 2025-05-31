@@ -1,3 +1,4 @@
+import { getRecentMessages } from '@/lib/getRecentMessages';
 import { NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 
@@ -5,50 +6,47 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req) {
   try {
-    const { userInput } = await req.json();
+    const { userInput, convo } = await req.json();
+    const recentMessages = getRecentMessages(convo);
+
+    const messages = [
+      {
+        role: 'system',
+        content: `
+          You are a highly intelligent assistant that extracts structured email information by analyzing both:
+          1. The user's latest message (most important)
+          2. The relevant previous conversation (if needed)
+
+          Your goal is to return a **strict JSON object** with:
+          - "to": recipient's email address if available, or name (never null if either is present)
+          - "subject": short summary of the email content (infer from body if missing)
+          - "body": full email message as a **single-line string** (no line breaks or placeholders like "[Your Name]", null only if absolutely absent)
+          - "missing": array of missing fields from ["to", "subject", "body"]
+
+          📌 Priority:
+          - Prioritize the user's latest input FIRST.
+          - If any field is unclear/missing, intelligently infer it from earlier conversation only if relevant to the current message.
+
+          🧠 Rules:
+          - If an email address is found, it takes precedence in "to". If only a name is found, return the name.
+          - Infer the subject from the body if it's not clearly stated.
+          - Don't fabricate data. Only include what's stated or logically inferable.
+          - Always return a valid JSON object with no extra commentary.
+        `.trim(),
+      },
+      { role: 'user', content: userInput },
+      ...recentMessages,
+    ];
+
     const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: `
-            You are a highly intelligent assistant that extracts structured email information from natural language input.
-
-            Your goal is to return a **strict JSON object** with the following keys:
-            - "to": the recipient's **email address if available**, or their **name** (never null if either is present)
-            - "subject": a short one-line summary of the email content (must be inferred if body is present)
-            - "body": the complete email message (can be null if truly not found)
-            - "missing": an array containing any of ["to", "subject", "body"] that are **completely absent**
-
-            🧠 RULES TO FOLLOW:
-            - If an email address is found, it takes precedence in the "to" field. If only a name is found, return the name instead. Never return "to": null if either is present.
-            - If a message is found (body), you MUST generate a suitable subject if none is stated explicitly.
-            - The "body" should contain the full intended message text. If no content at all is given, then only return it as null.
-            - Only add a field to the "missing" array if it is truly absent or not logically inferable.
-            - Always return a **valid JSON object with no extra commentary or text**.
-
-            🔍 Example Input:
-            "Email Aryan to tell him great work on the internship"
-
-            ✅ Example Output:
-            {
-              "to": "Aryan",
-              "subject": "Great job on the internship",
-              "body": "Hey Aryan, just wanted to say great work on your internship!",
-              "missing": []
-            }
-          `.trim(),
-        },
-        {
-          role: 'user',
-          content: `Extract the email fields from this input:\n\n"${userInput}"`,
-        },
-      ],
+      model: 'gpt-4.1',
+      messages,
       temperature: 0,
     });
 
     const content = completion.choices[0].message.content;
-    const json = JSON.parse(content); // might throw if output is not valid JSON
+    const json = JSON.parse(content);
+
     return NextResponse.json({ success: true, data: json });
   } catch (err) {
     console.error('Extraction failed:', err);

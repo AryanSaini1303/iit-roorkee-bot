@@ -448,6 +448,7 @@ export default function HomePage() {
       setSessionQuery(sessionStorage.getItem('query'));
     }
     const processQuery = async () => {
+      const convo = messages;
       setMessages((prev) => [...prev, { role: 'user', content: query }]);
       if (emailProcess) {
         const res = await fetch('/api/getEmailIntent', {
@@ -582,7 +583,10 @@ export default function HomePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: query }),
+        body: JSON.stringify({
+          message: query,
+          convo: [...convo, { role: 'user', content: query }],
+        }),
       });
       const data = await res.json();
       if (data.error) {
@@ -617,7 +621,10 @@ export default function HomePage() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ userInput: query }),
+          body: JSON.stringify({
+            userInput: query,
+            convo: [...convo, { role: 'user', content: query }],
+          }),
         });
         const data = await res.json();
         // console.log(data);
@@ -631,7 +638,7 @@ export default function HomePage() {
           return;
         }
         // console.log(data.data);
-        if (data.data.missing.length !== 0) {
+        if (data.data.missing && data.data.missing?.length !== 0) {
           const reply = `It looks like your email request is missing the following required field${
             data.data.missing.length > 1 ? 's' : ''
           }: ${data.data.missing.join(', ')}.\nPlease try again!`;
@@ -641,18 +648,20 @@ export default function HomePage() {
           playElevenLabsAudio(reply);
         } else {
           let email = data.data.to;
+          // console.log(email);
           const isValidEmail = (email) =>
             /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
-          // console.log(mailContacts);
+          console.log(contacts[291]);
           let match =
             contacts.find((contact) =>
-              contact.name?.toLowerCase().includes(data.data.to),
+              contact.name?.toLowerCase().includes(email.toLowerCase()),
             ) || null;
+          console.log(match);
           if (!match || !match?.email) {
             if (!mailContactsProcessing) {
               match = mailContacts
                 ? mailContacts.find((contact) =>
-                    contact.name?.toLowerCase().includes(data.data.to),
+                    contact.name?.toLowerCase().includes(email.toLowerCase()),
                   )
                 : null;
             } else {
@@ -668,7 +677,6 @@ export default function HomePage() {
               return;
             }
           }
-          // console.log(match);
           if (
             !data.data.to ||
             (data.data.to && !isValidEmail(data.data.to) && !match?.email)
@@ -1046,7 +1054,7 @@ export default function HomePage() {
       }
     };
     processQuery();
-  }, [query, session]);
+  }, [query, session, contacts, mailContacts]);
   // console.log(session);
 
   useEffect(() => {
@@ -1211,6 +1219,7 @@ export default function HomePage() {
         .from('contacts')
         .select('*')
         .eq('user_id', session?.user.id);
+      // console.log(data);
       if (data?.length > 0) {
         setContacts(data);
       } else {
@@ -1227,6 +1236,7 @@ export default function HomePage() {
         .from('email_contacts')
         .select('*')
         .eq('user_id', session?.user.id);
+      // console.log(data);
       if (data?.length > 0) {
         setMailContacts(data);
         setMailContactsProcessing(false);
