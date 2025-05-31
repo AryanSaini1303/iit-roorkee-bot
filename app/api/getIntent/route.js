@@ -6,47 +6,54 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { message, convo } = body;
-    // console.log(...getRecentMessages(convo));
+    const { convo } = body;
+
+    if (!Array.isArray(convo) || convo.length === 0) {
+      return new Response(JSON.stringify({ error: 'Missing conversation' }), {
+        status: 400,
+      });
+    }
+
+    const recentContext = getRecentMessages(convo.slice(0, -1)); // prior context
+    const latestMessage = convo[convo.length - 1]; // current message
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4.1',
+      temperature: 0,
       messages: [
         {
           role: 'system',
-          content: `You are an intent classifier. Given the user's latest input and optional prior context, classify the user's intent as one of: chat, send_email, book_cab, make_call, check_mail, send_whatsapp_message
+          content: `You are an intent classifier.
 
-            chat – questions, hypotheticals, or general talk (even if they mention send mail, call, cab, or WhatsApp)  
-            send_email – user clearly wants to send or write an email now  
-            book_cab – user wants to book a cab or ride now  
-            make_call – user wants to call or speak to someone now  
-            check_mail – user wants to check inbox, view latest, or filter mails  
+            Given the user's latest input and optional prior context, classify the user's intent as one of the following:
+
+            chat, send_email, book_cab, make_call, check_mail, send_whatsapp_message
+
+            🧠 Definitions:
+            chat – general talk, questions, jokes, hypotheticals, or exploratory requests  
+            send_email – user wants to write/send an email now  
+            book_cab – user wants a ride or cab now  
+            make_call – user wants to call someone now  
+            check_mail – user wants to check inbox, read or filter emails now  
             send_whatsapp_message – user wants to send a WhatsApp message now
 
-            Only use send_email, make_call, check_mail, book_cab, or send_whatsapp_message if the user wants to do it **now**. Else, use chat.
+            ✅ Use action intents (send_email, make_call, etc.) **only if the user clearly wants to do it now**  
+            ❌ Do NOT respond to the user's message. Only classify intent.
 
-            Examples:  
-            "Send a mail to my professor" → send_email  
-            "Send a mail to aryan" → send_email  
-            "Check if I got mail from Aryan" → check_mail  
-            "Book a cab to the airport" → book_cab  
-            "Call Aryan now" → make_call  
-            "Message mom on WhatsApp" → send_whatsapp_message  
-            "Can you send WhatsApp messages?" → chat
-
-            Respond with only one of: chat, send_email, book_cab, make_call, check_mail, send_whatsapp_message.
+            📤 Respond with just one of: chat, send_email, book_cab, make_call, check_mail, send_whatsapp_message
           `,
         },
-        ...getRecentMessages(convo),
-        // {
-        //   role: 'user',
-        //   content: message,
-        // },
+        ...recentContext,
+        {
+          role: 'user',
+          content: `Classify this message only: "${latestMessage.content}"`,
+        },
       ],
     });
 
     const intent = response.choices[0].message.content.trim().toLowerCase();
-    // console.log(intent);
-    return intent && Response.json({ intent });
+
+    return new Response(JSON.stringify({ intent }));
   } catch (error) {
     console.error('Intent classification error:', error);
     return new Response(

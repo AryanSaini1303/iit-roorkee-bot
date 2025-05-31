@@ -405,6 +405,7 @@ export default function HomePage() {
   }, [accessToken, emailData, emailIsConfirm]);
 
   function buildGmailQueryURL({ time, subject, from, to, before, after }) {
+    if (!time && !subject && !from && !to && !before && !after) return;
     const baseUrl =
       'https://gmail.googleapis.com/gmail/v1/users/me/messages?q=';
     const queryParts = [];
@@ -639,7 +640,7 @@ export default function HomePage() {
         return;
       }
       setQuery('');
-      console.log(data.intent);
+      // console.log(data.intent);
       if (data.intent === 'chat') {
         const date = new Date();
         const chatRes = await fetch('/api/chat', {
@@ -912,7 +913,7 @@ export default function HomePage() {
           name: name,
         });
         setCallProcess(true);
-        const reply = `Are you sure you want to call ${name}`;
+        const reply = `Are you sure you want to call ${data.to}, his number is ${phoneNumber}`;
         setMessages((prev) => [...prev, { role: 'system', content: reply }]);
         setReply(reply);
         setIsProcessing(false);
@@ -943,9 +944,30 @@ export default function HomePage() {
           playElevenLabsAudio(reply);
           return;
         }
-        let emails = { to: data.fields.to, from: data.fields.from };
-        let to = findMailInContacts(emails.to);
-        let from = findMailInContacts(emails.from);
+        const isValidEmail = (email) =>
+          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+        let to = '';
+        let from = '';
+        if (data.fields.to) {
+          if (isValidEmail(data.fields.to)) {
+            to = data.fields.to;
+          } else {
+            to = findMailInContacts(data.fields.to);
+            if (!to) {
+              return;
+            }
+          }
+        }
+        if (data.fields.from) {
+          if (isValidEmail(data.fields.from)) {
+            from = data.fields.from;
+          } else {
+            from = findMailInContacts(data.fields.from);
+            if (!from) {
+              return;
+            }
+          }
+        }
         setMailQuery({
           time: data.fields.time || null,
           subject: data.fields.subject || null,
@@ -963,6 +985,14 @@ export default function HomePage() {
           after: data.fields.after || null,
         });
         // console.log(url);
+        if (!url) {
+          const reply = `Looks like there is an issue in interpreting your request, make sure you provided valids parameters and try again later!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          return;
+        }
         const res1 = await fetch(url, {
           headers: {
             Authorization: `Bearer ${session?.provider_token}`,
