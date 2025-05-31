@@ -1,4 +1,3 @@
-import { getRecentMessages } from '@/lib/getRecentMessages';
 import { NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 
@@ -7,7 +6,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 export async function POST(req) {
   try {
     const { userInput, convo } = await req.json();
-    const recentMessages = getRecentMessages(convo);
+    const recentMessages = convo;
 
     const messages = [
       {
@@ -46,6 +45,7 @@ export async function POST(req) {
 
     const content = completion.choices[0].message.content;
     const json = JSON.parse(content);
+    // console.log(json);
 
     return NextResponse.json({ success: true, data: json });
   } catch (err) {

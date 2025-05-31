@@ -1,4 +1,3 @@
-import { getRecentMessages } from '@/lib/getRecentMessages';
 import { OpenAI } from 'openai';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -14,7 +13,7 @@ export async function POST(req) {
       });
     }
 
-    const recentContext = getRecentMessages(convo.slice(0, -1)); // prior context
+    const recentContext = convo.slice(0, -1); // prior context
     const latestMessage = convo[convo.length - 1]; // current message
 
     const response = await openai.chat.completions.create({

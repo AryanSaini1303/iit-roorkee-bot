@@ -1,4 +1,3 @@
-import { getRecentMessages } from '@/lib/getRecentMessages';
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
@@ -49,7 +48,7 @@ export async function POST(req) {
         content: `Today's date is ${currentDate}. Assume it when interpreting dates.`,
       },
       { role: 'system', content: systemPrompt },
-      ...getRecentMessages(convo),
+      ...convo,
     ];
 
     const chatResponse = await openai.chat.completions.create({
@@ -69,6 +68,7 @@ export async function POST(req) {
 
     try {
       const parsed = JSON.parse(raw);
+      // console.log(parsed);
       return NextResponse.json({ fields: parsed });
     } catch {
       return NextResponse.json(

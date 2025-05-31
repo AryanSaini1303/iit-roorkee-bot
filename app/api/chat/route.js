@@ -1,6 +1,5 @@
 import { OpenAI } from 'openai';
 import { NextResponse } from 'next/server';
-import { getRecentMessages } from '@/lib/getRecentMessages';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -23,7 +22,7 @@ export async function POST(req) {
           Keep responses extremely short and efficient, but never omit critical facts.
           Use natural, human-like tone, but prioritize clarity and directness.`,
         },
-        ...getRecentMessages(messages),
+        ...messages,
         { role: 'user', content: query },
       ],
     });

@@ -841,7 +841,7 @@ export default function HomePage() {
           }),
         });
         const data = await res.json();
-        // console.log(parseInt(data.to));
+        // console.log(data);
         if (data.error) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
           setMessages((prev) => [...prev, { role: 'system', content: reply }]);
@@ -913,7 +913,9 @@ export default function HomePage() {
           name: name,
         });
         setCallProcess(true);
-        const reply = `Are you sure you want to call ${data.to}, his number is ${phoneNumber}`;
+        const reply = `Are you sure you want to call ${data.to}${
+          !parseInt(data.to) ? `, his number is ${phoneNumber}` : ''
+        }`;
         setMessages((prev) => [...prev, { role: 'system', content: reply }]);
         setReply(reply);
         setIsProcessing(false);
@@ -1050,7 +1052,7 @@ export default function HomePage() {
           }),
         });
         const data = await res.json();
-        // console.log(data);
+        console.log(data);
         if (!data.success) {
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
           setMessages((prev) => [...prev, { role: 'system', content: reply }]);
@@ -1117,7 +1119,11 @@ export default function HomePage() {
               name: name,
             });
             setWhatsappProcess(true);
-            const reply = `Are you sure you want to send message "${data.data.message}" to ${name}`;
+            const reply = `Are you sure you want to send message "${
+              data.data.message
+            }" to ${data.data.to}?${
+              !parseInt(data.data.to) ? ` His number is ${number}` : ''
+            }`;
             setMessages((prev) => [
               ...prev,
               { role: 'system', content: reply },

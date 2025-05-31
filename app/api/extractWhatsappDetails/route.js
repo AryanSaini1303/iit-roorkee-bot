@@ -45,6 +45,7 @@ export async function POST(req) {
 
   try {
     const extracted = JSON.parse(reply);
+    // console.log(extracted);
     return NextResponse.json({ success: true, data: extracted });
   } catch (err) {
     return NextResponse.json({
