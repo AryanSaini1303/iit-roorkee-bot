@@ -651,7 +651,7 @@ export default function HomePage() {
           // console.log(email);
           const isValidEmail = (email) =>
             /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
-          console.log(contacts[291]);
+          // console.log(contacts[291]);
           let match =
             contacts.find((contact) =>
               contact.name?.toLowerCase().includes(email.toLowerCase()),
