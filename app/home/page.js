@@ -656,7 +656,7 @@ export default function HomePage() {
             contacts.find((contact) =>
               contact.name?.toLowerCase().includes(email.toLowerCase()),
             ) || null;
-          console.log(match);
+          // console.log(match);
           if (!match || !match?.email) {
             if (!mailContactsProcessing) {
               match = mailContacts
