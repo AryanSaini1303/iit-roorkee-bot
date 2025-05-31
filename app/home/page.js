@@ -56,11 +56,12 @@ export default function HomePage() {
   const [mailContactsProcessing, setMailContactsProcessing] = useState(true);
   const [whatsappData, setWhatsappData] = useState({});
   const [whatsappProcess, setWhatsappProcess] = useState(false);
+  const [voiceId, setVoiceId] = useState('');
+  const [showVoices, setShowVoices] = useState(false);
 
   const playElevenLabsAudio = async (text, intent, cabUrl) => {
     try {
       const apiKey = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY;
-      const voiceId = 'KoVIHoyLDrQyd4pGalbs';
       const response = await fetch(
         `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
         {
@@ -163,6 +164,7 @@ export default function HomePage() {
   const handleClickOutside = (event) => {
     if (menuRef.current && !menuRef.current.contains(event.target)) {
       setSettingsFlag(false);
+      setShowVoices(false);
     }
   };
 
@@ -328,6 +330,9 @@ export default function HomePage() {
     getSession();
     setSessionQuery(sessionStorage.getItem('query') || '');
     setMessages(JSON.parse(sessionStorage.getItem('messages')) || []);
+    if (typeof window !== undefined) {
+      setVoiceId(localStorage.getItem('voiceId') || 'KoVIHoyLDrQyd4pGalbs');
+    }
   }, []);
 
   useEffect(() => {
@@ -557,6 +562,7 @@ export default function HomePage() {
             body: JSON.stringify({
               to: callData.to,
               message: callData.message,
+              voiceId: voiceId,
             }),
           });
           const data1 = await res1.json();
@@ -1157,10 +1163,20 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!callSid) return;
+    let retryCount = 0;
+    const maxRetries = 4;
     const interval = setInterval(async () => {
       try {
+        if (retryCount >= maxRetries) {
+          clearInterval(interval);
+          const reply = `The call was declined before i could record a response!`;
+          setMessages((prev) => [...prev, { role: 'system', content: reply }]);
+          setReply(reply);
+          setIsProcessing(false);
+          playElevenLabsAudio(reply);
+          return;
+        }
         const result = await checkCallStatus(callSid);
-        // console.log(result);
         if (
           result.callStatus === 'not-ready' ||
           result.callStatus === 'unknown'
@@ -1184,6 +1200,7 @@ export default function HomePage() {
             },
             body: JSON.stringify({ callSid }),
           });
+          retryCount++;
           const data2 = await res2.json();
           if (data2.recordingUrls && data2.recordingUrls.length > 0) {
             setRecordingUrls(data2.recordingUrls);
@@ -1192,8 +1209,9 @@ export default function HomePage() {
           }
         }
       } catch (error) {
+        retryCount++;
+        // Optional: log the error
         // console.warn('Polling error:', error);
-        return;
       }
     }, 3000);
     return () => clearInterval(interval);
@@ -1390,9 +1408,77 @@ export default function HomePage() {
             <ul className={styles.options}>
               {/* <li>Preferences</li> */}
               {/* <li>Chat History</li> */}
-              <li onClick={() => signOut()}>
-                {signOutFlag ? 'Signing out...' : 'Sign Out'}
+              <li
+                onClick={() => setShowVoices(!showVoices)}
+                style={
+                  showVoices
+                    ? {
+                        border: '1px dashed black',
+                      }
+                    : null
+                }
+              >
+                Voices
               </li>
+              {
+                showVoices && (
+                  // <ul className={styles.options}>
+                  <>
+                    <li
+                      style={
+                        voiceId === 'ErXwobaYiN019PkySvjV'
+                          ? {
+                              backgroundColor: '#00BFFF',
+                              color: 'white',
+                            }
+                          : null
+                      }
+                      onClick={() => {
+                        setVoiceId('ErXwobaYiN019PkySvjV');
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem(
+                            'voiceId',
+                            'ErXwobaYiN019PkySvjV',
+                          );
+                        }
+                        setSettingsFlag(false);
+                        setShowVoices(false);
+                      }}
+                    >
+                      Male
+                    </li>
+                    <li
+                      style={
+                        voiceId === 'KoVIHoyLDrQyd4pGalbs'
+                          ? {
+                              backgroundColor: '#900C3F ',
+                              color: 'white',
+                            }
+                          : null
+                      }
+                      onClick={() => {
+                        setVoiceId('KoVIHoyLDrQyd4pGalbs');
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem(
+                            'voiceId',
+                            'KoVIHoyLDrQyd4pGalbs',
+                          );
+                        }
+                        setSettingsFlag(false);
+                        setShowVoices(false);
+                      }}
+                    >
+                      Female
+                    </li>
+                  </>
+                )
+                //</ul>
+              }
+              {!showVoices && (
+                <li onClick={() => signOut()} className={styles.lastChild}>
+                  {signOutFlag ? 'Signing out...' : 'Sign Out'}
+                </li>
+              )}
             </ul>
           )}
         </li>

@@ -1,11 +1,9 @@
 import { uploadToVercelBlob } from '@/lib/blobUploader';
-import {
-  appendMessage,
-  getConversation,
-} from '@/lib/convoStore';
+import { appendMessage, getConversation } from '@/lib/convoStore';
 import { generateVoiceBuffer } from '@/lib/elevenLabs';
 import { generateAIReply } from '@/lib/getResponse';
 import GetTranscription from '@/lib/getTranscription';
+import { getRedisClient } from '@/lib/redis';
 import { twiml } from 'twilio';
 
 export async function POST(req) {
@@ -25,6 +23,8 @@ export async function POST(req) {
     response.play(
       'https://x8kvogjfhjihtrrx.public.blob.vercel-storage.com/thankYou-Ns1PPq5miOzZ1BT13wTTN2h8dONtZy.mp3',
     );
+    const client = await getRedisClient();
+    await client.del(`voiceId:${callSid}`);
     response.hangup();
     return new Response(response.toString(), {
       headers: { 'Content-Type': 'text/xml' },
@@ -48,13 +48,15 @@ export async function POST(req) {
     response.play(
       'https://x8kvogjfhjihtrrx.public.blob.vercel-storage.com/thankYou-Ns1PPq5miOzZ1BT13wTTN2h8dONtZy.mp3',
     );
+    const client = await getRedisClient();
+    await client.del(`voiceId:${callSid}`);
     response.hangup();
     return new Response(response.toString(), {
       headers: { 'Content-Type': 'text/xml' },
     });
   } else {
     await appendMessage(callSid, { role: 'system', content: aiReply });
-    const voiceBuffer = await generateVoiceBuffer(aiReply);
+    const voiceBuffer = await generateVoiceBuffer(aiReply, callSid);
     const publicUrl = await uploadToVercelBlob(voiceBuffer);
     response.play(publicUrl);
     response.record({
