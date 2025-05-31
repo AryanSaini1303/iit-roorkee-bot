@@ -1349,12 +1349,6 @@ export default function HomePage() {
     getEmailContacts();
   }, [session]);
 
-  // useEffect(() => {
-  //   if (contacts.length === 0 || mailContacts.length === 0) return;
-  //   console.log(contacts[0]);
-  //   console.log(mailContacts);
-  // }, [contacts, mailContacts]);
-
   if (!loading && !session) return 'Unauthenticated';
 
   return (
