@@ -16,6 +16,7 @@ export async function POST(req) {
   // console.log(recordingUrl);
   const transcript = await GetTranscription(recordingUrl);
   if (!transcript || transcript.trim().length < 3) {
+    const client = await getRedisClient();
     const lang = await client.get(`lang:${callSid}`);
     console.log(lang);
     await appendMessage(callSid, {
@@ -30,7 +31,6 @@ export async function POST(req) {
         ? 'https://x8kvogjfhjihtrrx.public.blob.vercel-storage.com/thankYou-Ns1PPq5miOzZ1BT13wTTN2h8dONtZy.mp3'
         : 'https://x8kvogjfhjihtrrx.public.blob.vercel-storage.com/thankYou2-5RNIAreL6uKs03wYvgHNklrwyr65qG.mp3';
     response.play(media);
-    const client = await getRedisClient();
     await client.del(`voiceId:${callSid}`);
     response.hangup();
     return new Response(response.toString(), {
