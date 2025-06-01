@@ -1650,7 +1650,7 @@ export default function HomePage() {
                         : null
                     }
                     onClick={() => {
-                      setLang('Engligh');
+                      setLang('English');
                       if (typeof window !== 'undefined') {
                         localStorage.setItem('lang', 'English');
                       }
