@@ -167,6 +167,7 @@ export default function HomePage() {
     if (menuRef.current && !menuRef.current.contains(event.target)) {
       setSettingsFlag(false);
       setShowVoices(false);
+      setShowLangs(false);
     }
   };
 
