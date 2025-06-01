@@ -9,13 +9,13 @@ const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { to, message, voiceId } = body;
+    const { to, message, voiceId, lang } = body;
     const call = await twilioClient.calls.create({
       to,
       from: twilioNumber,
       url: `${
         process.env.NEXT_PUBLIC_BASE_URL
-      }/api/twilio/voice?msg=${encodeURIComponent(message)}&voiceId=${voiceId}`,
+      }/api/twilio/voice?msg=${encodeURIComponent(message)}&voiceId=${voiceId}&lang=${lang}`,
       method: 'POST',
       statusCallback: `${process.env.NEXT_PUBLIC_BASE_URL}/api/twilio/call-status`, // 👈 this will receive final call status
       statusCallbackEvent: ['completed'],

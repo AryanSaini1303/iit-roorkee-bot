@@ -10,9 +10,12 @@ export async function POST(req) {
   const callSid = form.get('CallSid');
   const msg = searchParams.get('msg') || 'Hello from Eva-AI';
   const voiceId = searchParams.get('voiceId');
+  const lang = searchParams.get('lang');
   const client = await getRedisClient();
   await client.set(`voiceId:${callSid}`, voiceId);
   await client.expire(`voiceId:${callSid}`, 15 * 60);
+  await client.set(`lang:${callSid}`, lang);
+  await client.expire(`lang:${callSid}`, 15 * 60);
   await appendMessage(callSid, { role: 'system', content: msg });
   const voiceBuffer = await generateVoiceBuffer(msg, callSid);
   // const fileName = `eva-ai-${Date.now()}.mp3`;

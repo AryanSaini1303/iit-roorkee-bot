@@ -623,6 +623,7 @@ export default function HomePage() {
               to: callData.to,
               message: translatedMessage,
               voiceId: voiceId,
+              lang
             }),
           });
           const data1 = await res1.json();

@@ -16,13 +16,19 @@ export async function POST(req) {
   // console.log(recordingUrl);
   const transcript = await GetTranscription(recordingUrl);
   if (!transcript || transcript.trim().length < 3) {
+    const lang = await client.get(`lang:${callSid}`);
     await appendMessage(callSid, {
       role: 'system',
-      content: 'Thank you for your response',
+      content:
+        lang === 'English'
+          ? 'Thank you for your response'
+          : 'Terima kasih atas maklum balas anda',
     });
-    response.play(
-      'https://x8kvogjfhjihtrrx.public.blob.vercel-storage.com/thankYou-Ns1PPq5miOzZ1BT13wTTN2h8dONtZy.mp3',
-    );
+    const media =
+      lang === 'English'
+        ? 'https://x8kvogjfhjihtrrx.public.blob.vercel-storage.com/thankYou-Ns1PPq5miOzZ1BT13wTTN2h8dONtZy.mp3'
+        : 'https://x8kvogjfhjihtrrx.public.blob.vercel-storage.com/thankYou2-5RNIAreL6uKs03wYvgHNklrwyr65qG.mp3';
+    response.play(media);
     const client = await getRedisClient();
     await client.del(`voiceId:${callSid}`);
     response.hangup();
