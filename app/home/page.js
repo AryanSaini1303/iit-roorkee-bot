@@ -1597,7 +1597,7 @@ export default function HomePage() {
                       if (typeof window !== 'undefined') {
                         localStorage.setItem('voiceId', 'ErXwobaYiN019PkySvjV');
                       }
-                      setSettingsFlag(false);
+                      // setSettingsFlag(false);
                       setShowVoices(false);
                     }}
                   >
@@ -1675,7 +1675,7 @@ export default function HomePage() {
                       if (typeof window !== 'undefined') {
                         localStorage.setItem('lang', 'Malay');
                       }
-                      setSettingsFlag(false);
+                      // setSettingsFlag(false);
                       setShowLangs(false);
                     }}
                   >
