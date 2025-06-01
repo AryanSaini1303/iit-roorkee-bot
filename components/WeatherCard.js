@@ -21,7 +21,7 @@ const getWeatherEmoji = (main) => {
   }
 };
 
-const WeatherCard = ({ weatherData }) => {
+const WeatherCard = ({ weatherData, lang }) => {
   if (!weatherData) return null;
 
   const { name, main, weather } = weatherData;
@@ -30,20 +30,28 @@ const WeatherCard = ({ weatherData }) => {
 
   return (
     <div className={styles.card}>
-      <div className={styles.header}>Current Weather</div>
-        <div className={styles.emoji}>{emoji}</div>
+      <div className={styles.header}>
+        {lang === 'English' ? 'Current Weather' : 'Cuaca Semasa'}
+      </div>
+      <div className={styles.emoji}>{emoji}</div>
       <div className={styles.body}>
         <div className={styles.info}>
           <div className={styles.row}>
-            <span className={styles.label}>City:</span>
+            <span className={styles.label}>
+              {lang === 'English' ? 'City:' : 'Bandar:'}
+            </span>
             <span className={styles.value}>{name}</span>
           </div>
           <div className={styles.row}>
-            <span className={styles.label}>Temperature:</span>
+            <span className={styles.label}>
+              {lang === 'English' ? 'Temprature:' : 'Suhu:'}
+            </span>
             <span className={styles.value}>{Math.round(main.temp)}°C</span>
           </div>
           <div className={styles.row}>
-            <span className={styles.label}>Condition:</span>
+            <span className={styles.label}>
+              {lang === 'English' ? 'Conditions:' : 'syarat:'}
+            </span>
             <span className={styles.value}>{condition}</span>
           </div>
         </div>

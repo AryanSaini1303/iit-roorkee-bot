@@ -6,7 +6,7 @@ const vagueTerms = ['my home', 'current location', 'here', 'my place'];
 
 export async function POST(req) {
   try {
-    const { convo } = await req.json();
+    const { convo, lang } = await req.json();
 
     if (!convo || !Array.isArray(convo) || convo.length === 0) {
       return new Response(
@@ -19,7 +19,7 @@ export async function POST(req) {
     }
 
     const systemPrompt = `
-      You are a cab booking assistant.
+      You are a cab booking assistant. The user's input is in language: ${lang}.
 
       Your task is to extract two fields from the user conversation:
       - "origin": where the ride starts
@@ -32,17 +32,19 @@ export async function POST(req) {
       )}), treat it as missing.
       - Use earlier messages only if the latest message lacks clarity.
       - Do not fabricate or guess unclear values.
-
+        
       Return JSON in this exact format:
       {
         "origin": string | null,
         "destination": string | null,
         "missing": [ "origin" | "destination" ]
       }
-    `;
+        
+      Respond with only the JSON object. No extra text, no explanation.
+    `.trim();
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4.1',
+      model: 'gpt-4o',
       messages: [{ role: 'system', content: systemPrompt }, ...convo],
       temperature: 0,
     });

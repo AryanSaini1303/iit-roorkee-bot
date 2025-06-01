@@ -6,7 +6,7 @@ const openai = new OpenAI({
 });
 
 export async function POST(req) {
-  const { userInput } = await req.json();
+  const { userInput, lang } = await req.json();
 
   if (!userInput) {
     return NextResponse.json({ error: 'Missing userInput' }, { status: 400 });
@@ -14,12 +14,12 @@ export async function POST(req) {
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4.1',
+      model: 'gpt-4o',
       temperature: 0,
       messages: [
         {
           role: 'system',
-          content: `You are an AI that only replies with a JSON object indicating whether the user wants to send a WhatsApp message now.
+          content: `You are an AI that only replies with a JSON object indicating whether the user wants to send a WhatsApp message now. The user input is in this language: ${lang}.
             Only reply with: { "result": true } or { "result": false }.
             Do not explain anything.`,
         },

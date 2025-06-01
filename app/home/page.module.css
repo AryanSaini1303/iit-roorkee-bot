@@ -262,6 +262,7 @@
   font-weight: 500;
   font-family: 'Playpen Sans Arabic', cursive;
   opacity: 0;
+  text-align: center;
 }
 .greetingsModal h1:nth-child(1) {
   animation: revealInfo 0.8s ease-in-out forwards;

@@ -5,7 +5,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { convo } = body;
+    const { convo, lang } = body;
 
     if (!Array.isArray(convo) || convo.length === 0) {
       return new Response(JSON.stringify({ error: 'Missing conversation' }), {
@@ -17,19 +17,19 @@ export async function POST(req) {
     const latestMessage = convo[convo.length - 1]; // current message
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4.1',
+      model: 'gpt-4o',
       temperature: 0,
       messages: [
         {
           role: 'system',
           content: `You are an intent classifier.
 
-            Given the user's latest input and optional prior context, classify the user's intent as one of the following:
+            Given the user's latest input in language ${lang} and optional prior context, classify the user's intent as one of the following:
 
             chat, send_email, book_cab, make_call, check_mail, send_whatsapp_message
 
             🧠 Definitions:
-            chat – general talk, questions, jokes, hypotheticals, or exploratory requests  
+            chat – general talk, questions or follow-up question, jokes, hypotheticals, or exploratory requests  
             send_email – user wants to write/send an email now  
             book_cab – user wants a ride or cab now  
             make_call – user wants to call someone now  

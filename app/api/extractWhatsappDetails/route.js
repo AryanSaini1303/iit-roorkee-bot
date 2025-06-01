@@ -6,7 +6,7 @@ const openai = new OpenAI({
 });
 
 export async function POST(req) {
-  const { convo } = await req.json();
+  const { convo, lang } = await req.json();
 
   if (!Array.isArray(convo) || convo.length === 0) {
     return NextResponse.json({ error: 'Missing convo' }, { status: 400 });
@@ -14,6 +14,7 @@ export async function POST(req) {
 
   const systemPrompt = `
     You are a message extractor.
+    The user's latest input is in language: ${lang}.
 
     Extract the following two fields from the user's latest input:
     - "to": the recipient's phone number (in international format) or name, if no number is found. This must never be "him", "her", etc.
@@ -36,7 +37,7 @@ export async function POST(req) {
   ];
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4.1',
+    model: 'gpt-4o',
     messages,
     temperature: 0,
   });

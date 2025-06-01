@@ -1,9 +1,9 @@
 import styles from './UpcomingEvents.module.css';
 
-export default function UpcomingEvents({ events }) {
+export default function UpcomingEvents({ events, lang }) {
   return (
     <div className={styles.card}>
-      <div className={styles.heading}>Upcoming</div>
+      <div className={styles.heading}>{lang === 'English' ? 'Upcoming' : 'Akan datang'}</div>
       {events.map((event, index) => (
         <div key={index} className={styles.event}>
           <div className={styles.ribbon}></div>

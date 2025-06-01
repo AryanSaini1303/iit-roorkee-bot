@@ -7,17 +7,17 @@ const openai = new OpenAI({
 
 export async function POST(req) {
   try {
-    const { userInput } = await req.json();
+    const { userInput, lang } = await req.json();
     // console.log(userInput);
     const systemPrompt = `
-        You are an intent classifier assistant. Your job is to analyze a user's response and classify their intent into one of the following three categories:
+        You are an intent classifier assistant. Your job is to analyze a user's response and The user's response is in this language: ${lang}. Classify their intent into one of the following three categories:
         - "confirm": The user agrees to send the email.
         - "decline": The user does NOT want to send the email.
         - "unknown": The user's input is ambiguous or unrelated.
         Respond with only one word: "confirm", "decline", or "unknown".
     `;
     const chatCompletion = await openai.chat.completions.create({
-      model: 'gpt-4.1',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userInput },

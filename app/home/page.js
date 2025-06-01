@@ -267,11 +267,13 @@ export default function HomePage() {
       getWeather();
     const time = new Date();
     if (time.getHours() < 12) {
-      setGreeting('Good Morning');
+      setGreeting(() => (lang === 'English' ? 'Good Morning' : 'Selamat Pagi'));
     } else if (time.getHours() > 12) {
-      setGreeting('Good Evening');
+      setGreeting(() =>
+        lang === 'English' ? 'Good Evening' : 'Selamat Petang',
+      );
     }
-  }, [voiceInputFlag, query]);
+  }, [voiceInputFlag, query, lang]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -543,7 +545,7 @@ export default function HomePage() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ userInput: query }),
+          body: JSON.stringify({ userInput: query, lang }),
         });
         const data = await res.json();
         // console.log('Email confirmation intent:', data.intent);
@@ -582,7 +584,7 @@ export default function HomePage() {
         const res = await fetch('/api/getCallIntent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userInput: query }),
+          body: JSON.stringify({ userInput: query, lang }),
         });
         const data = await res.json();
         // console.log(data);
@@ -666,7 +668,7 @@ export default function HomePage() {
         const res = await fetch('/api/getWhatsappIntent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userInput: query }),
+          body: JSON.stringify({ userInput: query, lang }),
         });
         const data = await res.json();
         // console.log(data);
@@ -710,6 +712,7 @@ export default function HomePage() {
         body: JSON.stringify({
           message: query,
           convo: [...convo, { role: 'user', content: query }],
+          lang,
         }),
       });
       const data = await res.json();
@@ -729,6 +732,9 @@ export default function HomePage() {
       setQuery('');
       // console.log(data.intent);
       if (data.intent === 'chat') {
+        setCallProcess(false);
+        setWhatsappProcess(false);
+        setEmailProcess(false);
         const date = new Date();
         const chatRes = await fetch('/api/chat', {
           method: 'POST',
@@ -736,6 +742,8 @@ export default function HomePage() {
             query,
             messages: [...convo, { role: 'user', content: query }],
             currentDate: date.toLocaleDateString(),
+            weather,
+            lang,
           }),
         });
         const { reply } = await chatRes.json();
@@ -868,6 +876,7 @@ export default function HomePage() {
           body: JSON.stringify({
             message: query,
             convo: [...convo, { role: 'user', content: query }],
+            lang
           }),
         });
         const data = await res.json();
@@ -948,6 +957,7 @@ export default function HomePage() {
             name:
               session?.user?.user_metadata?.name.split(' ')[0] || 'My Master',
             convo: [...convo, { role: 'user', content: query }],
+            lang
           }),
         });
         const data = await res.json();
@@ -1057,6 +1067,7 @@ export default function HomePage() {
             userInput: query,
             currentDate: date.toLocaleDateString(),
             convo: [...convo, { role: 'user', content: query }],
+            lang,
           }),
         });
         const data = await res.json();
@@ -1194,6 +1205,7 @@ export default function HomePage() {
           body: JSON.stringify({
             userInput: query,
             convo: [...convo, { role: 'user', content: query }],
+            lang,
           }),
         });
         const data = await res.json();
@@ -1578,7 +1590,7 @@ export default function HomePage() {
                       : null
                   }
                 >
-                  Voices
+                  {lang === 'English' ? 'Voices' : 'Suara'}
                 </li>
               )}
               {showVoices && !showLangs && (
@@ -1601,7 +1613,7 @@ export default function HomePage() {
                       setShowVoices(false);
                     }}
                   >
-                    Male
+                    {lang === 'English' ? 'Male' : 'jantan'}
                   </li>
                   <li
                     style={
@@ -1621,7 +1633,7 @@ export default function HomePage() {
                       setShowVoices(false);
                     }}
                   >
-                    Female
+                    {lang === 'English' ? 'Female' : 'perempuan'}
                   </li>
                 </>
               )}
@@ -1636,7 +1648,7 @@ export default function HomePage() {
                       : null
                   }
                 >
-                  Languages
+                  {lang === 'English' ? 'Languages' : 'bahasa'}
                 </li>
               )}
               {showLangs && !showVoices && (
@@ -1685,7 +1697,13 @@ export default function HomePage() {
               )}
               {!showVoices && !showLangs && (
                 <li onClick={() => signOut()} className={styles.lastChild}>
-                  {signOutFlag ? 'Signing out...' : 'Sign Out'}
+                  {signOutFlag
+                    ? lang === 'English'
+                      ? 'Signing out...'
+                      : 'melog keluar...'
+                    : lang === 'English'
+                    ? 'Sign Out'
+                    : 'Log keluar'}
                 </li>
               )}
             </ul>
@@ -1696,7 +1714,7 @@ export default function HomePage() {
         className={styles.whiteSection}
         style={!reply ? { overflow: 'hidden' } : null}
       >
-        <section className={styles.chatScreen}>
+        <section className={styles.chatScreen} key={lang}>
           {session && !query && !sessionStorage.getItem('query') && (
             <div className={styles.greetingsModal}>
               <div className={styles.holder}>
@@ -1705,7 +1723,11 @@ export default function HomePage() {
                 </h1>
               </div>
               <div className={styles.holder}>
-                <h1>How can I assist you today?</h1>
+                <h1>
+                  {lang === 'English'
+                    ? 'How can I assist you today?'
+                    : 'Bagaimana saya boleh membantu anda hari ini?'}
+                </h1>
               </div>
             </div>
           )}
@@ -1716,9 +1738,9 @@ export default function HomePage() {
             !isRecording && (
               <section className={styles.cardsContainer}>
                 {upcomingEventsData.length !== 0 && (
-                  <UpcomingEvents events={upcomingEventsData} />
+                  <UpcomingEvents events={upcomingEventsData} lang={lang} />
                 )}
-                <WeatherCard weatherData={weather} />
+                <WeatherCard weatherData={weather} lang={lang} />
               </section>
             )}
           {reply.length !== 0 &&
@@ -1731,9 +1753,9 @@ export default function HomePage() {
             !isProcessing &&
             callConvo.length === 0 &&
             mails.length === 0 ? (
-            <ChatPlaceholder />
+            <ChatPlaceholder lang={lang} />
           ) : isProcessing || (!audioIsReady && reply.length !== 0) ? (
-            <ZenaLoading />
+            <ZenaLoading lang={lang} />
           ) : callConvo.length !== 0 && mails.length === 0 ? (
             // <RecordingPlayer
             //   title="Your last call Recording"
@@ -1812,7 +1834,11 @@ export default function HomePage() {
             <form onSubmit={handleSubmit}>
               <input
                 type="text"
-                placeholder="Enter your query..."
+                placeholder={
+                  lang === 'English'
+                    ? 'Enter your query...'
+                    : 'Masukkan pertanyaan anda...'
+                }
                 name="query"
                 required
                 value={value}

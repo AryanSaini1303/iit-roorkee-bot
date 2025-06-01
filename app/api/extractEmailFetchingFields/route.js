@@ -5,35 +5,35 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const systemPrompt = `You are an email query extractor which takes into consideration the conversation/messages for extraction process.
-
-Return a JSON object in this exact format:
-
-{
-  "time": "latest" | number of days,   // "latest" if the user asks for recent emails, or number of days if like "last 5 days"
-  "subject": "text",                   // If a subject or topic is mentioned
-  "from": "name or email",             // Can be a name like "John Doe" or an email like "john@example.com"
-  "to": "name or email",               // Can be a name like "HR Team" or an email like "hr@example.com"
-  "before": "YYYY-MM-DD",              // If a specific cutoff date is mentioned (e.g. "before May 10")
-  "after": "YYYY-MM-DD"                // If a start date is mentioned (e.g. "after Jan 1", "since March 5")
-}
-
-🧠 Interpret:
-- Phrases like "recent", "just now", "most recent", or "last few emails" → "time": "latest"
-- "last 5 days", "past 2 days", "in the last 7 days" → "time": 5, "time": 2, etc.
-- "before [date]" → "before": "YYYY-MM-DD"
-- "after [date]", "since [date]" → "after": "YYYY-MM-DD"
-- If the year is not mentioned, assume the current year based on today’s date.
-- Interpret pronouns like "him" or "her" based on prior context (e.g., if a name was mentioned earlier).
-
-📌 Only include fields clearly stated or strongly implied.
-❌ Do not guess missing fields or add extras.
-📤 Output must be a valid JSON object — no explanation or text outside of it.
-`;
-
 export async function POST(req) {
   try {
-    const { convo, currentDate } = await req.json();
+    const { convo, currentDate, lang } = await req.json();
+    const systemPrompt = `You are an email query extractor. Use the full conversation/messages as context to accurately  extract relevant email fields.
+      The user's input is in language: ${lang}.
+
+      Return a JSON object in this exact format:
+
+      {
+        "time": "latest" | number of days,   // "latest" if the user asks for recent emails, or number of days if like "last  5    days"
+        "subject": "text",                   // If a subject or topic is mentioned
+        "from": "name or email",             // Can be a name like "John Doe" or an email like "john@example.com"
+        "to": "name or email",               // Can be a name like "HR Team" or an email like "hr@example.com"
+        "before": "YYYY-MM-DD",              // If a specific cutoff date is mentioned (e.g. "before May 10")
+        "after": "YYYY-MM-DD"                // If a start date is mentioned (e.g. "after Jan 1", "since March 5")
+      }
+
+      🧠 Interpret:
+      - Phrases like "recent", "just now", "most recent", or "last few emails" → "time": "latest"
+      - "last 5 days", "past 2 days", "in the last 7 days" → "time": 5, "time": 2, etc.
+      - "before [date]" → "before": "YYYY-MM-DD"
+      - "after [date]", "since [date]" → "after": "YYYY-MM-DD"
+      - If the year is not mentioned, assume the current year based on today’s date.
+      - Interpret pronouns like "him" or "her" based on prior context (e.g., if a name was mentioned earlier).
+
+      📌 Only include fields clearly stated or strongly implied.
+      ❌ Do not guess missing fields or add extras.
+      📤 Output must be a valid JSON object — no explanation or text outside of it.
+    `;
 
     if (!Array.isArray(convo) || convo.length === 0 || !currentDate) {
       return NextResponse.json(
@@ -52,12 +52,13 @@ export async function POST(req) {
     ];
 
     const chatResponse = await openai.chat.completions.create({
-      model: 'gpt-4.1',
+      model: 'gpt-4o',
       messages,
       temperature: 0,
     });
 
     const raw = chatResponse.choices[0].message?.content?.trim();
+    console.log(raw);
 
     if (!raw) {
       return NextResponse.json(

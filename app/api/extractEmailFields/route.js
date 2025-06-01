@@ -5,7 +5,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req) {
   try {
-    const { convo } = await req.json();
+    const { convo, lang } = await req.json();
     const recentMessages = convo;
 
     const messages = [
@@ -13,8 +13,8 @@ export async function POST(req) {
         role: 'system',
         content: `
           You are a highly intelligent assistant that extracts structured email information by analyzing both:
-          1. The user's latest message (most important)
-          2. The relevant previous conversation (if needed)
+          1. The user's latest message in language ${lang} (most important)
+          3. The relevant previous conversation (if needed)
 
           Your goal is to return a **strict JSON object** with:
           - "to": recipient's email address if available, or name (never null if either is present)
@@ -38,12 +38,19 @@ export async function POST(req) {
     ];
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4.1',
+      model: 'gpt-4o',
       messages,
       temperature: 0,
     });
 
-    const content = completion.choices[0].message.content;
+    let content = completion.choices[0].message.content;
+    if (content.startsWith('```')) {
+      content = content
+        .replace(/```(?:json)?\n?/, '')
+        .replace(/```$/, '')
+        .trim();
+    }
+    console.log(content);
     const json = JSON.parse(content);
     // console.log(json);
 
