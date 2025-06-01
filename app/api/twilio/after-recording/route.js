@@ -17,6 +17,7 @@ export async function POST(req) {
   const transcript = await GetTranscription(recordingUrl);
   if (!transcript || transcript.trim().length < 3) {
     const lang = await client.get(`lang:${callSid}`);
+    console.log(lang);
     await appendMessage(callSid, {
       role: 'system',
       content:

@@ -602,10 +602,12 @@ export default function HomePage() {
         if (data.result) {
           // console.log(callData);
           const reply = `Calling ${callData.name}...`;
+          const reply2 = `Calling ${callData.to}`;
           let translatedReply = await translateReply(lang, reply);
+          let translatedReply2 = await translateReply(lang, reply2);
           setMessages((prev) => [
             ...prev,
-            { role: 'system', content: translatedReply },
+            { role: 'system', content: translatedReply2 },
           ]);
           setReply(translatedReply);
           setIsProcessing(false);
@@ -623,7 +625,7 @@ export default function HomePage() {
               to: callData.to,
               message: translatedMessage,
               voiceId: voiceId,
-              lang
+              lang,
             }),
           });
           const data1 = await res1.json();
