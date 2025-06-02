@@ -29,7 +29,7 @@ export async function POST(req) {
             chat, send_email, book_cab, make_call, check_mail, send_whatsapp_message
 
             🧠 Definitions:
-            chat – general talk, questions or follow-up question, jokes, hypotheticals, or exploratory requests  
+            chat – general talk, questions, jokes, hypotheticals, or exploratory requests  
             send_email – user wants to write/send an email now  
             book_cab – user wants a ride or cab now  
             make_call – user wants to call someone now  

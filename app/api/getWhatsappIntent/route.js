@@ -19,7 +19,7 @@ export async function POST(req) {
       messages: [
         {
           role: 'system',
-          content: `You are an AI that only replies with a JSON object indicating whether the user wants to send a WhatsApp message now. The user input is in this language: ${lang}.
+          content: `You are an AI that only replies with a JSON object indicating whether the user wants to send a WhatsApp message now, even if it's a short confirmation like "yes", "sure", "okay". The user input is in this language: ${lang}.
             Only reply with: { "result": true } or { "result": false }.
             Do not explain anything.`,
         },

@@ -24,7 +24,7 @@ export default function HomePage() {
   const [settingsFlag, setSettingsFlag] = useState(false);
   const [signOutFlag, setSignOutFlag] = useState(false);
   const eyesRef = useRef(null);
-  const [upcomingEventsData, setUpcomingEventsData] = useState();
+  const [upcomingEventsData, setUpcomingEventsData] = useState([]);
   const [weather, setWeather] = useState({});
   const [voiceModeToggle, setVoiceModeToggle] = useState(false);
   const [query, setQuery] = useState('');
@@ -256,6 +256,9 @@ export default function HomePage() {
         );
         const data = await response.json();
         setWeather(data);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('weather', JSON.stringify(data));
+        }
         // console.log("Current Weather:", data);
       } catch (error) {
         console.error('Failed to get location or weather data:', error);
@@ -300,7 +303,11 @@ export default function HomePage() {
             return dateA - dateB;
           })
           .slice(0, 3); // Keep only the next 3 upcoming events
+        // console.log(upcomingEvents);
         setUpcomingEventsData(upcomingEvents);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('events', JSON.stringify(upcomingEvents));
+        }
         // console.log("Next 3 upcoming events:", upcomingEvents);
       } else {
         console.log('No upcoming events found.');
@@ -356,9 +363,11 @@ export default function HomePage() {
     getSession();
     setSessionQuery(sessionStorage.getItem('query') || '');
     setMessages(JSON.parse(sessionStorage.getItem('messages')) || []);
-    if (typeof window !== undefined) {
+    if (typeof window !== 'undefined') {
       setVoiceId(localStorage.getItem('voiceId') || 'KoVIHoyLDrQyd4pGalbs');
       setLang(localStorage.getItem('lang') || 'English');
+      setWeather(JSON.parse(sessionStorage.getItem('weather')) || {});
+      setUpcomingEventsData(JSON.parse(sessionStorage.getItem('events')) || {});
     }
   }, []);
 
@@ -744,6 +753,7 @@ export default function HomePage() {
             currentDate: date.toLocaleDateString(),
             weather,
             lang,
+            upcomingEventsData,
           }),
         });
         const { reply } = await chatRes.json();
@@ -876,7 +886,7 @@ export default function HomePage() {
           body: JSON.stringify({
             message: query,
             convo: [...convo, { role: 'user', content: query }],
-            lang
+            lang,
           }),
         });
         const data = await res.json();
@@ -957,7 +967,7 @@ export default function HomePage() {
             name:
               session?.user?.user_metadata?.name.split(' ')[0] || 'My Master',
             convo: [...convo, { role: 'user', content: query }],
-            lang
+            lang,
           }),
         });
         const data = await res.json();
@@ -1073,7 +1083,7 @@ export default function HomePage() {
         const data = await res.json();
         // console.log(data);
         if (data.error) {
-          console.log(data.error);
+          // console.log(data.error);
           const reply = `Looks like there is an issue in interpreting your request, please try again later!`;
           let translatedReply = await translateReply(lang, reply);
           setMessages((prev) => [
@@ -1149,7 +1159,16 @@ export default function HomePage() {
         const mailIds = messages?.map((message) => message.id);
         // console.log(mailIds);
         if (!mailIds) {
-          const reply = `No Emails found with your particular query!`;
+          const reply =
+            `No Emails found with your particular query!  \n` + // note the two spaces before \n, this tells the <ReactMarkdown></ReactMarkdown> to jump to next line
+            (data.fields.time ? `• Time: ${data.fields.time}  \n` : '') +
+            (data.fields.subject
+              ? `• Subject: ${data.fields.subject}  \n`
+              : '') +
+            (from ? `• From: ${from}  \n` : '') +
+            (to ? `• To: ${to}  \n` : '') +
+            (data.fields.before ? `• Before: ${data.fields.before}  \n` : '') +
+            (data.fields.after ? `• After: ${data.fields.after}  \n` : '');
           let translatedReply = await translateReply(lang, reply);
           setMessages((prev) => [
             ...prev,
@@ -1552,7 +1571,11 @@ export default function HomePage() {
             viewBox="0 0 24 24"
             width="1.8rem"
             height="1.8rem"
-            onClick={() => setSettingsFlag(!settingsFlag)}
+            onClick={() => {
+              setSettingsFlag(!settingsFlag);
+              setShowVoices(false);
+              setShowLangs(false);
+            }}
           >
             <g fill="none">
               <path
@@ -1715,25 +1738,32 @@ export default function HomePage() {
         style={!reply ? { overflow: 'hidden' } : null}
       >
         <section className={styles.chatScreen} key={lang}>
-          {session && !query && !sessionStorage.getItem('query') && (
-            <div className={styles.greetingsModal}>
-              <div className={styles.holder}>
-                <h1>
-                  {greeting}, {session?.user?.user_metadata?.name.split(' ')[0]}
-                </h1>
+          {session &&
+            query.length === 0 &&
+            sessionQuery.length === 0 &&
+            !isProcessing &&
+            reply.length === 0 && (
+              <div className={styles.greetingsModal}>
+                <div className={styles.holder}>
+                  <h1>
+                    {greeting},{' '}
+                    {session?.user?.user_metadata?.name.split(' ')[0]}
+                  </h1>
+                </div>
+                <div className={styles.holder}>
+                  <h1>
+                    {lang === 'English'
+                      ? 'How can I assist you today?'
+                      : 'Bagaimana saya boleh membantu anda hari ini?'}
+                  </h1>
+                </div>
               </div>
-              <div className={styles.holder}>
-                <h1>
-                  {lang === 'English'
-                    ? 'How can I assist you today?'
-                    : 'Bagaimana saya boleh membantu anda hari ini?'}
-                </h1>
-              </div>
-            </div>
-          )}
-          {upcomingEventsData &&
-            !sessionStorage.getItem('query') &&
-            !query &&
+            )}
+          {upcomingEventsData.length > 0 &&
+            sessionQuery.length === 0 &&
+            query.length === 0 &&
+            !isProcessing &&
+            reply.length === 0 &&
             Object.keys(weather).length !== 0 &&
             !isRecording && (
               <section className={styles.cardsContainer}>

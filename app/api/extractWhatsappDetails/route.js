@@ -42,7 +42,13 @@ export async function POST(req) {
     temperature: 0,
   });
 
-  const reply = completion.choices[0]?.message?.content?.trim() || '{}';
+  const reply = completion.choices[0]?.message?.content?.trim();
+  if (reply.startsWith('```')) {
+    reply = reply
+      .replace(/```(?:json)?\n?/, '')
+      .replace(/```$/, '')
+      .trim();
+  }
 
   try {
     const extracted = JSON.parse(reply);

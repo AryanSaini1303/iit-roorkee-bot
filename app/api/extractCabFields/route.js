@@ -49,9 +49,16 @@ export async function POST(req) {
       temperature: 0,
     });
 
+    const raw = response.choices[0].message.content.trim();
+    if (raw.startsWith('```')) {
+      raw = raw
+        .replace(/```(?:json)?\n?/, '')
+        .replace(/```$/, '')
+        .trim();
+    }
     let data;
     try {
-      data = JSON.parse(response.choices[0].message.content.trim());
+      data = JSON.parse(raw);
     } catch {
       data = {
         origin: null,

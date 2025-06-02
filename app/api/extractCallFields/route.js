@@ -50,19 +50,26 @@ export async function POST(req) {
     });
 
     const raw = response.choices[0].message.content || '';
-
-    // Extract JSON object from response text safely
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) {
-      return new Response(
-        JSON.stringify({
-          error: 'Could not parse call data from OpenAI response',
-        }),
-        { status: 500 },
-      );
+    // console.log(raw);
+    if (raw.startsWith('```')) {
+      raw = raw
+        .replace(/```(?:json)?\n?/, '')
+        .replace(/```$/, '')
+        .trim();
     }
 
-    const parsed = JSON.parse(match[0]);
+    // Extract JSON object from response text safely
+    // const match = raw.match(/\{[\s\S]*\}/);
+    // if (!match) {
+    //   return new Response(
+    //     JSON.stringify({
+    //       error: 'Could not parse call data from OpenAI response',
+    //     }),
+    //     { status: 500 },
+    //   );
+    // }
+
+    const parsed = JSON.parse(raw);
     // console.log(parsed);
 
     return new Response(JSON.stringify(parsed), {

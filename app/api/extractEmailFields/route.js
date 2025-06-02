@@ -50,7 +50,7 @@ export async function POST(req) {
         .replace(/```$/, '')
         .trim();
     }
-    console.log(content);
+    // console.log(content);
     const json = JSON.parse(content);
     // console.log(json);
 

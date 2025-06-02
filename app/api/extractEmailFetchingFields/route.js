@@ -29,6 +29,7 @@ export async function POST(req) {
       - "after [date]", "since [date]" → "after": "YYYY-MM-DD"
       - If the year is not mentioned, assume the current year based on today’s date.
       - Interpret pronouns like "him" or "her" based on prior context (e.g., if a name was mentioned earlier).
+      - If there's a "before" or "after" mentioned then "time" automatically becomes "" i.e. "time":"" as if a date is given then there's no need of "time" or number of days
 
       📌 Only include fields clearly stated or strongly implied.
       ❌ Do not guess missing fields or add extras.
@@ -57,8 +58,15 @@ export async function POST(req) {
       temperature: 0,
     });
 
-    const raw = chatResponse.choices[0].message?.content?.trim();
-    console.log(raw);
+    let raw = chatResponse.choices[0].message?.content?.trim();
+    // console.log(raw);
+    if (raw.startsWith('```')) {
+      raw = raw
+        .replace(/```(?:json)?\n?/, '')
+        .replace(/```$/, '')
+        .trim();
+    }
+    // console.log(raw);
 
     if (!raw) {
       return NextResponse.json(

@@ -19,9 +19,8 @@ export async function POST(req) {
       messages: [
         {
           role: 'system',
-          content: `You are an AI that only replies with a JSON object indicating whether the user wants to make a phone call. The user input is in this language: ${lang}.
-            Only reply with: { "result": true } or { "result": false }.
-            Do not explain anything.`,
+          content: `You are an AI that decides if the user wants to make a phone call **based on the current message**, even if it's a short confirmation like "yes", "sure", "okay". 
+          The language is ${lang}. Only return: { "result": true } or { "result": false }. Never explain.`,
         },
         {
           role: 'user',
@@ -31,6 +30,7 @@ export async function POST(req) {
     });
 
     const raw = completion.choices[0]?.message?.content?.trim() || '';
+    // console.log(raw);
 
     try {
       const parsed = JSON.parse(raw);

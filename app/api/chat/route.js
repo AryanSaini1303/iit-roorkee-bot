@@ -39,8 +39,9 @@ function formatWeatherData(data) {
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { query, messages, currentDate, weather, lang } = body;
-
+    const { query, messages, currentDate, weather, lang, upcomingEventsData } =
+      body;
+    // console.log(upcomingEventsData);
     const essentialWeather = extractEssentialWeatherData(weather);
     const formattedWeather = formatWeatherData(essentialWeather);
 
@@ -69,7 +70,8 @@ export async function POST(req) {
         },
         {
           role: 'user',
-          content: `Context: Today's date is ${currentDate}. The current weather at user's location is: ${formattedWeather}`,
+          content: `Context: Today's date is ${currentDate}. The user's current weather is: ${formattedWeather}. Here are their first 3 upcoming events: ${JSON.stringify(upcomingEventsData)}.
+          )}`,
         },
         ...messages,
         {
