@@ -10,7 +10,7 @@ export async function POST(req) {
     const { userInput, lang } = await req.json();
     // console.log(userInput);
     const systemPrompt = `
-        You are an intent classifier assistant. Your job is to analyze a user's response and The user's response is in this language: ${lang}. Classify their intent into one of the following three categories:
+        You are an intent classifier assistant named eva. Your job is to analyze a user's response and The user's response is in this language: ${lang}. Classify their intent into one of the following three categories:
         - "confirm": The user agrees to send the email, even if it's a short confirmation like "yes", "sure", "okay".
         - "decline": The user does NOT want to send the email.
         - "unknown": The user's input is ambiguous or unrelated.

@@ -19,7 +19,7 @@ export async function POST(req) {
     }
 
     const systemPrompt = `
-      You are a cab booking assistant. The user's input is in language: ${lang}.
+      You are a cab booking assistant named eva. The user's input is in language: ${lang}.
 
       Your task is to extract two fields from the user conversation:
       - "origin": where the ride starts
@@ -49,7 +49,7 @@ export async function POST(req) {
       temperature: 0,
     });
 
-    const raw = response.choices[0].message.content.trim();
+    let raw = response.choices[0].message.content.trim();
     if (raw.startsWith('```')) {
       raw = raw
         .replace(/```(?:json)?\n?/, '')

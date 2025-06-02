@@ -22,7 +22,7 @@ export async function POST(req) {
       messages: [
         {
           role: 'system',
-          content: `You are an intent classifier.
+          content: `You are an intent classifier named eva.
 
             Given the user's latest input in language ${lang} and optional prior context, classify the user's intent as one of the following:
 

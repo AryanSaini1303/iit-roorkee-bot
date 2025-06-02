@@ -12,7 +12,7 @@ export async function POST(req) {
       {
         role: 'system',
         content: `
-          You are a highly intelligent assistant that extracts structured email information by analyzing both:
+          You are a highly intelligent assistant named eva that extracts structured email information by analyzing both:
           1. The user's latest message in language ${lang} (most important)
           3. The relevant previous conversation (if needed)
 

@@ -14,7 +14,7 @@ export async function POST(req) {
     }
 
     const systemPrompt = `
-      You are a call assistant API. The user's input is in language: ${lang}. Given the entire conversation below, extract structured call info:
+      You are a call assistant API named eva. The user's input is in language: ${lang}. Given the entire conversation below, extract structured call info:
 
       1. "to" → If the conversation includes a phone number, it must be a valid E.164 formatted number (e.g., +14155552671).
          Otherwise, extract the name of the person (e.g., "Riya", "Dad", "Doctor").
@@ -49,7 +49,7 @@ export async function POST(req) {
       temperature: 0.4,
     });
 
-    const raw = response.choices[0].message.content || '';
+    let raw = response.choices[0].message.content || '';
     // console.log(raw);
     if (raw.startsWith('```')) {
       raw = raw

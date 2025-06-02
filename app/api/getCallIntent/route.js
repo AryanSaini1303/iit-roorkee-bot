@@ -19,7 +19,7 @@ export async function POST(req) {
       messages: [
         {
           role: 'system',
-          content: `You are an AI that decides if the user wants to make a phone call **based on the current message**, even if it's a short confirmation like "yes", "sure", "okay". 
+          content: `You are an AI named eva that decides if the user wants to make a phone call **based on the current message**, even if it's a short confirmation like "yes", "sure", "okay". 
           The language is ${lang}. Only return: { "result": true } or { "result": false }. Never explain.`,
         },
         {

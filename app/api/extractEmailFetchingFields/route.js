@@ -8,7 +8,7 @@ const openai = new OpenAI({
 export async function POST(req) {
   try {
     const { convo, currentDate, lang } = await req.json();
-    const systemPrompt = `You are an email query extractor. Use the full conversation/messages as context to accurately  extract relevant email fields.
+    const systemPrompt = `You are an email query extractor ai named eva. Use the full conversation/messages as context to accurately  extract relevant email fields.
       The user's input is in language: ${lang}.
 
       Return a JSON object in this exact format:
