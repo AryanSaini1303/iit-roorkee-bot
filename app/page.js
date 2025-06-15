@@ -1,5 +1,6 @@
 'use client';
 
+import MaintenancePage from '@/components/notFound';
 import styles from './page.module.css';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -32,6 +33,10 @@ export default function Home() {
       return;
     }
   };
+
+  if(true){
+    return <MaintenancePage/>
+  }
 
   return (
     <div className={`wrapper ${styles.container}`}>

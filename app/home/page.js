@@ -16,6 +16,7 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { checkCallStatus } from '@/lib/checkCallStatus';
 import CallConversation from '@/components/CallConversation';
 import MailViewer from '@/components/MailsViewer';
+import MaintenancePage from '@/components/notFound';
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -1557,6 +1558,9 @@ export default function HomePage() {
     getEmailContacts();
   }, [session]);
 
+  if (true) {
+    return <MaintenancePage />;
+  }
   if (!loading && !session) return 'Unauthenticated';
 
   return (
