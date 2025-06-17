@@ -34,9 +34,9 @@ export default function Home() {
     }
   };
 
-  if(true){
-    return <MaintenancePage/>
-  }
+  // if(true){
+  //   return <MaintenancePage/>
+  // }
 
   return (
     <div className={`wrapper ${styles.container}`}>

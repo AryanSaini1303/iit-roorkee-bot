@@ -1558,9 +1558,9 @@ export default function HomePage() {
     getEmailContacts();
   }, [session]);
 
-  if (true) {
-    return <MaintenancePage />;
-  }
+  // if (true) {
+  //   return <MaintenancePage />;
+  // }
   if (!loading && !session) return 'Unauthenticated';
 
   return (
