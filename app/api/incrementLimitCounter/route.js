@@ -12,16 +12,13 @@ export async function POST(req) {
       .from('limit_counter')
       .select('*')
       .eq('user_id', user?.id);
-
     if (error) {
       return NextResponse.json({ error: "Can't fetch user!" }, { status: 500 });
     }
-
     if (data.length === 0) {
       const { error } = await supabase
         .from('limit_counter')
         .insert([{ email: user?.email, query_num: 1, user_id: user?.id }]);
-
       if (error) {
         return NextResponse.json({ error: 'Insert error' }, { status: 500 });
       }
@@ -39,11 +36,9 @@ export async function POST(req) {
               : null,
         })
         .eq('user_id', user?.id);
-
       if (error) {
         return NextResponse.json({ error: 'Update error' }, { status: 500 });
       }
-
       return NextResponse.json({ success: true }, { status: 200 });
     }
   } catch (error) {
