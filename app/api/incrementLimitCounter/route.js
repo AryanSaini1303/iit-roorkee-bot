@@ -27,9 +27,17 @@ export async function POST(req) {
       }
       return NextResponse.json({ success: true }, { status: 200 });
     } else {
+      const date = new Date();
       const { error } = await supabase
         .from('limit_counter')
-        .update({ query_num: data[0].query_num + 1 })
+        .update({
+          query_num: data[0].query_num + 1,
+          limit_reached_at:
+            data[0].query_num + 1 ===
+            Number(process.env.NEXT_PUBLIC_QUERY_LIMIT)
+              ? date
+              : null,
+        })
         .eq('user_id', user?.id);
 
       if (error) {

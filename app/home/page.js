@@ -17,6 +17,7 @@ import CallConversation from '@/components/CallConversation';
 import MailViewer from '@/components/MailsViewer';
 import MaintenancePage from '@/components/notFound';
 import { createClient } from '@/utils/supabase/client';
+import NoPromptsMessage from '@/components/NoPromptMessage';
 
 export default function HomePage() {
   const supabase = createClient();
@@ -62,6 +63,7 @@ export default function HomePage() {
   const [lang, setLang] = useState('');
   const [showVoices, setShowVoices] = useState(false);
   const [showLangs, setShowLangs] = useState(false);
+  const [queryNum, setQueryNum] = useState(0);
 
   const playElevenLabsAudio = async (text, intent, cabUrl) => {
     try {
@@ -281,7 +283,7 @@ export default function HomePage() {
   }, [voiceInputFlag, query, lang]);
 
   useEffect(() => {
-    if(!session) return;
+    if (!session) return;
     const fetchEvents = async () => {
       // console.log("events");
       const response = await fetch(
@@ -554,7 +556,7 @@ export default function HomePage() {
             credentials: 'include',
           });
           const data = await response.json();
-          console.log(data);
+          // console.log(data);
         } catch (error) {
           console.error('Error in testing:', error);
         }
@@ -1578,6 +1580,29 @@ export default function HomePage() {
     getEmailContacts();
   }, [session]);
 
+  useEffect(() => {
+    const getLimitCounter = async () => {
+      try {
+        const response = await fetch('/api/getLimitCounter', {
+          credentials: 'include',
+        });
+        const data = await response.json();
+        console.log(data);
+        setQueryNum(data.num);
+      } catch (error) {
+        console.log(error.message);
+      }
+    };
+    getLimitCounter();
+  }, [messages]);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('code')) {
+      router.replace('/home'); // clean URL without code
+    }
+  }, []);
+
   // if (true) {
   //   return <MaintenancePage />;
   // }
@@ -1824,134 +1849,162 @@ export default function HomePage() {
             <MailViewer emails={mails} queryParams={mailQuery} />
           ) : null}
         </section>
-        {voiceModeToggle ? (
-          <section
-            className={styles.aiListener}
-            style={!reply ? { position: 'absolute' } : null}
-          >
-            {voiceInputFlag ? (
-              <div
-                className={styles.voiceBeats}
-                onDoubleClick={() =>
-                  !voiceInputFlag && setVoiceModeToggle(false)
-                }
-                onClick={() => {
-                  setTimeout(() => {
-                    setVoiceInputFlag(true);
-                  }, 500);
-                }}
-                key={voiceInputFlag}
+        <section>
+          {queryNum < process.env.NEXT_PUBLIC_QUERY_LIMIT ? (
+            voiceModeToggle ? (
+              <section
+                className={styles.aiListener}
+                style={!reply ? { position: 'absolute' } : null}
               >
-                <div></div>
-                <div></div>
-                <div></div>
-              </div>
-            ) : (
-              <div
-                className={styles.eyes}
-                ref={eyesRef}
-                onDoubleClick={() =>
-                  !voiceInputFlag && setVoiceModeToggle(false)
-                }
-                onClick={() => {
-                  setTimeout(() => {
-                    setVoiceInputFlag(true);
-                    playSound();
-                    stopAudio();
-                  }, 500);
-                }}
-              >
-                <div></div>
-                <div></div>
-              </div>
-            )}
-            <img
-              src="/images/aiBackground7.gif"
-              alt="AI"
-              onDoubleClick={() => !voiceInputFlag && setVoiceModeToggle(false)}
-              onClick={() => {
-                setTimeout(() => {
-                  setVoiceInputFlag(true);
-                  playSound();
-                  stopAudio();
-                }, 500);
-              }}
-              style={isRecording ? { transform: 'scale(1.3)' } : null}
-            />
-          </section>
-        ) : (
-          <section
-            className={styles.textInput}
-            key={voiceModeToggle}
-            style={!reply ? { position: 'absolute' } : null}
-          >
-            <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                placeholder={
-                  lang === 'English'
-                    ? 'Enter your query...'
-                    : 'Masukkan pertanyaan anda...'
-                }
-                name="query"
-                required
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-              />
-              <div className={styles.buttonContainer}>
-                <button type="submit">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    width="2.5rem"
-                    height="2.5rem"
+                {voiceInputFlag ? (
+                  <div
+                    className={styles.voiceBeats}
+                    onDoubleClick={() =>
+                      !voiceInputFlag && setVoiceModeToggle(false)
+                    }
+                    onClick={() => {
+                      setTimeout(() => {
+                        setVoiceInputFlag(true);
+                      }, 500);
+                    }}
+                    key={voiceInputFlag}
                   >
-                    <path
-                      fill="black"
-                      fillRule="evenodd"
-                      d="M12 1.25C6.063 1.25 1.25 6.063 1.25 12S6.063 22.75 12 22.75S22.75 17.937 22.75 12S17.937 1.25 12 1.25m1.03 6.72l3.5 3.5a.75.75 0 0 1 0 1.06l-3.5 3.5a.75.75 0 1 1-1.06-1.06l2.22-2.22H8a.75.75 0 0 1 0-1.5h6.19l-2.22-2.22a.75.75 0 0 1 1.06-1.06"
-                      clipRule="evenodd"
-                    ></path>
-                  </svg>
-                </button>
-                <button
-                  type="button"
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                  </div>
+                ) : (
+                  <div
+                    className={styles.eyes}
+                    ref={eyesRef}
+                    onDoubleClick={() =>
+                      !voiceInputFlag && setVoiceModeToggle(false)
+                    }
+                    onClick={() => {
+                      setTimeout(() => {
+                        if (
+                          queryNum >=
+                          Number(process.env.NEXT_PUBLIC_QUERY_LIMIT)
+                        )
+                          return;
+                        setVoiceInputFlag(true);
+                        playSound();
+                        stopAudio();
+                      }, 500);
+                    }}
+                  >
+                    <div></div>
+                    <div></div>
+                  </div>
+                )}
+                <img
+                  src="/images/aiBackground7.gif"
+                  alt="AI"
+                  onDoubleClick={() =>
+                    !voiceInputFlag && setVoiceModeToggle(false)
+                  }
                   onClick={() => {
-                    setVoiceModeToggle(true);
-                    setVoiceInputFlag(false);
+                    setTimeout(() => {
+                      if (
+                        queryNum >= Number(process.env.NEXT_PUBLIC_QUERY_LIMIT)
+                      )
+                        return;
+                      setVoiceInputFlag(true);
+                      playSound();
+                      stopAudio();
+                    }, 500);
                   }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 26 26"
-                    width="2.5rem"
-                    height="2.5rem"
-                  >
-                    <g fill="black">
-                      <path
-                        d="M26 14c0 6.627-5.373 12-12 12S2 20.627 2 14S7.373 2 14 2s12 5.373 12 12"
-                        opacity=".2"
-                      ></path>
-                      <path
-                        fillRule="evenodd"
-                        d="M10.75 7.25a2.25 2.25 0 0 1 4.5 0v3.5a2.25 2.25 0 0 1-4.5 0z"
-                        clipRule="evenodd"
-                      ></path>
-                      <path d="M13 20c-2.48 0-4-.217-4-1s1.52-1 4-1s4 .217 4 1s-1.52 1-4 1"></path>
-                      <path d="M12.5 15.5h1V19h-1z"></path>
-                      <path d="M17 10.5a.5.5 0 0 1 1 0v1.65c0 2.421-2.254 4.35-5 4.35s-5-1.929-5-4.35V10.5a.5.5 0 0 1 1 0v1.65c0 1.831 1.775 3.35 4 3.35s4-1.519 4-3.35z"></path>
-                      <path
-                        fillRule="evenodd"
-                        d="M13 24.5c6.351 0 11.5-5.149 11.5-11.5S19.351 1.5 13 1.5S1.5 6.649 1.5 13S6.649 24.5 13 24.5m0 1c6.904 0 12.5-5.596 12.5-12.5S19.904.5 13 .5S.5 6.096.5 13S6.096 25.5 13 25.5"
-                        clipRule="evenodd"
-                      ></path>
-                    </g>
-                  </svg>
-                </button>
-              </div>
-            </form>
-          </section>
-        )}
+                  style={
+                    isRecording
+                      ? { transform: 'scale(1.3)' }
+                      : queryNum >= Number(process.env.NEXT_PUBLIC_QUERY_LIMIT)
+                      ? {}
+                      : null
+                  }
+                />
+              </section>
+            ) : (
+              <section
+                className={styles.textInput}
+                key={voiceModeToggle}
+                style={!reply ? { position: 'absolute' } : null}
+              >
+                <form onSubmit={handleSubmit}>
+                  <input
+                    type="text"
+                    placeholder={
+                      lang === 'English'
+                        ? 'Enter your query...'
+                        : 'Masukkan pertanyaan anda...'
+                    }
+                    name="query"
+                    required
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                  />
+                  <div className={styles.buttonContainer}>
+                    <button
+                      type="submit"
+                      disabled={
+                        queryNum >= Number(process.env.NEXT_PUBLIC_QUERY_LIMIT)
+                      }
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        width="2.5rem"
+                        height="2.5rem"
+                      >
+                        <path
+                          fill="black"
+                          fillRule="evenodd"
+                          d="M12 1.25C6.063 1.25 1.25 6.063 1.25 12S6.063 22.75 12 22.75S22.75 17.937 22.75 12S17.937 1.25 12 1.25m1.03 6.72l3.5 3.5a.75.75 0 0 1 0 1.06l-3.5 3.5a.75.75 0 1 1-1.06-1.06l2.22-2.22H8a.75.75 0 0 1 0-1.5h6.19l-2.22-2.22a.75.75 0 0 1 1.06-1.06"
+                          clipRule="evenodd"
+                        ></path>
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVoiceModeToggle(true);
+                        setVoiceInputFlag(false);
+                      }}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 26 26"
+                        width="2.5rem"
+                        height="2.5rem"
+                      >
+                        <g fill="black">
+                          <path
+                            d="M26 14c0 6.627-5.373 12-12 12S2 20.627 2 14S7.373 2 14 2s12 5.373 12 12"
+                            opacity=".2"
+                          ></path>
+                          <path
+                            fillRule="evenodd"
+                            d="M10.75 7.25a2.25 2.25 0 0 1 4.5 0v3.5a2.25 2.25 0 0 1-4.5 0z"
+                            clipRule="evenodd"
+                          ></path>
+                          <path d="M13 20c-2.48 0-4-.217-4-1s1.52-1 4-1s4 .217 4 1s-1.52 1-4 1"></path>
+                          <path d="M12.5 15.5h1V19h-1z"></path>
+                          <path d="M17 10.5a.5.5 0 0 1 1 0v1.65c0 2.421-2.254 4.35-5 4.35s-5-1.929-5-4.35V10.5a.5.5 0 0 1 1 0v1.65c0 1.831 1.775 3.35 4 3.35s4-1.519 4-3.35z"></path>
+                          <path
+                            fillRule="evenodd"
+                            d="M13 24.5c6.351 0 11.5-5.149 11.5-11.5S19.351 1.5 13 1.5S1.5 6.649 1.5 13S6.649 24.5 13 24.5m0 1c6.904 0 12.5-5.596 12.5-12.5S19.904.5 13 .5S.5 6.096.5 13S6.096 25.5 13 25.5"
+                            clipRule="evenodd"
+                          ></path>
+                        </g>
+                      </svg>
+                    </button>
+                  </div>
+                </form>
+              </section>
+            )
+          ) : (
+            <NoPromptsMessage />
+          )}
+        </section>
       </div>
     </div>
   );

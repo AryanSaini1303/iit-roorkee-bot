@@ -8,6 +8,8 @@
   padding: 20px;
   border-radius: 10px;
   overflow-wrap: break-word;
+  overflow-y: scroll;
+  max-height: 55vh;
 }
 
 /* Paragraphs */
