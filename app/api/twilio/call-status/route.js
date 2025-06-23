@@ -1,6 +1,7 @@
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/utils/supabase/client';
 
 export async function POST(req) {
+  const supabase = createClient();
   const formData = await req.formData();
   const callSid = formData.get('CallSid');
   const callStatus = formData.get('CallStatus');
