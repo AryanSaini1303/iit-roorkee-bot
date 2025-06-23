@@ -281,6 +281,7 @@ export default function HomePage() {
   }, [voiceInputFlag, query, lang]);
 
   useEffect(() => {
+    if(!session) return;
     const fetchEvents = async () => {
       // console.log("events");
       const response = await fetch(
@@ -369,7 +370,7 @@ export default function HomePage() {
       setVoiceId(localStorage.getItem('voiceId') || 'KoVIHoyLDrQyd4pGalbs');
       setLang(localStorage.getItem('lang') || 'English');
       setWeather(JSON.parse(sessionStorage.getItem('weather')) || {});
-      setUpcomingEventsData(JSON.parse(sessionStorage.getItem('events')) || {});
+      setUpcomingEventsData(JSON.parse(sessionStorage.getItem('events')) || []);
     }
   }, []);
 
