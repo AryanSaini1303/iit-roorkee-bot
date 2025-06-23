@@ -1,6 +1,5 @@
 'use client';
 
-import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import styles from './page.module.css';
@@ -17,8 +16,10 @@ import { checkCallStatus } from '@/lib/checkCallStatus';
 import CallConversation from '@/components/CallConversation';
 import MailViewer from '@/components/MailsViewer';
 import MaintenancePage from '@/components/notFound';
+import { createClient } from '@/utils/supabase/client';
 
 export default function HomePage() {
+  const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const router = useRouter();
@@ -541,6 +542,24 @@ export default function HomePage() {
     setReply('');
     setAudioIsReady(false);
     stopAudio();
+    if (!emailProcess && !callProcess && !whatsappProcess) {
+      const testing = async () => {
+        try {
+          const response = await fetch('/api/incrementLimitCounter', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+          });
+          const data = await response.json();
+          console.log(data);
+        } catch (error) {
+          console.error('Error in testing:', error);
+        }
+      };
+      testing();
+    }
     if (!sessionStorage.getItem('query')) {
       sessionStorage.setItem('query', query);
     } else {

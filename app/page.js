@@ -2,9 +2,10 @@
 
 import MaintenancePage from '@/components/notFound';
 import styles from './page.module.css';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/utils/supabase/client';
 
 export default function Home() {
+  const supabase = createClient();
   const signIn = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
