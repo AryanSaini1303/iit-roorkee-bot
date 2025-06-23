@@ -260,7 +260,7 @@ export default function HomePage() {
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('weather', JSON.stringify(data));
         }
-        // console.log("Current Weather:", data);
+        // console.log('Current Weather:', data);
       } catch (error) {
         console.error('Failed to get location or weather data:', error);
       }
@@ -1763,12 +1763,12 @@ export default function HomePage() {
                 </div>
               </div>
             )}
-          {upcomingEventsData.length > 0 &&
-            sessionQuery.length === 0 &&
+          {sessionQuery.length === 0 &&
             query.length === 0 &&
             !isProcessing &&
             reply.length === 0 &&
-            Object.keys(weather).length !== 0 &&
+            (Object.keys(weather).length !== 0 ||
+              upcomingEventsData.length > 0) &&
             !isRecording && (
               <section className={styles.cardsContainer}>
                 {upcomingEventsData.length !== 0 && (
