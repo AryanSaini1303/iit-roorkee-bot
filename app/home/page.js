@@ -1587,7 +1587,7 @@ export default function HomePage() {
           credentials: 'include',
         });
         const data = await response.json();
-        console.log(data);
+        // console.log(data);
         setQueryNum(data.num);
       } catch (error) {
         console.log(error.message);
