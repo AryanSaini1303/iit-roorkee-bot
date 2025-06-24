@@ -6,10 +6,11 @@ export default function MaintenancePage() {
       <div className={styles.card}>
         <h1 className={styles.title}>🚫 Deployment Inactive</h1>
         <p className={styles.message}>
-          This project’s hosting has expired or the deployment is no longer active.
+          This project’s hosting and services has expired.
         </p>
         <p className={styles.subMessage}>
-          If you are the site owner, please verify your deployment status on Vercel or contact your hosting provider.
+          If you are the site owner, please verify your deployment status on
+          Vercel or contact your developer.
         </p>
         <div className={styles.code}>
           <code>ERR_DEPLOYMENT_NOT_FOUND</code>
