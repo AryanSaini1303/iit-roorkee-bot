@@ -8,6 +8,7 @@ import ChatPlaceholder from '@/components/ChatPlaceholder';
 import ZenaLoading from '@/components/ZenaLoading';
 import { createClient } from '@/utils/supabase/client';
 import MaintenancePage from '@/components/notFound';
+import PagesComponent from '@/components/PagesComponent';
 
 export default function HomePage() {
   const supabase = createClient();
@@ -24,6 +25,8 @@ export default function HomePage() {
   const [sessionQuery, setSessionQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [pages, setPages] = useState([]);
+  const [showPages, setShowPages] = useState(false);
 
   const handleClickOutside = (event) => {
     if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -111,6 +114,7 @@ export default function HomePage() {
         },
       });
       const { answer, pages } = await chatRes.json();
+      setPages(pages);
       console.log(pages);
       setMessages((prev) => [...prev, { role: 'system', content: answer }]);
       setReply(answer);
@@ -133,6 +137,7 @@ export default function HomePage() {
 
   return (
     <div className={`${'wrapper'} ${'container'}`}>
+      {showPages && <PagesComponent pages={pages} func={setShowPages} />}
       <img src="/images/logo.gif" alt="IITR logo" className={styles.logo} />
       <ul className={styles.header}>
         <li className={styles.headerElement}>
@@ -201,7 +206,7 @@ export default function HomePage() {
               </div>
             )}
           {reply.length !== 0 ? (
-            <ChatResponse content={reply} />
+            <ChatResponse content={reply} pages={pages} func={setShowPages}/>
           ) : reply.length === 0 &&
             sessionQuery.length !== 0 &&
             !isProcessing ? (

@@ -226,7 +226,7 @@
   background-color: white;
   margin: 0 3rem;
   border-radius: 10px;
-  opacity: 0.6;
+  opacity: 0.65;
   height: 85vh;
   backdrop-filter: blur(10px);
   overflow: auto;
@@ -247,7 +247,7 @@
   transform: translate(-50%, -50%);
   right: 0.5rem;
   top: 6rem;
-  z-index: 10000;
+  z-index: 1;
 }
 
 /* GREETINGS MODAL */
@@ -470,24 +470,9 @@
     margin: 0;
   }
   .textInput form {
-    flex-direction: column;
     border-radius: 0;
     width: 100%;
     gap: 0.5rem;
-  }
-  .textInput {
-    margin: 0;
-  }
-  .textInput .buttonContainer {
-    width: 88%;
-    display: flex;
-    justify-content: space-between;
-  }
-  .textInput .buttonContainer button:nth-child(1) {
-    order: 2;
-  }
-  .textInput form input {
-    width: 80%;
   }
 }
 
