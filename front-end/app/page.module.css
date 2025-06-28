@@ -1,0 +1,229 @@
+.image {
+  height: 95vh;
+  border-radius: 50px 150px 50px 150px;
+  border: 2px solid white;
+}
+.imageContainer {
+  animation: revealImage 0.8s ease-in-out forwards;
+}
+.container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  place-items: center;
+  font-family: 'Segoe UI', sans-serif;
+}
+.loginSection > img {
+  position: absolute;
+  height: 15rem;
+  top: -4rem;
+  right: -5rem;
+}
+
+.signInBtn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+}
+.signInBtn img {
+  height: 2.5rem;
+}
+.signInBtn h3 {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 550;
+  font-size: 1.1rem;
+}
+.signInBtn {
+  background-color: white;
+  border-radius: 50px;
+  margin: 0 auto;
+  border: none;
+  box-shadow: inset -0.25rem -0.25rem 1rem rgba(0, 0, 0, 0.594);
+  transition: 0.2s all ease-in-out;
+  cursor: pointer;
+  padding: 0 4rem;
+  width: fit-content;
+}
+.signInBtn:hover {
+  background-color: rgba(0, 0, 0, 0.823);
+  color: white;
+}
+.signInBtn:active {
+  transform: scale(0.98);
+  background-color: rgba(0, 0, 0, 0.823);
+  color: white;
+  opacity: 0.5;
+}
+
+/* styles.module.css */
+.loginSection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+  background: transparent;
+  /* backdrop-filter: blur(8px); */
+  /* -webkit-backdrop-filter: blur(8px); */
+  color: #1e1e1e;
+}
+
+.loginSection h1 {
+  font-size: 6rem;
+  font-family: 'Kapakana', cursive;
+  font-optical-sizing: auto;
+  font-weight: bold;
+  font-style: normal;
+  color: #222;
+  margin: 0;
+}
+
+.loginSection p {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+.infoContainer {
+  display: flex;
+}
+.infoContainer img {
+  height: 4.5rem;
+  position: absolute;
+  right: -3.8rem;
+}
+
+.holder {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+@keyframes revealInfo {
+  0% {
+    transform: translateY(4rem);
+    /* opacity: 0; */
+  }
+  50% {
+    transform: translateY(-0.3rem);
+    /* opacity: 1; */
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.loginSection h1,
+.loginSection .infoContainer,
+.loginSection .signInBtn {
+  animation: revealInfo 0.8s ease-in-out forwards;
+}
+
+@keyframes revealImage {
+  0% {
+    opacity: 0;
+    transform: translateX(-1rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 990px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
+  .loginSection {
+    position: absolute;
+    z-index: 2;
+    bottom: 7rem;
+    width: 80%;
+  }
+  .loginSection h1 {
+    color: white;
+  }
+  .loginSection p {
+    color: lightgrey;
+  }
+  .image {
+    height: 80vh;
+  }
+  .imageContainer {
+    position: relative;
+  }
+  .imageContainer::before {
+    content: '';
+    position: absolute;
+    background: linear-gradient(rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.879));
+    bottom: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 1000;
+    border-radius: 50px 150px 50px 150px;
+  }
+  .loginSection .signInBtn h3 {
+    font-size: 0.9rem;
+  }
+  .loginSection .signInBtn {
+    padding: 0 2rem;
+  }
+  .loginSection .signInBtn img {
+    height: 2.2rem;
+  }
+  .loginSection h1 {
+    font-size: 3.8rem;
+  }
+  .loginSection p {
+    font-size: 1.1rem;
+  }
+  .infoContainer img {
+    height: 4rem;
+    right: -3.2rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .image {
+    height: 100vh;
+    border-radius: 0;
+  }
+  .imageContainer {
+    border-radius: 0;
+  }
+  .loginSection {
+    width: 100%;
+    padding: 0;
+  }
+  .loginSection .holder {
+    width: 100%;
+  }
+  .imageContainer::before {
+    border-radius: 0;
+  }
+  .loginSection h1 {
+    font-size: 5rem;
+  }
+  .loginSection p {
+    font-size: 1.2rem;
+    margin-bottom: 1.8rem;
+  }
+  .loginSection .signInBtn h3 {
+    font-size: 1rem;
+  }
+  .loginSection .signInBtn {
+    padding: 0 3rem;
+  }
+  .loginSection .signInBtn img {
+    height: 2.5rem;
+  }
+  .infoContainer img {
+    height: 3.5rem;
+    right: -2.9rem;
+  }
+}
