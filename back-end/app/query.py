@@ -1,7 +1,7 @@
 import os
-from openai import OpenAI
-import chromadb
-from dotenv import load_dotenv
+from openai import OpenAI #type: ignore
+import chromadb #type: ignore
+from dotenv import load_dotenv #type: ignore
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

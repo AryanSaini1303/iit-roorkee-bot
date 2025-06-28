@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Request
-from pydantic import BaseModel
+from fastapi import FastAPI, Request #type: ignore
+from pydantic import BaseModel #type: ignore
 from app.query import get_answer  # refactored function
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware #type: ignore
 
 app = FastAPI()
 app.add_middleware(
