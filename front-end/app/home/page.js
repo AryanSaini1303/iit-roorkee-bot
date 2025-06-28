@@ -100,7 +100,7 @@ export default function HomePage() {
     const processQuery = async () => {
       const convo = messages;
       setMessages((prev) => [...prev, { role: 'user', content: query }]);
-      const chatRes = await fetch('http://127.0.0.1:8000/ask', {
+      const chatRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ask`, {
         method: 'POST',
         body: JSON.stringify({
           question: query,
