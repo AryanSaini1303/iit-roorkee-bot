@@ -9,9 +9,7 @@ export default function ZenaLoading({ lang }) {
         <span></span>
         <span></span>
       </div>
-      <p className={styles.text}>
-        {lang === 'English' ? 'Eva is thinking...' : 'Eva sedang berfikir...'}
-      </p>
+      <p className={styles.text}>Eva is thinking...</p>
     </div>
   );
 }
