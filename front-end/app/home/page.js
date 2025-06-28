@@ -133,6 +133,7 @@ export default function HomePage() {
 
   return (
     <div className={`${'wrapper'} ${'container'}`}>
+      <img src="/images/logo.gif" alt="IITR logo" className={styles.logo} />
       <ul className={styles.header}>
         <li className={styles.headerElement}>
           <h1>Eva</h1>
