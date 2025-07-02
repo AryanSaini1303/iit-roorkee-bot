@@ -91,6 +91,9 @@
 .infoContainer {
   display: flex;
 }
+.loginSection h1{
+  font-family: 'MyCustomFont', sans-serif;
+}
 .infoContainer p{
   font-size: 1.2rem;
 }

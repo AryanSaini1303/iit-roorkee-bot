@@ -18,3 +18,11 @@ body {
   width: 100vw;
   overflow: hidden;
 }
+@font-face {
+  font-family: 'MyCustomFont';
+  src: url('/fonts/SamarkanNormal.woff2') format('woff2'),
+       url('/fonts/SamarkanNormal.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}

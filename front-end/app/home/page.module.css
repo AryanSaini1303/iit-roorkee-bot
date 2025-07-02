@@ -12,7 +12,7 @@
 }
 
 .header .headerElement:nth-child(1) {
-  font-family: 'Kapakana', cursive;
+  font-family: 'MyCustomFont', sans-serif;
   font-optical-sizing: auto;
   font-weight: 500;
   font-style: normal;
@@ -252,7 +252,7 @@
   z-index: 1;
   width: fit-content;
 }
-.logoSection .curved{
+.logoSection .curved {
   position: absolute;
   height: 4.2rem;
   left: 49.5%;
@@ -464,11 +464,22 @@
     gap: 0;
   }
 }
+@media (max-width: 914px) {
+  .header .headerElement:nth-child(1) {
+    font-size: 1.5rem;
+  }
+}
 
 @media (max-width: 850px) {
   .textInput form {
     width: 80%;
     margin: auto;
+  }
+}
+
+@media (max-width: 657px) {
+  .header .headerElement:nth-child(1) {
+    font-size: 1.2rem;
   }
 }
 
@@ -491,7 +502,7 @@
     font-size: clamp(0.8rem, 2vw + 0.8rem, 1.4rem);
   }
   .header .headerElement:nth-child(1) {
-    font-size: 1.3rem;
+    font-size: 1rem;
   }
   .header .headerElement:nth-child(2) {
     padding: 0.3rem;
