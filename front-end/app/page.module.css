@@ -91,6 +91,9 @@
 .infoContainer {
   display: flex;
 }
+.infoContainer p{
+  font-size: 1.2rem;
+}
 .infoContainer img {
   height: 4.5rem;
   position: absolute;

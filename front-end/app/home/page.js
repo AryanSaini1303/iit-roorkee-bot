@@ -138,10 +138,17 @@ export default function HomePage() {
   return (
     <div className={`${'wrapper'} ${'container'}`}>
       {showPages && <PagesComponent pages={pages} func={setShowPages} />}
-      <img src="/images/logo.gif" alt="IITR logo" className={styles.logo} />
+      <div className={styles.logoSection}>
+        <img
+          src="/images/curvedText.png"
+          alt="ICED"
+          className={styles.curved}
+        />
+        <img src="/images/logo.gif" alt="IITR logo" className={styles.logo} />
+      </div>
       <ul className={styles.header}>
         <li className={styles.headerElement}>
-          <h1>Eva</h1>
+          <h1>Varuna</h1>
         </li>
         <li className={styles.headerElement} ref={menuRef}>
           <svg
@@ -206,7 +213,7 @@ export default function HomePage() {
               </div>
             )}
           {reply.length !== 0 ? (
-            <ChatResponse content={reply} pages={pages} func={setShowPages}/>
+            <ChatResponse content={reply} pages={pages} func={setShowPages} />
           ) : reply.length === 0 &&
             sessionQuery.length !== 0 &&
             !isProcessing ? (

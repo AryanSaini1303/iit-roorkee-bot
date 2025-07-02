@@ -242,12 +242,22 @@
 .logo {
   height: 5.5rem;
   width: 5.5rem;
+}
+.logoSection {
   position: absolute;
   left: 50%;
   transform: translate(-50%, -50%);
   right: 0.5rem;
   top: 6rem;
   z-index: 1;
+  width: fit-content;
+}
+.logoSection .curved{
+  position: absolute;
+  height: 4.2rem;
+  left: 49.5%;
+  top: 23%;
+  transform: translate(-50%, -50%);
 }
 
 /* GREETINGS MODAL */
@@ -508,7 +518,7 @@
     box-shadow: inset -2px -2px 5px rgba(0, 0, 0, 0.1),
       inset 2px 2px 5px rgba(0, 0, 0, 0.05);
   }
-  .logo{
+  .logo {
     top: 4.8rem;
   }
 }

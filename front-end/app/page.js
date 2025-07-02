@@ -42,11 +42,11 @@ export default function Home() {
       </div>
       <section className={styles.loginSection}>
         <div className={styles.holder}>
-          <h1>Eva</h1>
+          <h1>Varuna</h1>
         </div>
         <div className={styles.holder}>
           <div className={styles.infoContainer}>
-            <p>Your personal AI assistant</p>
+            <p>&ndash; by ICED, IIT Roorkee</p>
             <img src="/images/rocket.gif" alt="rocket" />
           </div>
         </div>

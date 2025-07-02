@@ -12,9 +12,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Eva",
+  title: "Varuna",
   description:
-    "Eva is your personal AI assistant that listens, responds, and gets things done. From sending emails to ordering food, just say the word—Eva handles it all with ease and elegance.",
+    "Varuna is your personal AI assistant by International Centre of Excellence for Dams (ICED)",
 };
 
 export default function RootLayout({ children }) {
