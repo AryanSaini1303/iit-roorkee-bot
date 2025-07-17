@@ -9,6 +9,36 @@ import ZenaLoading from '@/components/ZenaLoading';
 import { createClient } from '@/utils/supabase/client';
 import MaintenancePage from '@/components/notFound';
 import PagesComponent from '@/components/PagesComponent';
+import { Howl } from 'howler';
+
+export const useClickHandlers = ({
+  onSingleClick,
+  onDoubleClick,
+  delay = 250,
+}) => {
+  const clickTimeout = useRef(null);
+  const handleClick = () => {
+    if (clickTimeout.current) {
+      clearTimeout(clickTimeout.current);
+      clickTimeout.current = null;
+    }
+    clickTimeout.current = setTimeout(() => {
+      onSingleClick();
+      clickTimeout.current = null;
+    }, delay);
+  };
+  const handleDoubleClick = () => {
+    if (clickTimeout.current) {
+      clearTimeout(clickTimeout.current);
+      clickTimeout.current = null;
+    }
+    onDoubleClick();
+  };
+  return {
+    onClick: handleClick,
+    onDoubleClick: handleDoubleClick,
+  };
+};
 
 export default function HomePage() {
   const supabase = createClient();
@@ -27,6 +57,129 @@ export default function HomePage() {
   const [messages, setMessages] = useState([]);
   const [pages, setPages] = useState([]);
   const [showPages, setShowPages] = useState(false);
+  const [voiceModeToggle, setVoiceModeToggle] = useState(true);
+  const [noAudio, SetNoAudio] = useState(false);
+  const [audioIsReady, setAudioIsReady] = useState(false);
+  const [audioHasEnded, setAudioHasEnded] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceInputFlag, setVoiceInputFlag] = useState(false);
+  const [currentAudio, setCurrentAudio] = useState(null);
+  const [voiceId, setVoiceId] = useState('KoVIHoyLDrQyd4pGalbs');
+  const sound = new Howl({ src: ['/sounds/tapSound.mp3'] });
+  const eyesRef = useRef(null);
+  const { onClick, onDoubleClick } = useClickHandlers({
+    onSingleClick: () => {
+      if (isRecording || isProcessing) return;
+      setVoiceInputFlag(true);
+      playSound();
+      stopAudio();
+    },
+    onDoubleClick: () => {
+      if (!voiceInputFlag) {
+        setVoiceModeToggle(false);
+      }
+    },
+  });
+
+  const playElevenLabsAudio = async (text, intent, url) => {
+    SetNoAudio(false);
+    try {
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text, voiceId }),
+      });
+      if (!res.ok) {
+        console.warn('TTS API Error:', res.statusText);
+        SetNoAudio(true);
+        return;
+      }
+      const audioBlob = await res.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      setCurrentAudio(audio);
+      setAudioIsReady(true);
+      audio.play().catch((err) => {
+        console.warn('Audio playback failed:', err);
+        setCurrentAudio(null);
+        setAudioHasEnded(true);
+        if (intent === 'book_cab') {
+          window.open(url, '_blank');
+        } else if (intent === 'send_message') {
+          window.open(url, '_blank');
+          setWhatsappData({});
+          setWhatsappProcess(false);
+        }
+      });
+      audio.onended = () => {
+        setCurrentAudio(null);
+        setAudioHasEnded(true);
+        if (intent === 'book_cab') {
+          window.open(url, '_blank');
+        } else if (intent === 'send_message') {
+          window.open(url, '_blank');
+          setWhatsappData({});
+          setWhatsappProcess(false);
+        }
+      };
+    } catch (err) {
+      SetNoAudio(true);
+      console.warn('Text-to-speech failed:', err);
+    }
+  };
+
+  const stopAudio = () => {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setCurrentAudio(null);
+      setAudioHasEnded(true);
+    }
+  };
+
+  const playSound = () => {
+    sound.play();
+  };
+
+  const handleVoiceInput = () => {
+    setAudioHasEnded(false);
+    let gotResult = false;
+    const recognition = new window.webkitSpeechRecognition();
+    recognition.lang = 'en-IN';
+    recognition.interimResults = false;
+    recognition.onstart = () => setIsRecording(true);
+    recognition.onresult = (event) => {
+      gotResult = true;
+      const transcript = event.results[0][0].transcript;
+      // console.log(transcript);
+      setQuery(transcript);
+    };
+    recognition.onend = () => {
+      setIsRecording(false);
+      if (!gotResult) {
+        setVoiceInputFlag(false);
+        setAudioHasEnded(true);
+      }
+      // setVoiceInputFlag(false);
+    };
+    recognition.start();
+  };
+
+  useEffect(() => {
+    // console.log('******************************');
+    // console.log('audioHasEnded: ', audioHasEnded);
+    // console.log('isRecording: ', isRecording);
+    // console.log('voiceInputFlag: ', voiceInputFlag);
+    // console.log('isProcessing: ', isProcessing);
+    // console.log('******************************');
+    if (audioHasEnded && !isRecording && voiceInputFlag && !isProcessing) {
+      // console.log('execute');
+      playSound();
+      handleVoiceInput();
+    }
+  }, [audioHasEnded, isRecording, voiceInputFlag, isProcessing]);
 
   const handleClickOutside = (event) => {
     if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -115,9 +268,10 @@ export default function HomePage() {
       });
       const { answer, pages } = await chatRes.json();
       setPages(pages);
-      console.log(pages);
+      // console.log(pages);
       setMessages((prev) => [...prev, { role: 'system', content: answer }]);
       setReply(answer);
+      playElevenLabsAudio(answer);
       setIsProcessing(false);
     };
     processQuery();
@@ -212,7 +366,7 @@ export default function HomePage() {
                 </div>
               </div>
             )}
-          {reply.length !== 0 ? (
+          {reply.length !== 0 && (audioIsReady || noAudio) ? (
             <ChatResponse content={reply} pages={pages} func={setShowPages} />
           ) : reply.length === 0 &&
             sessionQuery.length !== 0 &&
@@ -223,38 +377,113 @@ export default function HomePage() {
           ) : null}
         </section>
         <section>
-          <section
-            className={styles.textInput}
-            style={!reply ? { position: 'absolute' } : null}
-          >
-            <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                placeholder={'Enter your query'}
-                name="query"
-                required
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
+          {voiceModeToggle ? (
+            <section
+              className={styles.aiListener}
+              style={!reply ? { position: 'absolute' } : null}
+            >
+              {voiceInputFlag ? (
+                <div
+                  className={styles.voiceBeats}
+                  onDoubleClick={() => {
+                    !voiceInputFlag && setVoiceModeToggle(false);
+                    // playSound();
+                  }}
+                  onClick={onClick}
+                  key={voiceInputFlag}
+                >
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                </div>
+              ) : (
+                <div
+                  className={styles.eyes}
+                  ref={eyesRef}
+                  onDoubleClick={onDoubleClick}
+                  onClick={onClick}
+                >
+                  <div></div>
+                  <div></div>
+                </div>
+              )}
+              <img
+                src="/images/aiBackground7.gif"
+                alt="AI"
+                onDoubleClick={onDoubleClick}
+                onClick={onClick}
+                style={isRecording ? { transform: 'scale(1.3)' } : null}
               />
-              <div className={styles.buttonContainer}>
-                <button type="submit">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    width="2.5rem"
-                    height="2.5rem"
+            </section>
+          ) : (
+            <section
+              className={styles.textInput}
+              key={voiceModeToggle}
+              style={!reply ? { position: 'absolute' } : null}
+            >
+              <form onSubmit={handleSubmit}>
+                <input
+                  type="text"
+                  placeholder={'Enter your query...'}
+                  name="query"
+                  required
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                />
+                <div className={styles.buttonContainer}>
+                  <button type="submit">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      width="2.5rem"
+                      height="2.5rem"
+                    >
+                      <path
+                        fill="black"
+                        fillRule="evenodd"
+                        d="M12 1.25C6.063 1.25 1.25 6.063 1.25 12S6.063 22.75 12 22.75S22.75 17.937 22.75 12S17.937 1.25 12 1.25m1.03 6.72l3.5 3.5a.75.75 0 0 1 0 1.06l-3.5 3.5a.75.75 0 1 1-1.06-1.06l2.22-2.22H8a.75.75 0 0 1 0-1.5h6.19l-2.22-2.22a.75.75 0 0 1 1.06-1.06"
+                        clipRule="evenodd"
+                      ></path>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVoiceModeToggle(true);
+                      setVoiceInputFlag(false);
+                    }}
                   >
-                    <path
-                      fill="black"
-                      fillRule="evenodd"
-                      d="M12 1.25C6.063 1.25 1.25 6.063 1.25 12S6.063 22.75 12 22.75S22.75 17.937 22.75 12S17.937 1.25 12 1.25m1.03 6.72l3.5 3.5a.75.75 0 0 1 0 1.06l-3.5 3.5a.75.75 0 1 1-1.06-1.06l2.22-2.22H8a.75.75 0 0 1 0-1.5h6.19l-2.22-2.22a.75.75 0 0 1 1.06-1.06"
-                      clipRule="evenodd"
-                    ></path>
-                  </svg>
-                </button>
-              </div>
-            </form>
-          </section>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 26 26"
+                      width="2.5rem"
+                      height="2.5rem"
+                    >
+                      <g fill="black">
+                        <path
+                          d="M26 14c0 6.627-5.373 12-12 12S2 20.627 2 14S7.373 2 14 2s12 5.373 12 12"
+                          opacity=".2"
+                        ></path>
+                        <path
+                          fillRule="evenodd"
+                          d="M10.75 7.25a2.25 2.25 0 0 1 4.5 0v3.5a2.25 2.25 0 0 1-4.5 0z"
+                          clipRule="evenodd"
+                        ></path>
+                        <path d="M13 20c-2.48 0-4-.217-4-1s1.52-1 4-1s4 .217 4 1s-1.52 1-4 1"></path>
+                        <path d="M12.5 15.5h1V19h-1z"></path>
+                        <path d="M17 10.5a.5.5 0 0 1 1 0v1.65c0 2.421-2.254 4.35-5 4.35s-5-1.929-5-4.35V10.5a.5.5 0 0 1 1 0v1.65c0 1.831 1.775 3.35 4 3.35s4-1.519 4-3.35z"></path>
+                        <path
+                          fillRule="evenodd"
+                          d="M13 24.5c6.351 0 11.5-5.149 11.5-11.5S19.351 1.5 13 1.5S1.5 6.649 1.5 13S6.649 24.5 13 24.5m0 1c6.904 0 12.5-5.596 12.5-12.5S19.904.5 13 .5S.5 6.096.5 13S6.096 25.5 13 25.5"
+                          clipRule="evenodd"
+                        ></path>
+                      </g>
+                    </svg>
+                  </button>
+                </div>
+              </form>
+            </section>
+          )}
         </section>
       </div>
     </div>
