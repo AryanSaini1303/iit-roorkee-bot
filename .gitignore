@@ -1,5 +1,6 @@
-/db
-/pdfs
+back-end/db
+back-end/pdfs
+front-end/public/pdfs
 .env
 .env.local
 .node_modules
