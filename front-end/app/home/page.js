@@ -58,7 +58,7 @@ export default function HomePage() {
   const [pages, setPages] = useState([]);
   const [showPages, setShowPages] = useState(false);
   const [voiceModeToggle, setVoiceModeToggle] = useState(true);
-  const [noAudio, SetNoAudio] = useState(false);
+  const [noAudio, SetNoAudio] = useState(true);
   const [audioIsReady, setAudioIsReady] = useState(false);
   const [audioHasEnded, setAudioHasEnded] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
@@ -181,6 +181,37 @@ export default function HomePage() {
     }
   }, [audioHasEnded, isRecording, voiceInputFlag, isProcessing]);
 
+  useEffect(() => {
+    const handleMouseMove = (event) => {
+      if (!eyesRef.current) return;
+      // Get bounding rect of the eyes container
+      const rect = eyesRef.current.getBoundingClientRect();
+      // Calculate the center of the eyes container
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      // Calculate the relative mouse position from the center (range -1 to 1)
+      let deltaX = (event.clientX - centerX) / (rect.width / 2);
+      let deltaY = (event.clientY - centerY) / (rect.height / 2);
+      // Clamp the delta between -1 and 1 for smooth max movement
+      deltaX = Math.max(-1, Math.min(1, deltaX));
+      deltaY = Math.max(-1, Math.min(1, deltaY));
+      // Max translation in pixels for the eyes movement
+      const maxTranslate = 16;
+      // Calculate final translation
+      const translateX = deltaX * maxTranslate;
+      const translateY = deltaY * maxTranslate;
+      // Apply transform to each eye div
+      const eyes = eyesRef.current.querySelectorAll('div');
+      eyes.forEach((eye) => {
+        eye.style.transform = `translate(${translateX}px, ${translateY}px)`;
+      });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
   const handleClickOutside = (event) => {
     if (menuRef.current && !menuRef.current.contains(event.target)) {
       setSettingsFlag(false);
@@ -255,12 +286,14 @@ export default function HomePage() {
     }
     const processQuery = async () => {
       const convo = messages;
+      // console.log(convo);
       setMessages((prev) => [...prev, { role: 'user', content: query }]);
       const chatRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ask`, {
         method: 'POST',
         body: JSON.stringify({
           question: query,
           // messages: [...convo, { role: 'user', content: query }],
+          conversation: convo,
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -268,10 +301,10 @@ export default function HomePage() {
       });
       const { answer, pages } = await chatRes.json();
       setPages(pages);
-      // console.log(pages);
+      // console.log(answer,pages);
       setMessages((prev) => [...prev, { role: 'system', content: answer }]);
       setReply(answer);
-      playElevenLabsAudio(answer);
+      // playElevenLabsAudio(answer);
       setIsProcessing(false);
     };
     processQuery();

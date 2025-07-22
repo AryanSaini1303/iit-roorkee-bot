@@ -22,7 +22,7 @@
   align-items: center;
 }
 
-.container button:hover svg {
+/* .container button:hover svg {
   transition: 0.2s all ease-in-out;
 }
 
@@ -32,10 +32,23 @@
 
 .container button:hover svg{
   filter: drop-shadow(0.5px 0.5px 0 black);
-}
+} */
 
 .pagesInfo {
   display: flex;
+  transition: all 0.2s ease-in-out;
+}
+
+.pagesInfo p{
+  font-size: 0.8rem;
+  font-weight: lighter;
+}
+
+.pagesInfo:hover{
+  opacity: 0.8;
+  cursor: pointer;
+  color: blue;
+  text-decoration: underline;
 }
 
 /* Paragraphs */

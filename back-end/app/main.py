@@ -17,10 +17,11 @@ app.add_middleware(
 
 class QueryRequest(BaseModel):
     question: str
+    conversation:list
 
 @app.post("/ask")
 async def ask_question(req: QueryRequest):
-    response, pages = get_answer(req.question)
+    response, pages = get_answer(req.question, req.conversation)
     return {
         "answer": response,
         "pages": sorted(pages)

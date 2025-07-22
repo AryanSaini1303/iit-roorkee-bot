@@ -11,6 +11,11 @@ const SinglePagePdfRenderer = dynamic(
 
 export default function PagesComponent({ pages, func }) {
   const [pageNum, setPageNum] = useState(0);
+  const parsedPages = pages.map((entry) => {
+    const [name, pageStr] = entry.split('|').map((str) => str.trim());
+    const pageNumber = parseInt(pageStr.replace('Page', '').trim(), 10);
+    return { name, page: pageNumber };
+  });
   return (
     <section className={styles.pagesSection}>
       <section className={styles.buttonContainer}>
@@ -193,54 +198,61 @@ export default function PagesComponent({ pages, func }) {
             </g>
           </svg>
         </button>
-        <button
-          onClick={() => setPageNum(() => (pageNum === 0 ? 0 : pageNum - 1))}
-          disabled={pageNum === 0}
-          style={{ transform: 'rotate(180deg)' }}
-          className={styles.button}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            width="1em"
-            height="1em"
-            className={styles.icon}
-          >
-            <path
-              fill="currentColor"
-              d="M9.31 6.71a.996.996 0 0 0 0 1.41L13.19 12l-3.88 3.88a.996.996 0 1 0 1.41 1.41l4.59-4.59a.996.996 0 0 0 0-1.41L10.72 6.7c-.38-.38-1.02-.38-1.41.01"
-            ></path>
-          </svg>
-        </button>
-        <strong>{pages[pageNum]}</strong>
-        <button
-          onClick={() =>
-            setPageNum(() =>
-              pages.length - 1 === pageNum ? pages.length - 1 : pageNum + 1,
-            )
-          }
-          disabled={pages.length - 1 === pageNum}
-          className={styles.button}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            width="1em"
-            height="1em"
-            className={styles.icon}
-          >
-            <path
-              fill="currentColor"
-              d="M9.31 6.71a.996.996 0 0 0 0 1.41L13.19 12l-3.88 3.88a.996.996 0 1 0 1.41 1.41l4.59-4.59a.996.996 0 0 0 0-1.41L10.72 6.7c-.38-.38-1.02-.38-1.41.01"
-            ></path>
-          </svg>
-        </button>
+        <section className={styles.pageControlContainer}>
+          <section className={styles.pageControl}>
+            <button
+              onClick={() =>
+                setPageNum(() => (pageNum === 0 ? 0 : pageNum - 1))
+              }
+              disabled={pageNum === 0}
+              style={{ transform: 'rotate(180deg)' }}
+              className={styles.button}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="1em"
+                height="1em"
+                className={styles.icon}
+              >
+                <path
+                  fill="currentColor"
+                  d="M9.31 6.71a.996.996 0 0 0 0 1.41L13.19 12l-3.88 3.88a.996.996 0 1 0 1.41 1.41l4.59-4.59a.996.996 0 0 0 0-1.41L10.72 6.7c-.38-.38-1.02-.38-1.41.01"
+                ></path>
+              </svg>
+            </button>
+            <strong>{parsedPages[pageNum].page}</strong>
+            <button
+              onClick={() =>
+                setPageNum(() =>
+                  pages.length - 1 === pageNum ? pages.length - 1 : pageNum + 1,
+                )
+              }
+              disabled={pages.length - 1 === pageNum}
+              className={styles.button}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="1em"
+                height="1em"
+                className={styles.icon}
+              >
+                <path
+                  fill="currentColor"
+                  d="M9.31 6.71a.996.996 0 0 0 0 1.41L13.19 12l-3.88 3.88a.996.996 0 1 0 1.41 1.41l4.59-4.59a.996.996 0 0 0 0-1.41L10.72 6.7c-.38-.38-1.02-.38-1.41.01"
+                ></path>
+              </svg>
+            </button>
+          </section>
+          <p>{parsedPages[pageNum].name}</p>
+        </section>
       </section>
       <section className={styles.pagesContainer}>
         <SinglePagePdfRenderer
-          key={pages[pageNum]}
-          pdfUrl="/knowledge_base1.pdf"
-          pageNumber={pages[pageNum]}
+          key={parsedPages[pageNum].page}
+          pdfUrl={`/pdfs/${parsedPages[pageNum].name}.pdf`}
+          pageNumber={parsedPages[pageNum].page}
         />
       </section>
     </section>

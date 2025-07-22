@@ -14,6 +14,23 @@
   animation: reveal 0.2s forwards;
 }
 
+.pageControlContainer{
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pageControl{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pageControlContainer p{
+  margin: 0;
+}
+
 @keyframes reveal {
   0% {
     opacity: 0;
@@ -35,7 +52,7 @@
   align-items: center;
   justify-content: center;
   gap: 1.2rem;
-  padding: 1.5rem 0;
+  padding: 0.8rem 0;
   border-radius: 1.25rem;
   width: 100%;
   color: white;
