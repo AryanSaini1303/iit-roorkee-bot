@@ -11,7 +11,7 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 chroma_client = chromadb.PersistentClient(path="./db")
 collection = chroma_client.get_or_create_collection(name="iit_docs")
 
-def get_answer(question: str, conversation: list, top_k: int = 12):  
+def get_answer(question: str, conversation: list, top_k: int = 10):  
     if conversation is None:
         conversation = []
         
