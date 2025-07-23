@@ -2,6 +2,7 @@ import os
 from openai import OpenAI  # type:ignore
 import chromadb  # type:ignore
 from dotenv import load_dotenv  # type:ignore
+import json
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -10,57 +11,89 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 chroma_client = chromadb.PersistentClient(path="./db")
 collection = chroma_client.get_or_create_collection(name="iit_docs")
 
-def get_answer(question: str, conversation: list, top_k: int = 3):
-    # print(conversation)
-    query_embedding = client.embeddings.create(
-        model="text-embedding-3-small",
-        input=question
-    ).data[0].embedding
-
-    results = collection.query(
-        query_embeddings=[query_embedding],
-        n_results=top_k,
-        include=["documents", "metadatas"]
+def get_answer(question: str, conversation: list, top_k: int = 12):  
+    if conversation is None:
+        conversation = []
+        
+    initialCompletion = client.chat.completions.create(
+        model="gpt-4o",
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a query builder that takes the user's current question and the conversation history, "
+                    "and returns a complete, standalone search query that includes all necessary context, even if it was mentioned earlier.\n\n"
+                    "The constructed query must be in the form of a full question — such as starting with what, why, how, when, where, etc. "
+                    "It should never be a phrase, keyword, or document heading. Avoid vague or incomplete queries.\n\n"
+                    "If the user's intent is casual conversation (e.g., hi, hello, how are you), return:\n"
+                    '{\n  "query_type": "small talk",\n  "query": "<user\'s casual message>"\n}\n\n'
+                    "If the user is asking a question requiring document lookup, return:\n"
+                    '{\n  "query_type": "question",\n  "query": "<fully constructed, grammatically correct question>"\n}\n\n'
+                    "Respond only with the JSON object. Do not include any greeting, explanation, or markdown formatting."
+                )
+            },
+            {
+                "role": "user",
+                "content": f"Conversation history:\n{conversation}"
+            },
+            {
+                "role": "user",
+                "content": f"User's question:\n{question}"
+            }
+        ]
     )
-
-    docs = results["documents"][0]
-    metas = results["metadatas"][0]
-
-    if not docs:
-        return "No relevant info found.", set()
-
-    context = ""
-    pages = set()
-    for doc, meta in zip(docs, metas):
-        page = meta["page"]
-        source = meta["pdf_name"]
-        pages.add(f"{source} | Page {page}")
-        context += f"[{source} | Page {page}]\n{doc.strip()}\n\n"
-
-    # if conversation is None:
-    #     conversation = []
+    query_json_str = initialCompletion.choices[0].message.content.strip()
+    query = json.loads(query_json_str)
+    # print(f"Query: {query}")
+    
+    if(query['query_type']=="question"):
+        # print(conversation)
+        query_embedding = client.embeddings.create(
+            model="text-embedding-3-small",
+            input=query['query']
+        ).data[0].embedding
+        results = collection.query(
+            query_embeddings=[query_embedding],
+            n_results=top_k,
+            include=["documents", "metadatas"]
+        )
+        docs = results["documents"][0]
+        metas = results["metadatas"][0]
+        if not docs:
+            return "No relevant info found.", set()
+        context = ""
+        pages = set()
+        for doc, meta in zip(docs, metas):
+            page = meta["page"]
+            source = meta["pdf_name"]
+            pages.add(f"{source} | Page {page}")
+            context += f"[{source} | Page {page}]\n{doc.strip()}\n\n"
+    elif(query['query_type']=="small talk"):
+        context = "This is a casual conversation, no documents needed."
+        pages = set()
+        query=question
 
     messages = [
         {
             "role": "system",
             "content": (
-                "You are an academic assistant. Use only the provided context to answer the user's question, don't leave important detail behind and don't change the exact words or meaning of the context. "
-                "Cite the PDF name and page numbers in your answer where you found the information. "
-                "Extract all relevant information. Cite each point in format: (PDF: <pdf_name>, Page: <page_number>)."
-                "Try building an answer if the context is not enough, but do not make up information."
-                "If the answer is not found, say 'Not found in the provided context.'"
+                "You are an academic assistant Varuna. Answer the user's question using only the provided context. "
+                "Do not omit important details and do not alter the wording or meaning of the context. "
+                "Cite the PDF name and page number for every fact you include using this format: (PDF: <pdf_name>, Page: <page_number>).\n\n"
+                "Extract and include all relevant information from the context. If the context is insufficient, you may infer an answer based on it, "
+                "but never fabricate or introduce information that is not grounded in the provided context.\n\n"
+                "If the answer cannot be found in the context, and the question is academic, respond with: 'Not found in the provided context.'\n\n"
+                "If the user's message appears to be casual or conversational (e.g., greetings, opinions, non-academic chat), feel free to reply informally and helpfully, as a friendly assistant."
             )
         },
-        # *conversation,
+        # ... === *
         {
             "role": "user",
             "content": f"Context:\n{context}\n\nQuestion: {question}"
         }
     ]
-
     completion = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o",
         messages=messages
     )
-
     return completion.choices[0].message.content.strip(), pages

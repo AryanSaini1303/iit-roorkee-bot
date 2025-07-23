@@ -9,9 +9,11 @@ export default function ChatResponse({ content, pages, func }) {
     <div className={styles.container}>
       <ReactMarkdown rehypePlugins={[rehypeHighlight]}>{content}</ReactMarkdown>
       <section className={styles.pagesInfo} onClick={() => func(true)}>
-        <p>
-          <em>Referenced pages: {pages.join(', ')}</em>
-        </p>
+        {pages?.length!==0 && (
+          <p>
+            <em>Referenced pages: {pages.join(', ')}</em>
+          </p>
+        )}
         {/* <button onClick={() => func(true)}>
           <svg
             xmlns="http://www.w3.org/2000/svg"

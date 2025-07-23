@@ -481,6 +481,9 @@
   .header .headerElement:nth-child(1) {
     font-size: 1.2rem;
   }
+  .logoSection {
+    top: 5rem;
+  }
 }
 
 @media (max-width: 490px) {
@@ -494,6 +497,7 @@
     border-radius: 0;
     width: 100%;
     gap: 0.5rem;
+    box-shadow: none;
   }
 }
 
@@ -531,5 +535,9 @@
   }
   .logo {
     top: 4.8rem;
+  }
+  .logoSection{
+    scale: 0.9;
+    top: 4.2rem;
   }
 }

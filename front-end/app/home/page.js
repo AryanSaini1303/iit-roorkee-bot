@@ -57,7 +57,7 @@ export default function HomePage() {
   const [messages, setMessages] = useState([]);
   const [pages, setPages] = useState([]);
   const [showPages, setShowPages] = useState(false);
-  const [voiceModeToggle, setVoiceModeToggle] = useState(true);
+  const [voiceModeToggle, setVoiceModeToggle] = useState(false);
   const [noAudio, SetNoAudio] = useState(true);
   const [audioIsReady, setAudioIsReady] = useState(false);
   const [audioHasEnded, setAudioHasEnded] = useState(true);
@@ -174,12 +174,14 @@ export default function HomePage() {
     // console.log('voiceInputFlag: ', voiceInputFlag);
     // console.log('isProcessing: ', isProcessing);
     // console.log('******************************');
-    if (audioHasEnded && !isRecording && voiceInputFlag && !isProcessing) {
+    // if (audioHasEnded && !isRecording && voiceInputFlag && !isProcessing) {
+    if (!isRecording && voiceInputFlag && !isProcessing) {
       // console.log('execute');
       playSound();
       handleVoiceInput();
     }
-  }, [audioHasEnded, isRecording, voiceInputFlag, isProcessing]);
+  }, [isRecording, voiceInputFlag, isProcessing]);
+  // }, [audioHasEnded, isRecording, voiceInputFlag, isProcessing]);
 
   useEffect(() => {
     const handleMouseMove = (event) => {
