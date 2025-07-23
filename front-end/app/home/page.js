@@ -289,7 +289,14 @@ export default function HomePage() {
     const processQuery = async () => {
       const convo = messages;
       // console.log(convo);
-      setMessages((prev) => [...prev, { role: 'user', content: query }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'user',
+          content: query,
+          createdAt: new Date().toLocaleString(),
+        },
+      ]);
       const chatRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ask`, {
         method: 'POST',
         body: JSON.stringify({
@@ -304,7 +311,14 @@ export default function HomePage() {
       const { answer, pages } = await chatRes.json();
       setPages(pages);
       // console.log(answer,pages);
-      setMessages((prev) => [...prev, { role: 'system', content: answer }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'system',
+          content: answer,
+          createdAt: new Date().toLocaleString(),
+        },
+      ]);
       setReply(answer);
       // playElevenLabsAudio(answer);
       setIsProcessing(false);
