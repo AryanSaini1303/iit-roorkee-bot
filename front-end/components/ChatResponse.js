@@ -3,31 +3,44 @@ import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github.css'; // Or any preferred theme
 import styles from './ChatResponse.module.css';
+import { useEffect, useRef } from 'react';
+import ZenaLoading from './ZenaLoading';
 
-export default function ChatResponse({ content, pages, func }) {
+export default function ChatResponse({
+  conversation,
+  pages,
+  func,
+  isProcessing,
+}) {
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [conversation]);
+
   return (
     <div className={styles.container}>
-      <ReactMarkdown rehypePlugins={[rehypeHighlight]}>{content}</ReactMarkdown>
+      {conversation.map((message, index) => (
+        <div
+          key={index}
+          className={
+            message.role === 'user' ? styles.userMessage : styles.botMessage
+          }
+        >
+          <ReactMarkdown rehypePlugins={[rehypeHighlight]} key={index}>
+            {message.content}
+          </ReactMarkdown>
+        </div>
+      ))}
       <section className={styles.pagesInfo} onClick={() => func(true)}>
-        {pages?.length!==0 && (
+        {pages?.length !== 0 && !isProcessing && (
           <p>
             <em>Referenced pages: {pages.join(', ')}</em>
           </p>
         )}
-        {/* <button onClick={() => func(true)}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            width="1.4em"
-            height="1.4em"
-          >
-            <path
-              fill="currentColor"
-              d="M10 6v2H5v11h11v-5h2v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1zm11-3v8h-2V6.413l-7.793 7.794l-1.414-1.414L17.585 5H13V3z"
-            ></path>
-          </svg>
-        </button> */}
+        <div ref={bottomRef}></div>
       </section>
+        {isProcessing && <ZenaLoading />}
     </div>
   );
 }

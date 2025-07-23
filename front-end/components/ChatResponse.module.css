@@ -135,6 +135,25 @@
   text-decoration: none;
 }
 
+.userMessage{
+  background-color: #EAF4FF;
+  width: fit-content;
+  margin-left: auto;
+  padding:0.2rem 1.2rem;
+  border-radius: 20px;
+  margin: 1.5rem 0 1.5rem auto;
+  box-shadow: inset -4px -4px 6px lightblue;
+}
+
+.botMessage{
+  background-color: #F5F5F5;
+  width: fit-content;
+  padding:0.2rem 1.2rem;
+  border-radius: 20px;
+  margin: 1.5rem 0 1.5rem 0;
+  box-shadow: inset -4px -4px 6px lightgrey;
+}
+
 @media (max-width:470px){
   .pagesInfo{
     font-size: 0.9rem;

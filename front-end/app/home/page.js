@@ -401,15 +401,14 @@ export default function HomePage() {
                 </div>
               </div>
             )}
-          {reply.length !== 0 && (audioIsReady || noAudio) ? (
-            <ChatResponse content={reply} pages={pages} func={setShowPages} />
-          ) : reply.length === 0 &&
-            sessionQuery.length !== 0 &&
-            !isProcessing ? (
-            <ChatPlaceholder />
-          ) : isProcessing || reply.length !== 0 ? (
-            <ZenaLoading />
-          ) : null}
+          {(sessionQuery.length !== 0 || messages.length !== 0) && (
+            <ChatResponse
+              conversation={messages}
+              pages={pages}
+              func={setShowPages}
+              isProcessing={isProcessing}
+            />
+          )}
         </section>
         <section>
           {voiceModeToggle ? (

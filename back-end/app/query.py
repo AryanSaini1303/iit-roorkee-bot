@@ -16,7 +16,7 @@ def get_answer(question: str, conversation: list, top_k: int = 10):
         conversation = []
         
     initialCompletion = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         messages = [
             {
                 "role": "system",
@@ -93,7 +93,7 @@ def get_answer(question: str, conversation: list, top_k: int = 10):
         }
     ]
     completion = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         messages=messages
     )
     return completion.choices[0].message.content.strip(), pages
