@@ -421,13 +421,13 @@ export default function HomePage() {
         if (!res.ok) throw new Error('Failed to fetch chats');
         const data = await res.json();
         // console.log(data);
-        setChats(data.chats || []);
+        setChats(data.chats);
       } catch (error) {
         console.error('Error fetching chats:', error);
       }
     };
     fetchChats();
-  }, [session, messages, reply]);
+  }, [session, messages, reply, showChats]);
 
   // if (true) {
   //   return <MaintenancePage />;

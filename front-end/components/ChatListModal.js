@@ -9,9 +9,8 @@ export default function ChatListModal({
   onSelectChat,
 }) {
   const modalRef = useRef(null);
-//   console.log(chats);
+  // console.log(chats);
 
-  // Close modal on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
