@@ -12,7 +12,6 @@ export default function ChatListModal({
   const modalRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [selectId, setSelectId] = useState('');
-  // console.log(chats);
 
   const deleteChat = async (conversationId) => {
     try {
