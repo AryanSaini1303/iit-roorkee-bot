@@ -119,9 +119,53 @@
   }
 }
 
+.nameForm {
+  display: flex;
+  gap: 0.2rem;
+  margin: 0.3rem 0;
+}
+
+.nameForm input {
+  border-radius: 5px;
+  border: 1px solid black;
+  padding: 0.3rem;
+  font-size: 1rem;
+}
+
+.nameForm button {
+  background-color: transparent;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nameForm button:hover {
+  cursor: pointer;
+}
+
+.nameForm button:hover svg {
+  fill: black;
+  stroke: white;
+}
+
 @media (max-width: 657px) {
   .modal {
     max-width: 300px;
+  }
+  .nameForm input {
+    width: 70%;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 491px) {
+  .nameForm button svg {
+    height: 1.3rem;
+    width: 1.3rem;
+  }
+  .nameForm {
+    margin: 0.2rem 0;
   }
 }
 

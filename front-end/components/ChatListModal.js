@@ -12,6 +12,7 @@ export default function ChatListModal({
   const modalRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [selectId, setSelectId] = useState('');
+  const [changeFlag, setChangeFlag] = useState(false);
 
   const deleteChat = async (conversationId) => {
     try {
@@ -26,6 +27,36 @@ export default function ChatListModal({
       console.error('Failed to delete chat:', err.message);
     }
   };
+
+  async function handleSubmit(conversationId, e) {
+    if (e.target.name.value.trim() === '') return;
+    e.preventDefault();
+    try {
+      const name = e.target.name.value;
+      setLoading(true);
+      const res = await fetch('/api/updateName', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId, name }),
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Failed to update conversation name');
+      }
+      const data = await res.json();
+      // console.log('Updated successfully:', data);
+      if (data.status === 200) {
+        alert('Chat name updated successfully');
+        setChangeFlag(false);
+        setLoading(false);
+        setSelectId('');
+        onClose();
+      }
+    } catch (err) {
+      setLoading(false);
+      console.error('Submission error:', err.message);
+    }
+  }
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -60,32 +91,79 @@ export default function ChatListModal({
                 <div
                   key={index}
                   className={styles.chatItem}
-                  onClick={() => {
-                    onSelectChat(chat.id);
-                    setLoading(true);
-                    setSelectId(chat.id);
-                  }}
+                  onClick={
+                    !changeFlag
+                      ? () => {
+                          onSelectChat(chat.id);
+                          setLoading(true);
+                          setSelectId(chat.id);
+                        }
+                      : null
+                  }
                 >
                   <section className={styles.textSection}>
                     <h3>
-                      {`${chat.name}${chat.name.length >= 5 ? '...' : ''}` ||
-                        `Chat ${index + 1}`}{' '}
+                      {changeFlag && selectId === chat.id ? (
+                        <form
+                          className={styles.nameForm}
+                          onClick={(e) => e.stopPropagation()}
+                          onSubmit={async (e) => await handleSubmit(chat.id, e)}
+                        >
+                          <input
+                            type="text"
+                            name="name"
+                            placeholder="Enter new name"
+                            required
+                          />
+                          <button type="submit">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              width="1.7rem"
+                              height="1.7rem"
+                            >
+                              <path
+                                fill="none"
+                                stroke="currentColor"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M3.714 3.048a.498.498 0 0 0-.683.627l2.843 7.627a2 2 0 0 1 0 1.396l-2.842 7.627a.498.498 0 0 0 .682.627l18-8.5a.5.5 0 0 0 0-.904zM6 12h16"
+                              ></path>
+                            </svg>
+                          </button>
+                        </form>
+                      ) : (
+                        `${chat.name}${chat.name.length >= 5 ? '...' : ''}` ||
+                        `Chat ${index + 1}`
+                      )}
                     </h3>
                     <p>
-                      {new Date(chat.updated_at).toLocaleString('en-IN', {
-                        month: 'short',
-                        year: 'numeric',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true,
-                      })}
+                      {!(changeFlag && selectId === chat.id) &&
+                        new Date(chat.updated_at).toLocaleString('en-IN', {
+                          month: 'short',
+                          year: 'numeric',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true,
+                        })}
                     </p>
                   </section>
                   <section className={styles.buttonContainer}>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        setChangeFlag((prev) => {
+                          if (prev && selectId === chat.id) {
+                            setSelectId('');
+                          } else {
+                            setSelectId(chat.id);
+                          }
+                          return !prev;
+                        });
+                        // setChangeFlag(!changeFlag);
+                        // setSelectId(chat.id);
                       }}
                     >
                       <svg
