@@ -143,6 +143,7 @@
   border-radius: 20px;
   margin: 1.5rem 0 1.5rem auto;
   box-shadow: inset -4px -4px 6px lightblue;
+  max-width: 90%;
 }
 
 .botMessage{
@@ -152,6 +153,7 @@
   border-radius: 20px;
   margin: 1.5rem 0 1.5rem 0;
   box-shadow: inset -4px -4px 6px lightgrey;
+  max-width: 90%;
 }
 
 @media (max-width:470px){

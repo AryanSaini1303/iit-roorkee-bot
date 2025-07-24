@@ -10,6 +10,7 @@ import { createClient } from '@/utils/supabase/client';
 import MaintenancePage from '@/components/notFound';
 import PagesComponent from '@/components/PagesComponent';
 import { Howl } from 'howler';
+import ChatListModal from '@/components/ChatListModal';
 
 export const useClickHandlers = ({
   onSingleClick,
@@ -65,8 +66,12 @@ export default function HomePage() {
   const [voiceInputFlag, setVoiceInputFlag] = useState(false);
   const [currentAudio, setCurrentAudio] = useState(null);
   const [voiceId, setVoiceId] = useState('KoVIHoyLDrQyd4pGalbs');
+  const [conversationId, setConversationId] = useState(null);
+  const [chats, setChats] = useState([]);
   const sound = new Howl({ src: ['/sounds/tapSound.mp3'] });
   const eyesRef = useRef(null);
+  const [showChats, setShowChats] = useState(false);
+  const [loadingChat, setLoadingChat] = useState(false);
   const { onClick, onDoubleClick } = useClickHandlers({
     onSingleClick: () => {
       if (isRecording || isProcessing) return;
@@ -238,6 +243,40 @@ export default function HomePage() {
     setValue('');
   }
 
+  async function getConversationById(conversationId) {
+    try {
+      const res = await fetch('/api/getConversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId }),
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch conversation');
+
+      const data = await res.json();
+      // console.log(data);
+      if (data.success) {
+        setMessages(data.conversation.messages || []);
+        setSessionQuery(data.conversation.messages[0]?.content || '');
+        sessionStorage.setItem('messages', data.conversation.messages || []);
+        sessionStorage.setItem(
+          'query',
+          data.conversation.messages[0]?.content || '',
+        );
+        sessionStorage.setItem(
+          'lastMessagesLength',
+          data.conversation.messages.length || 0,
+        );
+        sessionStorage.setItem('conversationId', conversationId);
+        setConversationId(conversationId);
+        setShowChats(false);
+      }
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  }
+
   useEffect(() => {
     messages.length !== 0 &&
       sessionStorage.setItem('messages', JSON.stringify(messages));
@@ -294,7 +333,7 @@ export default function HomePage() {
         {
           role: 'user',
           content: query,
-          createdAt: new Date().toLocaleString(),
+          createdAt: new Date().toISOString(),
         },
       ]);
       const chatRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ask`, {
@@ -316,7 +355,7 @@ export default function HomePage() {
         {
           role: 'system',
           content: answer,
-          createdAt: new Date().toLocaleString(),
+          createdAt: new Date().toISOString(),
         },
       ]);
       setReply(answer);
@@ -333,14 +372,94 @@ export default function HomePage() {
     }
   }, []);
 
+  useEffect(() => {
+    // console.log(
+    //   messages.length,
+    //   parseInt(sessionStorage.getItem('lastMessagesLength')),
+    // );
+    if (
+      messages.length -
+        (parseInt(sessionStorage.getItem('lastMessagesLength')) || 0) >=
+      2
+    ) {
+      const newMessages = messages.slice(-2); // user + bot
+      fetch('/api/saveConversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversationId,
+          newMessages,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          // console.log(data);
+          if (data?.id && !conversationId) {
+            setConversationId(data.id); // capture the new conversation ID
+            sessionStorage.setItem('conversationId', data.id);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to save messages:', err);
+        });
+      sessionStorage.setItem('lastMessagesLength', messages.length);
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    const storedConversationId = sessionStorage.getItem('conversationId');
+    if (storedConversationId) {
+      setConversationId(storedConversationId);
+    }
+    // sessionStorage.setItem('lastMessagesLength', messages.length);
+    const fetchChats = async () => {
+      try {
+        const res = await fetch('/api/getChats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) throw new Error('Failed to fetch chats');
+        const data = await res.json();
+        // console.log(data);
+        setChats(data.chats || []);
+      } catch (error) {
+        console.error('Error fetching chats:', error);
+      }
+    };
+    fetchChats();
+  }, [session, messages, reply]);
+
   // if (true) {
   //   return <MaintenancePage />;
   // }
+  // console.log(showChats);
+
   if (!loading && !session) return 'Unauthenticated';
 
   return (
     <div className={`${'wrapper'} ${'container'}`}>
       {showPages && <PagesComponent pages={pages} func={setShowPages} />}
+      {showChats && (
+        <ChatListModal
+          chats={chats}
+          onClose={() => setShowChats(false)}
+          onNewChat={() => {
+            setMessages([]);
+            setSessionQuery('');
+            sessionStorage.removeItem('messages', []);
+            sessionStorage.removeItem('query', '');
+            sessionStorage.removeItem('lastMessagesLength', 0);
+            sessionStorage.removeItem('conversationId', null);
+            setConversationId(null);
+            setShowChats(false);
+            setQuery('');
+            setReply('');
+          }}
+          onSelectChat={async (id) => {
+            await getConversationById(id);
+          }}
+        />
+      )}
       <div className={styles.logoSection}>
         <img
           src="/images/curvedText.png"
@@ -386,6 +505,13 @@ export default function HomePage() {
           </svg>
           {settingsFlag && (
             <ul className={styles.options}>
+              <li
+                onClick={() => {
+                  setShowChats(true), setSettingsFlag(false);
+                }}
+              >
+                Chats
+              </li>
               <li onClick={() => signOut()} className={styles.lastChild}>
                 {signOutFlag ? 'Signing out...' : 'Sign out'}
               </li>
