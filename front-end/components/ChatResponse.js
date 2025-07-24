@@ -13,6 +13,11 @@ export default function ChatResponse({
   isProcessing,
 }) {
   const bottomRef = useRef(null);
+  const width = (() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth;
+    }
+  })();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -35,12 +40,14 @@ export default function ChatResponse({
       <section className={styles.pagesInfo} onClick={() => func(true)}>
         {pages?.length !== 0 && !isProcessing && (
           <p>
-            <em>Referenced pages: {pages.join(', ')}</em>
+            <em>
+              Referenced pages: {width < 900 ? 'Click here!' : pages.join(', ')}
+            </em>
           </p>
         )}
         <div ref={bottomRef}></div>
       </section>
-        {isProcessing && <ZenaLoading />}
+      {isProcessing && <ZenaLoading />}
     </div>
   );
 }

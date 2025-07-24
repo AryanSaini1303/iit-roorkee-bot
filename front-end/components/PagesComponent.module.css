@@ -104,6 +104,7 @@
 .crossBtn {
   position: absolute;
   right: 0;
+  top: 0.5rem;
   cursor: pointer;
   background-color: transparent;
   border: none;
