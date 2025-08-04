@@ -11,7 +11,7 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 chroma_client = chromadb.PersistentClient(path="./db")
 collection = chroma_client.get_or_create_collection(name="iit_docs")
 
-def get_answer(question: str, conversation: list, top_k: int = 10):  
+def get_answer(question: str, conversation: list, top_k: int = 10):
     if conversation is None:
         conversation = []
         
@@ -44,7 +44,7 @@ def get_answer(question: str, conversation: list, top_k: int = 10):
     )
     query_json_str = initialCompletion.choices[0].message.content.strip()
     query = json.loads(query_json_str)
-    # print(f"Query: {query}")
+    # print(f"new query constructed")
     
     if(query['query_type']=="question"):
         # print(conversation)
@@ -68,6 +68,7 @@ def get_answer(question: str, conversation: list, top_k: int = 10):
             source = meta["pdf_name"]
             pages.add(f"{source} | Page {page}")
             context += f"[{source} | Page {page}]\n{doc.strip()}\n\n"
+        # print("context formed from documents")
     elif(query['query_type']=="small talk"):
         context = "This is a casual conversation, no documents needed."
         pages = set()
@@ -96,4 +97,5 @@ def get_answer(question: str, conversation: list, top_k: int = 10):
         model="gpt-4o-mini",
         messages=messages
     )
+    # print("answer generated")
     return completion.choices[0].message.content.strip(), pages

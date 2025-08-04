@@ -6,8 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware #type: ignore
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    # allow_origins=["*"],  # Or specify domains like ["http://localhost:3000"]
-    allow_origins=["http://localhost:3000","https://iit-roorkee-bot.vercel.app"],
+    allow_origins=["*"],  # Or specify domains like ["http://localhost:3000"]
+    # allow_origins=["http://localhost:3000","https://iit-roorkee-bot.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
