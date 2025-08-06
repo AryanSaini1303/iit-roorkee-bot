@@ -11,7 +11,7 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 chroma_client = chromadb.PersistentClient(path="./db")
 collection = chroma_client.get_or_create_collection(name="iit_docs")
 
-def get_answer(question: str, conversation: list, top_k: int = 10):
+def get_answer(question: str, conversation: list, top_k: int = 20):
     if conversation is None:
         conversation = []
         
@@ -44,12 +44,13 @@ def get_answer(question: str, conversation: list, top_k: int = 10):
     )
     query_json_str = initialCompletion.choices[0].message.content.strip()
     query = json.loads(query_json_str)
+    # print(query)
     # print(f"new query constructed")
     
     if(query['query_type']=="question"):
         # print(conversation)
         query_embedding = client.embeddings.create(
-            model="text-embedding-3-small",
+            model="text-embedding-3-large", # to improve the accuracy, the database is not embedded with "text-embedding-3-large" model so using same for the search (works so well :)
             input=query['query']
         ).data[0].embedding
         results = collection.query(
@@ -58,6 +59,7 @@ def get_answer(question: str, conversation: list, top_k: int = 10):
             include=["documents", "metadatas"]
         )
         docs = results["documents"][0]
+        # Here all the pages are retained but can be net picked based on individual score to reduce the context size
         metas = results["metadatas"][0]
         if not docs:
             return "No relevant info found.", set()
@@ -74,23 +76,25 @@ def get_answer(question: str, conversation: list, top_k: int = 10):
         pages = set()
         query=question
 
+    # print(context)
+    # print(query)
     messages = [
         {
             "role": "system",
             "content": (
-                "You are an academic assistant Varuna. Answer the user's question using only the provided context. "
+                "You are an academic assistant Varuna. Answer the user's question using only the provided context whenever possible. "
                 "Do not omit important details and do not alter the wording or meaning of the context. "
                 "Cite the PDF name and page number for every fact you include using this format: (PDF: <pdf_name>, Page: <page_number>).\n\n"
-                "Extract and include all relevant information from the context. If the context is insufficient, you may infer an answer based on it, "
-                "but never fabricate or introduce information that is not grounded in the provided context.\n\n"
-                "If the answer cannot be found in the context, and the question is academic, respond with: 'Not found in the provided context.'\n\n"
+                "Extract and include all relevant information from the context. If the context is insufficient, try to infer a helpful answer based on it. "
+                "If inference is not possible, respond with: 'Couldn’t find that in the provided materials, but here’s what I can tell you…' and provide your best answer using general knowledge. "
+                "Never fabricate or make up facts. Make it clear when you're using general knowledge vs the provided materials.\n\n"
                 "If the user's message appears to be casual or conversational (e.g., greetings, opinions, non-academic chat), feel free to reply informally and helpfully, as a friendly assistant."
             )
         },
         # ... === *
         {
             "role": "user",
-            "content": f"Context:\n{context}\n\nQuestion: {question}"
+            "content": f"Context:\n{context}\n\nQuestion: {query}"
         }
     ]
     completion = client.chat.completions.create(
