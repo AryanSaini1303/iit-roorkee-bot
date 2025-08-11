@@ -10,6 +10,9 @@ from openai import OpenAI #type: ignore
 from dotenv import load_dotenv #type: ignore
 import tiktoken #type: ignore
 import nltk #type: ignore
+from typing import List
+from fastapi.responses import StreamingResponse #type: ignore
+import os
 
 # Load NLTK punkt tokenizer
 nltk.download('punkt')
@@ -29,7 +32,7 @@ collection = chroma_client.get_or_create_collection(name="iit_docs")
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Or specify domains like ["http://localhost:3000"]
+    allow_origins=["*"],
     # allow_origins=["http://localhost:3000","https://iit-roorkee-bot.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
@@ -69,43 +72,49 @@ async def ask_question(req: QueryRequest):
     }
 
 @app.post("/add")
-async def add_pdf(file: UploadFile = File(...)):
-    # Save temp file
-    temp_path = f"./temp_{file.filename}"
-    with open(temp_path, "wb") as f:
-        f.write(await file.read())
-
-    # Process PDF
-    pdf_name = os.path.splitext(file.filename)[0]
-    doc = fitz.open(temp_path)
-    for i in range(len(doc)):
-        page_num = i + 1
-        raw_text = doc[i].get_text().strip()
-        if not raw_text:
-            continue
-        clean_text = re.sub(r'\s+', ' ', raw_text)
-        chunks = split_into_chunks(clean_text)
-
-        for idx, chunk in enumerate(chunks):
-            try:
-                embedding = client.embeddings.create(
-                    model="text-embedding-3-large",
-                    input=chunk
-                ).data[0].embedding
-
-                chunk_id = f"{pdf_name}_page_{page_num}_chunk_{idx}"
-                collection.add(
-                    documents=[chunk],
-                    embeddings=[embedding],
-                    ids=[chunk_id],
-                    metadatas=[{
-                        "page": page_num,
-                        "pdf_name": pdf_name,
-                        "chunk_index": idx
-                    }]
-                )
-            except Exception as e:
-                return {"error": f"Failed embedding on {chunk_id}: {e}"}
-
-    os.remove(temp_path)  # cleanup temp file
-    return {"status": "success", "pages_processed": len(doc)}
+async def add_pdfs(files: List[UploadFile] = File(...)):
+    processed_files = []
+    errors = []
+    for file in files:
+        temp_path = f"./temp_{file.filename}"
+        with open(temp_path, "wb") as f:
+            f.write(await file.read())
+        pdf_name = os.path.splitext(file.filename)[0]
+        doc = fitz.open(temp_path)
+        for i in range(len(doc)):
+            page_num = i + 1
+            raw_text = doc[i].get_text().strip()
+            if not raw_text:
+                continue
+            clean_text = re.sub(r'\s+', ' ', raw_text)
+            chunks = split_into_chunks(clean_text)
+            for idx, chunk in enumerate(chunks):
+                try:
+                    embedding = client.embeddings.create(
+                        model="text-embedding-3-large",
+                        input=chunk
+                    ).data[0].embedding
+                    chunk_id = f"{pdf_name}_page_{page_num}_chunk_{idx}"
+                    collection.add(
+                        documents=[chunk],
+                        embeddings=[embedding],
+                        ids=[chunk_id],
+                        metadatas=[{
+                            "page": page_num,
+                            "pdf_name": pdf_name,
+                            "chunk_index": idx
+                        }]
+                    )
+                except Exception as e:
+                    errors.append({
+                        "file": file.filename,
+                        "chunk_id": chunk_id,
+                        "error": str(e)
+                    })
+        os.remove(temp_path)
+        processed_files.append(file.filename)
+    return {
+        "status": "completed",
+        "files_processed": processed_files,
+        "errors": errors
+    }

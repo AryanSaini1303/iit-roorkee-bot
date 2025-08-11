@@ -1,0 +1,67 @@
+.container {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.7);
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 900px;
+  margin: 2rem auto;
+  font-family: sans-serif;
+  color: #222;
+}
+
+.container h1,.container h2 {
+  color: #003366;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+}
+
+.table th, .table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #ccc;
+  text-align: left;
+}
+
+.deleteBtn {
+  background: black;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  color: white;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.deleteBtn svg{
+  stroke:white;
+  stroke-width: 1.5px;
+}
+
+.deleteBtn:hover {
+  background: #cc0000;
+}
+
+.dropzone {
+  padding: 2rem;
+  border: 2px dashed #aaa;
+  border-radius: 8px;
+  background: rgba(240, 248, 255, 0.6);
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.activeDrop {
+  background: rgba(173, 216, 230, 0.6);
+}
+
+.uploading {
+  margin-top: 1rem;
+  color: #555;
+}

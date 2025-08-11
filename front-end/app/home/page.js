@@ -229,6 +229,7 @@ export default function HomePage() {
     setSignOutFlag(true);
     setLoading(true);
     const { error } = await supabase.auth.signOut();
+    sessionStorage.clear();
     if (error) {
       console.error('Sign-out error:', error.message);
     } else {
@@ -426,7 +427,7 @@ export default function HomePage() {
         console.error('Error fetching chats:', error);
       }
     };
-    fetchChats();
+    session && fetchChats();
   }, [session, messages, reply, showChats]);
 
   // if (true) {

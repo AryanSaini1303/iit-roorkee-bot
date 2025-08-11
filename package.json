@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "pdfjs-dist": "^5.3.31"
+    "pdfjs-dist": "^5.3.31",
+    "react-dropzone": "^14.3.8"
   }
 }
