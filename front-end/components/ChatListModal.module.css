@@ -180,3 +180,19 @@
     font-size: 0.8rem;
   }
 }
+
+@media (max-width: 385px){
+  .chatItem{
+    /* flex-direction: column; */
+    width: fit-content;
+    margin: auto;
+    width: 70vw;
+  }
+  .modal{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    width: 80vw;
+  }
+}
