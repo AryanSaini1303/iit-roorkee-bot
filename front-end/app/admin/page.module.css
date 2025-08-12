@@ -1,6 +1,6 @@
 .container {
   backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.6);
   padding: 2rem;
   border-radius: 12px;
   width: 70%;
@@ -8,6 +8,14 @@
   color: #222;
   margin: auto;
   position: relative;
+}
+
+.uploadContainer, .userContainer{
+  box-shadow: inset -4px -4px 9px rgb(94, 94, 94);
+  /* border: dashed grey 2px; */
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 12px;
 }
 
 .loaderContainer {
@@ -23,13 +31,14 @@
 }
 
 .tableContainer {
-  max-height: 50vh;
-  overflow: scroll;
+  max-height: 27vh;
+  overflow: auto;
 }
 
 .container h1,
 .container h2 {
   color: #003366;
+  font-family:'Courier New', Courier, monospace;
 }
 
 .container h1 {
@@ -79,6 +88,7 @@
   text-align: center;
   cursor: pointer;
   transition: background 0.2s ease;
+  margin-bottom: 1rem;
 }
 
 .activeDrop {
@@ -96,6 +106,7 @@
   border-radius: 5px;
   font-size: 0.9rem;
   transition: 0.2s all ease-in-out;
+  font-family:'Courier New', Courier, monospace;
 }
 
 .signOut:hover{

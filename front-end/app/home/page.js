@@ -86,54 +86,54 @@ export default function HomePage() {
     },
   });
 
-  const playElevenLabsAudio = async (text, intent, url) => {
-    SetNoAudio(false);
-    try {
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text, voiceId }),
-      });
-      if (!res.ok) {
-        console.warn('TTS API Error:', res.statusText);
-        SetNoAudio(true);
-        return;
-      }
-      const audioBlob = await res.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      setCurrentAudio(audio);
-      setAudioIsReady(true);
-      audio.play().catch((err) => {
-        console.warn('Audio playback failed:', err);
-        setCurrentAudio(null);
-        setAudioHasEnded(true);
-        if (intent === 'book_cab') {
-          window.open(url, '_blank');
-        } else if (intent === 'send_message') {
-          window.open(url, '_blank');
-          setWhatsappData({});
-          setWhatsappProcess(false);
-        }
-      });
-      audio.onended = () => {
-        setCurrentAudio(null);
-        setAudioHasEnded(true);
-        if (intent === 'book_cab') {
-          window.open(url, '_blank');
-        } else if (intent === 'send_message') {
-          window.open(url, '_blank');
-          setWhatsappData({});
-          setWhatsappProcess(false);
-        }
-      };
-    } catch (err) {
-      SetNoAudio(true);
-      console.warn('Text-to-speech failed:', err);
-    }
-  };
+  // const playElevenLabsAudio = async (text, intent, url) => {
+  //   SetNoAudio(false);
+  //   try {
+  //     const res = await fetch('/api/tts', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({ text, voiceId }),
+  //     });
+  //     if (!res.ok) {
+  //       console.warn('TTS API Error:', res.statusText);
+  //       SetNoAudio(true);
+  //       return;
+  //     }
+  //     const audioBlob = await res.blob();
+  //     const audioUrl = URL.createObjectURL(audioBlob);
+  //     const audio = new Audio(audioUrl);
+  //     setCurrentAudio(audio);
+  //     setAudioIsReady(true);
+  //     audio.play().catch((err) => {
+  //       console.warn('Audio playback failed:', err);
+  //       setCurrentAudio(null);
+  //       setAudioHasEnded(true);
+  //       if (intent === 'book_cab') {
+  //         window.open(url, '_blank');
+  //       } else if (intent === 'send_message') {
+  //         window.open(url, '_blank');
+  //         setWhatsappData({});
+  //         setWhatsappProcess(false);
+  //       }
+  //     });
+  //     audio.onended = () => {
+  //       setCurrentAudio(null);
+  //       setAudioHasEnded(true);
+  //       if (intent === 'book_cab') {
+  //         window.open(url, '_blank');
+  //       } else if (intent === 'send_message') {
+  //         window.open(url, '_blank');
+  //         setWhatsappData({});
+  //         setWhatsappProcess(false);
+  //       }
+  //     };
+  //   } catch (err) {
+  //     SetNoAudio(true);
+  //     console.warn('Text-to-speech failed:', err);
+  //   }
+  // };
 
   const stopAudio = () => {
     if (currentAudio) {
@@ -435,7 +435,12 @@ export default function HomePage() {
   // }
   // console.log(showChats);
 
-  if (!loading && !session) return 'Unauthenticated';
+  if (!loading && !session)
+    return (
+      <div className="wrapper">
+        <h1>Unauthenticated</h1>
+      </div>
+    );
 
   return (
     <div className={`${'wrapper'} ${'container'}`}>
