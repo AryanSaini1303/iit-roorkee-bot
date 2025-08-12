@@ -44,7 +44,7 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
     )
     query_json_str = initialCompletion.choices[0].message.content.strip()
     query = json.loads(query_json_str)
-    # print(query)
+    print(query)
     # print(f"new query constructed")
     
     if(query['query_type']=="question"):

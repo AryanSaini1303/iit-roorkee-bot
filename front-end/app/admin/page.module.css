@@ -3,14 +3,37 @@
   background: rgba(255, 255, 255, 0.7);
   padding: 2rem;
   border-radius: 12px;
-  max-width: 900px;
-  margin: 2rem auto;
+  width: 70%;
   font-family: sans-serif;
   color: #222;
+  margin: auto;
+  position: relative;
 }
 
-.container h1,.container h2 {
+.loaderContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.wrapperContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tableContainer {
+  max-height: 50vh;
+  overflow: scroll;
+}
+
+.container h1,
+.container h2 {
   color: #003366;
+}
+
+.container h1 {
+  text-align: center;
 }
 
 .table {
@@ -19,7 +42,8 @@
   margin-bottom: 2rem;
 }
 
-.table th, .table td {
+.table th,
+.table td {
   padding: 0.75rem;
   border-bottom: 1px solid #ccc;
   text-align: left;
@@ -38,8 +62,8 @@
   transition: all 0.2s ease-in-out;
 }
 
-.deleteBtn svg{
-  stroke:white;
+.deleteBtn svg {
+  stroke: white;
   stroke-width: 1.5px;
 }
 
@@ -61,7 +85,40 @@
   background: rgba(173, 216, 230, 0.6);
 }
 
+.signOut{
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  border: none;
+  background-color: black;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  transition: 0.2s all ease-in-out;
+}
+
+.signOut:hover{
+  background-color: red;
+  cursor: pointer;
+}
+
 .uploading {
   margin-top: 1rem;
   color: #555;
+  text-align: center;
+  animation: pulse 1.8s ease-in-out infinite;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.4;
+  }
 }

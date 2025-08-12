@@ -250,7 +250,7 @@ export default function PagesComponent({ pages, func }) {
       </section>
       <section className={styles.pagesContainer}>
         <SinglePagePdfRenderer
-          key={parsedPages[pageNum].page}
+          key={`${parsedPages[pageNum].name}-${parsedPages[pageNum].page}`}
           pdfUrl={`/pdfs/${parsedPages[pageNum].name}.pdf`}
           pageNumber={parsedPages[pageNum].page}
         />

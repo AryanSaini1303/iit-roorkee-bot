@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from 'react';
 import { getDocument } from 'pdfjs-dist';
-import setPdfWorker from '@/components/pdfWorker'; // adjust path as needed
+import setPdfWorker from '@/components/pdfWorker';
 
-export default function SinglePagePdfRenderer({ pdfUrl, pageNumber }) {
+export default function SinglePagePdfRenderer({ pdfUrl, pageNumber, key }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -34,5 +34,5 @@ export default function SinglePagePdfRenderer({ pdfUrl, pageNumber }) {
     renderPage();
   }, [pdfUrl, pageNumber]);
 
-  return <canvas ref={canvasRef} style={{ height: '100%', width: '100%', scale:"1.15"}} />;
+  return <canvas ref={canvasRef} style={{ height: '100%', width: '100%', scale:"1.15"}} key={key}/>;
 }
