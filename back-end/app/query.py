@@ -3,6 +3,7 @@ from openai import OpenAI  # type:ignore
 import chromadb  # type:ignore
 from dotenv import load_dotenv  # type:ignore
 import json
+# import requests
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -44,7 +45,7 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
     )
     query_json_str = initialCompletion.choices[0].message.content.strip()
     query = json.loads(query_json_str)
-    print(query)
+    # print(query)
     # print(f"new query constructed")
     
     if(query['query_type']=="question"):
@@ -103,3 +104,26 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
     )
     # print("answer generated")
     return completion.choices[0].message.content.strip(), pages
+    
+    # system_message = (
+    #     "You are an academic assistant Varuna. Answer the user's question using only the provided context whenever possible. "                "Do not omit important details and do not alter the wording or meaning of the context. "
+    #     "Cite the PDF name and page number for every fact you include using this format: (PDF: <pdf_name>, Page: <page_number>).\n\n"
+    #     "Extract and include all relevant information from the context. If the context is insufficient, try to infer a helpful answer based on it. "
+    #     "If inference is not possible, respond with: 'Couldn’t find that in the provided materials, but here’s what I can tell you…' and provide your best answer using general knowledge. "
+    #     "Never fabricate or make up facts. Make it clear when you're using general knowledge vs the provided materials.\n\n"
+    #     "If the user's message appears to be casual or conversational (e.g., greetings, opinions, non-academic chat), feel free to reply informally and helpfully, as a friendly assistant."
+    # )
+    # user_message = f"Context:\n{context}\n\nQuestion: {query}"
+    # prompt = f"System: {system_message}\n\nUser: {user_message}\n\nAssistant:"
+    # # print(prompt)
+    # res = requests.post(
+    #     "http://localhost:11434/api/generate",
+    #     json={
+    #         "model": "llama3.1:8b",
+    #         "prompt": prompt,
+    #         "stream": False
+    #     },
+    #     timeout=500
+    # )
+    # print(res.json()["response"])
+    # return res.json()["response"], pages

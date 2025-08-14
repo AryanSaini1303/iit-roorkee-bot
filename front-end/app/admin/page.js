@@ -199,7 +199,7 @@ export default function AdminPage() {
             )}
             {uploading && (
               <div className={styles.uploading}>
-                <h3>Uploading...</h3>
+                <h4>Uploading...</h4>
                 <p>
                   Hold tight &ndash; our AI is weaving your data into its
                   knowledge base. Precision takes time.
