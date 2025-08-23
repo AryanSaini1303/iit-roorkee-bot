@@ -12,6 +12,7 @@ import PagesComponent from '@/components/PagesComponent';
 import { Howl } from 'howler';
 import ChatListModal from '@/components/ChatListModal';
 import OnboardingModal from '@/components/OnboardingModal';
+import Link from 'next/link';
 
 export const useClickHandlers = ({
   onSingleClick,
@@ -59,7 +60,7 @@ export default function HomePage() {
   const [messages, setMessages] = useState([]);
   const [pages, setPages] = useState([]);
   const [showPages, setShowPages] = useState(false);
-  const [voiceModeToggle, setVoiceModeToggle] = useState(false);
+  const [voiceModeToggle, setVoiceModeToggle] = useState(true);
   const [noAudio, SetNoAudio] = useState(true);
   const [audioIsReady, setAudioIsReady] = useState(false);
   const [audioHasEnded, setAudioHasEnded] = useState(true);
@@ -505,7 +506,12 @@ export default function HomePage() {
         <li className={styles.headerElement}>
           <h1>Varuna</h1>
         </li>
-        <li className={styles.headerElement} ref={menuRef}>
+        <li
+          className={styles.headerElement}
+          ref={menuRef}
+          tabIndex={0}
+          role="button"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -539,15 +545,22 @@ export default function HomePage() {
           </svg>
           {settingsFlag && (
             <ul className={styles.options}>
-              <li
-                onClick={() => {
-                  setShowChats(true), setSettingsFlag(false);
-                }}
-              >
-                Chats
+              <li>
+                <button
+                  onClick={() => {
+                    setShowChats(true), setSettingsFlag(false);
+                  }}
+                >
+                  Chats
+                </button>
               </li>
-              <li onClick={() => signOut()} className={styles.lastChild}>
-                {signOutFlag ? 'Signing out...' : 'Sign out'}
+              <li>
+                <Link href={'/about'}>About</Link>
+              </li>
+              <li>
+                <button onClick={() => signOut()} className={styles.lastChild}>
+                  {signOutFlag ? 'Signing out...' : 'Sign out'}
+                </button>
               </li>
             </ul>
           )}

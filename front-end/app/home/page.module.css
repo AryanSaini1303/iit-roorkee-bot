@@ -103,7 +103,6 @@
 
 .options li {
   /* background-color: whitesmoke; */
-  padding: 1rem 0;
   font-size: 0.9rem;
   border-radius: 10px;
   display: flex;
@@ -115,6 +114,22 @@
   min-width: 150px;
   animation: optionsReveal 0.3s ease-in-out forwards;
   opacity: 0;
+}
+
+.options li a, .options li button {
+  padding: 1rem 0;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0);
+  border: none;
+  border-radius: 10px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  text-decoration: none;
+  color: black;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  font-size: 0.9rem;
 }
 
 .options li:nth-child(1) {
@@ -229,7 +244,7 @@
   opacity: 0.65;
   height: 85vh;
   backdrop-filter: blur(10px);
-  overflow: auto;
+  overflow: hidden;
 }
 .whiteSection img {
   filter: invert(100%) brightness(150%) contrast(150%);
@@ -536,7 +551,7 @@
   .logo {
     top: 4.8rem;
   }
-  .logoSection{
+  .logoSection {
     scale: 0.9;
     top: 4.2rem;
   }

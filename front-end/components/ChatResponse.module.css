@@ -156,6 +156,18 @@
   max-width: 90%;
 }
 
+@media (max-width: 914px) {
+  .userMessage, .botMessage{
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 724px) {
+  .userMessage, .botMessage{
+    font-size: 0.85rem;
+  }
+}
+
 @media (max-width:470px){
   .pagesInfo{
     font-size: 0.9rem;
@@ -164,6 +176,6 @@
 
 @media (max-width:555px){
   .userMessage, .botMessage{
-    width: 80%;
+    font-size: 0.8rem;
   }
 }
