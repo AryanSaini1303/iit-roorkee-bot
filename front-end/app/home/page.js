@@ -58,7 +58,7 @@ export default function HomePage() {
   const [messages, setMessages] = useState([]);
   const [pages, setPages] = useState([]);
   const [showPages, setShowPages] = useState(false);
-  const [voiceModeToggle, setVoiceModeToggle] = useState(false);
+  const [voiceModeToggle, setVoiceModeToggle] = useState(true);
   const [noAudio, SetNoAudio] = useState(true);
   const [audioIsReady, setAudioIsReady] = useState(false);
   const [audioHasEnded, setAudioHasEnded] = useState(true);
@@ -78,6 +78,7 @@ export default function HomePage() {
       setVoiceInputFlag(true);
       playSound();
       stopAudio();
+      handleVoiceInput(); // remove this too if you want continuous voice input
     },
     onDoubleClick: () => {
       if (!voiceInputFlag) {
@@ -150,9 +151,6 @@ export default function HomePage() {
 
   // console.log(voiceInputFlag);
   const handleVoiceInput = () => {
-    setVoiceInputFlag(true); // remove this too if you want continuous voice input and if already happens when 'onClick' executes
-    playSound(); // remove this too if you want continuous voice input and if already happens when 'onClick' executes
-    stopAudio(); // remove this too if you want continuous voice input and if already happens when 'onClick' executes
     setAudioHasEnded(false);
     let gotResult = false;
     const recognition = new window.webkitSpeechRecognition();
@@ -191,7 +189,7 @@ export default function HomePage() {
   //   }
   // }, [isRecording, voiceInputFlag, isProcessing]);
   // // }, [audioHasEnded, isRecording, voiceInputFlag, isProcessing]);
-  // Uncomment above and set 'onClick' to 'onClick' if you want continuous voice input
+  // Uncomment above if you want continuous voice input
 
   useEffect(() => {
     const handleMouseMove = (event) => {
@@ -587,7 +585,7 @@ export default function HomePage() {
                   className={styles.eyes}
                   ref={eyesRef}
                   onDoubleClick={onDoubleClick}
-                  onClick={handleVoiceInput}
+                  onClick={onClick}
                 >
                   <div></div>
                   <div></div>
@@ -597,7 +595,7 @@ export default function HomePage() {
                 src="/images/aiBackground7.gif"
                 alt="AI"
                 onDoubleClick={onDoubleClick}
-                onClick={handleVoiceInput}
+                onClick={onClick}
                 style={isRecording ? { transform: 'scale(1.3)' } : null}
               />
             </section>
