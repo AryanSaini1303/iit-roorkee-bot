@@ -10,12 +10,15 @@ export async function GET() {
   try {
     const { data, error } = await supabase.auth.admin.listUsers();
     if (error) throw error;
+    // console.log(data);
     const users = data.users.map((u) => ({
       id: u.id,
       email: u.email,
       created_at: u.created_at,
       last_sign_in_at: u.last_sign_in_at,
       name: u.user_metadata.full_name,
+      phone: u.user_metadata.phone,
+      organisation: u.user_metadata.organisation,
     }));
     return NextResponse.json({ users });
   } catch (err) {

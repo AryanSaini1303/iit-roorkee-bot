@@ -52,6 +52,7 @@ export default function AdminPage() {
     const res = await fetch('/api/list_users');
     const data = await res.json();
     setUsers(data.users || []);
+    // console.log(data?.users[0]);
   };
 
   useEffect(() => {
@@ -136,8 +137,10 @@ export default function AdminPage() {
                     <th>S. No.</th>
                     <th>Name</th>
                     <th>Email</th>
+                    <th>Phone</th>
+                    <th>Organisation</th>
                     {/* <th>Created At</th> */}
-                    <th>Last Sign In</th>
+                    <th>Last Sign In At</th>
                     <th>Terminate</th>
                   </tr>
                 </thead>
@@ -145,8 +148,10 @@ export default function AdminPage() {
                   {users.map((u, index) => (
                     <tr key={u.id}>
                       <td>{index + 1}</td>
+                      <td>{u.name}</td>
                       <td>{u.email}</td>
-                      <td>{formatDate(u.created_at)}</td>
+                      <td>{u.phone || "--"}</td>
+                      <td>{u.organisation || "--"}</td>
                       <td>{formatDate(u.last_sign_in_at)}</td>
                       <td>
                         <button

@@ -11,6 +11,7 @@ import MaintenancePage from '@/components/notFound';
 import PagesComponent from '@/components/PagesComponent';
 import { Howl } from 'howler';
 import ChatListModal from '@/components/ChatListModal';
+import OnboardingModal from '@/components/OnboardingModal';
 
 export const useClickHandlers = ({
   onSingleClick,
@@ -58,7 +59,7 @@ export default function HomePage() {
   const [messages, setMessages] = useState([]);
   const [pages, setPages] = useState([]);
   const [showPages, setShowPages] = useState(false);
-  const [voiceModeToggle, setVoiceModeToggle] = useState(true);
+  const [voiceModeToggle, setVoiceModeToggle] = useState(false);
   const [noAudio, SetNoAudio] = useState(true);
   const [audioIsReady, setAudioIsReady] = useState(false);
   const [audioHasEnded, setAudioHasEnded] = useState(true);
@@ -72,8 +73,10 @@ export default function HomePage() {
   const eyesRef = useRef(null);
   const [showChats, setShowChats] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
+  const [isVerified, setIsVerified] = useState(true);
   const { onClick, onDoubleClick } = useClickHandlers({
     onSingleClick: () => {
+      if (!isVerified) return;
       if (isRecording || isProcessing) return;
       setVoiceInputFlag(true);
       playSound();
@@ -81,6 +84,7 @@ export default function HomePage() {
       handleVoiceInput(); // remove this too if you want continuous voice input
     },
     onDoubleClick: () => {
+      if (!isVerified) return;
       if (!voiceInputFlag) {
         setVoiceModeToggle(false);
       }
@@ -173,6 +177,18 @@ export default function HomePage() {
     };
     recognition.start();
   };
+  // console.log(session);
+
+  useEffect(() => {
+    if (!session) return;
+    const { phone, organisation } = session.user.user_metadata || {};
+    // console.log(phone, organisation);
+    if (!phone || !organisation) {
+      setIsVerified(false);
+    } else {
+      setIsVerified(true);
+    }
+  }, [session]);
 
   // useEffect(() => {
   //   // console.log('******************************');
@@ -243,6 +259,7 @@ export default function HomePage() {
 
   function handleSubmit(e) {
     e.preventDefault();
+    if (!isVerified) return;
     setQuery(e.target.query.value);
     setValue('');
   }
@@ -448,6 +465,7 @@ export default function HomePage() {
 
   return (
     <div className={`${'wrapper'} ${'container'}`}>
+      <OnboardingModal session={session} />
       {showPages && <PagesComponent pages={pages} func={setShowPages} />}
       {showChats && (
         <ChatListModal
@@ -478,7 +496,12 @@ export default function HomePage() {
         />
         <img src="/images/logo.gif" alt="IITR logo" className={styles.logo} />
       </div>
-      <ul className={styles.header}>
+      <ul
+        className={styles.header}
+        style={
+          isVerified ? null : { pointerEvents: 'none', userSelect: 'none' }
+        }
+      >
         <li className={styles.headerElement}>
           <h1>Varuna</h1>
         </li>
@@ -489,6 +512,7 @@ export default function HomePage() {
             width="1.8rem"
             height="1.8rem"
             onClick={() => {
+              if (!isVerified) return;
               setSettingsFlag(!settingsFlag);
             }}
           >
@@ -560,7 +584,16 @@ export default function HomePage() {
             />
           )}
         </section>
-        <section>
+        <section
+          style={
+            isVerified
+              ? null
+              : {
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                }
+          }
+        >
           {voiceModeToggle ? (
             <section
               className={styles.aiListener}
@@ -633,6 +666,7 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => {
+                      if (!isVerified) return;
                       setVoiceModeToggle(true);
                       setVoiceInputFlag(false);
                     }}
