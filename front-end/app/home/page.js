@@ -148,7 +148,11 @@ export default function HomePage() {
     sound.play();
   };
 
+  // console.log(voiceInputFlag);
   const handleVoiceInput = () => {
+    setVoiceInputFlag(true); // remove this too if you want continuous voice input and if already happens when 'onClick' executes
+    playSound(); // remove this too if you want continuous voice input and if already happens when 'onClick' executes
+    stopAudio(); // remove this too if you want continuous voice input and if already happens when 'onClick' executes
     setAudioHasEnded(false);
     let gotResult = false;
     const recognition = new window.webkitSpeechRecognition();
@@ -172,21 +176,22 @@ export default function HomePage() {
     recognition.start();
   };
 
-  useEffect(() => {
-    // console.log('******************************');
-    // console.log('audioHasEnded: ', audioHasEnded);
-    // console.log('isRecording: ', isRecording);
-    // console.log('voiceInputFlag: ', voiceInputFlag);
-    // console.log('isProcessing: ', isProcessing);
-    // console.log('******************************');
-    // if (audioHasEnded && !isRecording && voiceInputFlag && !isProcessing) {
-    if (!isRecording && voiceInputFlag && !isProcessing) {
-      // console.log('execute');
-      playSound();
-      handleVoiceInput();
-    }
-  }, [isRecording, voiceInputFlag, isProcessing]);
-  // }, [audioHasEnded, isRecording, voiceInputFlag, isProcessing]);
+  // useEffect(() => {
+  //   // console.log('******************************');
+  //   // console.log('audioHasEnded: ', audioHasEnded);
+  //   // console.log('isRecording: ', isRecording);
+  //   // console.log('voiceInputFlag: ', voiceInputFlag);
+  //   // console.log('isProcessing: ', isProcessing);
+  //   // console.log('******************************');
+  //   // if (audioHasEnded && !isRecording && voiceInputFlag && !isProcessing) {
+  //   if (!isRecording && voiceInputFlag && !isProcessing) {
+  //     // console.log('execute');
+  //     playSound();
+  //     handleVoiceInput();
+  //   }
+  // }, [isRecording, voiceInputFlag, isProcessing]);
+  // // }, [audioHasEnded, isRecording, voiceInputFlag, isProcessing]);
+  // Uncomment above and set 'onClick' to 'onClick' if you want continuous voice input
 
   useEffect(() => {
     const handleMouseMove = (event) => {
@@ -362,6 +367,7 @@ export default function HomePage() {
       setReply(answer);
       // playElevenLabsAudio(answer);
       setIsProcessing(false);
+      setVoiceInputFlag(false); // remove this too if you want continuous voice input
     };
     processQuery();
   }, [query, session]);
@@ -581,7 +587,7 @@ export default function HomePage() {
                   className={styles.eyes}
                   ref={eyesRef}
                   onDoubleClick={onDoubleClick}
-                  onClick={onClick}
+                  onClick={handleVoiceInput}
                 >
                   <div></div>
                   <div></div>
@@ -591,7 +597,7 @@ export default function HomePage() {
                 src="/images/aiBackground7.gif"
                 alt="AI"
                 onDoubleClick={onDoubleClick}
-                onClick={onClick}
+                onClick={handleVoiceInput}
                 style={isRecording ? { transform: 'scale(1.3)' } : null}
               />
             </section>
