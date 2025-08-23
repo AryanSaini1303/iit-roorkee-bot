@@ -44,7 +44,7 @@ export default function AdminPage() {
       console.error('Sign-out error:', error.message);
     } else {
       setSession(null);
-      router.push('/');
+      router.push('/adminLogin');
     }
   };
 
