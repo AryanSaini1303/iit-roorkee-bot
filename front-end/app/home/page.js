@@ -178,7 +178,7 @@ export default function HomePage() {
     };
     recognition.start();
   };
-  // console.log(session);
+  console.log(session);
 
   useEffect(() => {
     if (!session) return;
@@ -466,7 +466,7 @@ export default function HomePage() {
 
   return (
     <div className={`${'wrapper'} ${'container'}`}>
-      <OnboardingModal session={session} />
+      <OnboardingModal session={session} func={setIsVerified} />
       {showPages && <PagesComponent pages={pages} func={setShowPages} />}
       {showChats && (
         <ChatListModal

@@ -3,14 +3,15 @@
   background: rgba(255, 255, 255, 0.6);
   padding: 2rem;
   border-radius: 12px;
-  width: 90%;
+  width: 100%;
   font-family: sans-serif;
   color: #222;
-  margin: auto;
+  margin: auto 2rem;
   position: relative;
 }
 
-.uploadContainer, .userContainer{
+.uploadContainer,
+.userContainer {
   box-shadow: inset -4px -4px 9px rgb(94, 94, 94);
   /* border: dashed grey 2px; */
   padding: 1rem;
@@ -18,7 +19,7 @@
   border-radius: 12px;
 }
 
-.uploading p{
+.uploading p {
   font-size: 0.9rem;
 }
 
@@ -42,7 +43,7 @@
 .container h1,
 .container h2 {
   color: #003366;
-  font-family:'Courier New', Courier, monospace;
+  font-family: 'Courier New', Courier, monospace;
 }
 
 .container h1 {
@@ -99,10 +100,11 @@
   background: rgba(173, 216, 230, 0.6);
 }
 
-.signOut{
+.signOut {
   position: absolute;
-  right: 1rem;
-  top: 1rem;
+  right: 0rem;
+  top: 0rem;
+  margin: 2rem;
   border: none;
   background-color: black;
   color: white;
@@ -110,12 +112,37 @@
   border-radius: 5px;
   font-size: 0.9rem;
   transition: 0.2s all ease-in-out;
-  font-family:'Courier New', Courier, monospace;
+  font-family: 'Courier New', Courier, monospace;
 }
 
-.signOut:hover{
+.signOut:hover {
   background-color: red;
   cursor: pointer;
+}
+
+.downloadBtn {
+  position: absolute;
+  left: 0rem;
+  top: 0rem;
+  margin: 2rem;
+  padding: 0.5rem 0.75rem;
+  background-color: black;
+  color: white;
+  border-radius: 6px;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.downloadBtn:hover {
+  background-color: green;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+
+.downloadBtn:active {
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+  transform: scale(0.98);
 }
 
 .uploading {

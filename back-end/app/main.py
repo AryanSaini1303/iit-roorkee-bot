@@ -26,7 +26,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 assert OPENAI_API_KEY, "Missing OPENAI_API_KEY in .env"
 
 client = OpenAI(api_key=OPENAI_API_KEY)
-chroma_client = chromadb.PersistentClient(path="./db1") # change this to "./db" in production
+chroma_client = chromadb.PersistentClient(path="./pilotDB") # change this to "./db" in production
 collection = chroma_client.get_or_create_collection(name="iit_docs")
 
 app = FastAPI()

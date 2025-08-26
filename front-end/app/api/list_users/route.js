@@ -19,6 +19,7 @@ export async function GET() {
       name: u.user_metadata.full_name,
       phone: u.user_metadata.phone,
       organisation: u.user_metadata.organisation,
+      designation: u.user_metadata.designation,
     }));
     return NextResponse.json({ users });
   } catch (err) {

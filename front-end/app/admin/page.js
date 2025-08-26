@@ -6,15 +6,40 @@ import { createClient } from '@/utils/supabase/client';
 import LoaderComponent from '@/components/loader';
 import { useRouter } from 'next/navigation';
 import FileLoader from '@/components/FileLoader';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingUsers, setLoadingUsers] = useState(true);
   const [session, setSession] = useState(null);
   const supabase = createClient();
   const router = useRouter();
   const [signOutFlag, setSignOutFlag] = useState(false);
+
+  const handleDownload = () => {
+    // 1. Map your users object to array of plain objects
+    const data = users.map((u) => ({
+      ID: u.id,
+      Email: u.email,
+      Phone: u.phone,
+      Organisation: u.organisation,
+      Designation: u.designation,
+      CreatedAt: u.created_at,
+      LastSignIn: u.last_sign_in_at,
+    }));
+    // 2. Create a worksheet
+    const ws = XLSX.utils.json_to_sheet(data);
+    // 3. Create a new workbook and append the worksheet
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Users');
+    // 4. Generate Excel file and trigger download
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(blob, 'users.xlsx');
+  };
 
   useEffect(() => {
     const getSession = async () => {
@@ -49,9 +74,11 @@ export default function AdminPage() {
   };
 
   const fetchUsers = async () => {
+    setLoadingUsers(true);
     const res = await fetch('/api/list_users');
     const data = await res.json();
     setUsers(data.users || []);
+    setLoadingUsers(false);
     // console.log(data?.users[0]);
   };
 
@@ -122,14 +149,17 @@ export default function AdminPage() {
 
   return (
     <div className={`${styles.wrapperContainer} wrapper`}>
-      {users.length !== 0 ? (
-        <div className={styles.container}>
-          <button className={styles.signOut} onClick={signOut}>
-            {signOutFlag ? 'Signing out...' : 'Sign Out'}
-          </button>
-          <h1>Admin Dashboard</h1>
-          <section className={styles.userContainer}>
-            <h2>Users</h2>
+      <div className={styles.container}>
+        <button className={styles.signOut} onClick={signOut}>
+          {signOutFlag ? 'Signing out...' : 'Sign Out'}
+        </button>
+        <button onClick={handleDownload} className={styles.downloadBtn}>
+          Export Users
+        </button>
+        <h1>Admin Dashboard</h1>
+        <section className={styles.userContainer}>
+          <h2>Users</h2>
+          {users.length !== 0 ? (
             <section className={styles.tableContainer}>
               <table className={styles.table}>
                 <thead>
@@ -139,6 +169,7 @@ export default function AdminPage() {
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Organisation</th>
+                    <th>Designation</th>
                     {/* <th>Created At</th> */}
                     <th>Last Sign In At</th>
                     <th>Terminate</th>
@@ -150,8 +181,9 @@ export default function AdminPage() {
                       <td>{index + 1}</td>
                       <td>{u.name}</td>
                       <td>{u.email}</td>
-                      <td>{u.phone || "--"}</td>
-                      <td>{u.organisation || "--"}</td>
+                      <td>{u.phone || '--'}</td>
+                      <td>{u.organisation || '--'}</td>
+                      <td>{u.designation || '--'}</td>
                       <td>{formatDate(u.last_sign_in_at)}</td>
                       <td>
                         <button
@@ -180,50 +212,46 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </section>
-          </section>
-          <section className={styles.uploadContainer}>
-            <h2>Upload PDFs</h2>
-            {!uploading ? (
-              <div
-                {...getRootProps()}
-                className={`${styles.dropzone} ${
-                  isDragActive ? styles.activeDrop : ''
-                }`}
-              >
-                <input {...getInputProps()} />
-                {isDragActive ? (
-                  <p>Drop PDFs here...</p>
-                ) : (
-                  <p>Drag & drop PDFs here, or click to select</p>
-                )}
-              </div>
-            ) : (
-              <div className={styles.loaderContainer}>
-                <FileLoader />
-              </div>
-            )}
-            {uploading && (
-              <div className={styles.uploading}>
-                <h4>Uploading...</h4>
-                <p>
-                  Hold tight &ndash; our AI is weaving your data into its
-                  knowledge base. Precision takes time.
-                </p>
-              </div>
-            )}
-          </section>
-        </div>
-      ) : (
-        <LoaderComponent
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            scale: '1.5',
-          }}
-        />
-      )}
+          ) : loadingUsers ? (
+            <LoaderComponent style={{ margin: 'auto' }} />
+          ) : (
+            <p style={{ margin: '1.3rem 0' }}>
+              <em>No users found...</em>
+            </p>
+          )}
+        </section>
+        <section className={styles.uploadContainer}>
+          <h2>Upload PDFs</h2>
+          {!uploading ? (
+            <div
+              {...getRootProps()}
+              className={`${styles.dropzone} ${
+                isDragActive ? styles.activeDrop : ''
+              }`}
+            >
+              <input {...getInputProps()} />
+              {isDragActive ? (
+                <p>Drop PDFs here...</p>
+              ) : (
+                <p>Drag & drop PDFs here, or click to select</p>
+              )}
+            </div>
+          ) : (
+            <div className={styles.loaderContainer}>
+              <FileLoader />
+            </div>
+          )}
+          {uploading && (
+            <div className={styles.uploading}>
+              <h4>Uploading...</h4>
+              <p>
+                Hold tight &ndash; our AI is weaving your data into its
+                knowledge base. Precision takes time.
+              </p>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

@@ -4,21 +4,23 @@ import { useEffect, useState } from 'react';
 import styles from './OnboardingModal.module.css';
 import { createClient } from '@/utils/supabase/client';
 
-export default function OnboardingModal({ session }) {
-  const { phone, organisation } = session?.user.user_metadata || {};
+export default function OnboardingModal({ session, func }) {
+  const { phone, organisation, designation } =
+    session?.user.user_metadata || {};
   //   console.log(phone, organisation);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     phone: phone || '',
     organisation: organisation || '',
+    designation: designation || '',
   });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (session && (!phone || !organisation)) {
+    if (session && (!phone || !organisation || !designation)) {
       setShowModal(true);
     }
-  }, [session, phone, organisation]);
+  }, [session, phone, organisation, designation]);
   //   console.log(showModal);
 
   async function updateUserProfile(data) {
@@ -28,6 +30,7 @@ export default function OnboardingModal({ session }) {
       console.error('Error updating user metadata:', error.message);
     } else {
       setShowModal(false); // close modal after success
+      func(true);
     }
     setLoading(false);
   }
@@ -68,6 +71,16 @@ export default function OnboardingModal({ session }) {
               type="text"
               name="organisation"
               value={formData.organisation}
+              onChange={handleChange}
+              required
+            />
+          </label>
+          <label>
+            Designation
+            <input
+              type="text"
+              name="designation"
+              value={formData.designation}
               onChange={handleChange}
               required
             />

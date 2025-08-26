@@ -84,3 +84,24 @@
     transform: translateY(0);
   }
 }
+
+@media (max-width: 600px) {
+  .modal {
+    width: 70%;
+  }
+}
+
+@media (max-width: 340px) {
+  .title {
+    font-size: 1rem;
+  }
+  .form label {
+    font-size: 0.8rem;
+  }
+  .form input {
+    font-size: 0.9rem;
+  }
+  .submit {
+    font-size: 0.9rem;
+  }
+}
