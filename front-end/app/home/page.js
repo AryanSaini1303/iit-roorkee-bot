@@ -178,7 +178,7 @@ export default function HomePage() {
     };
     recognition.start();
   };
-  console.log(session);
+  // console.log(session);
 
   useEffect(() => {
     if (!session) return;
@@ -451,6 +451,22 @@ export default function HomePage() {
     };
     session && fetchChats();
   }, [session, messages, reply, showChats]);
+
+  useEffect(() => {
+    const incrementVisits = async () => {
+      try {
+        const res = await fetch('/api/incrementVisits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await res.json();
+        // console.log(data);
+      } catch (error) {
+        console.error('Error incrementing visits:', error);
+      }
+    };
+    session && incrementVisits();
+  }, [session]);
 
   // if (true) {
   //   return <MaintenancePage />;

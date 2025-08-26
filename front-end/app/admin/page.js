@@ -18,6 +18,7 @@ export default function AdminPage() {
   const supabase = createClient();
   const router = useRouter();
   const [signOutFlag, setSignOutFlag] = useState(false);
+  const [totalVisits, setTotalVisits] = useState(0);
 
   const handleDownload = () => {
     // 1. Map your users object to array of plain objects
@@ -78,6 +79,10 @@ export default function AdminPage() {
     const res = await fetch('/api/list_users');
     const data = await res.json();
     setUsers(data.users || []);
+    const res1 = await fetch('/api/getTotalVisits');
+    const data1 = await res1.json();
+    // console.log(data1);
+    setTotalVisits(data1.count || 0)
     setLoadingUsers(false);
     // console.log(data?.users[0]);
   };
@@ -220,36 +225,52 @@ export default function AdminPage() {
             </p>
           )}
         </section>
-        <section className={styles.uploadContainer}>
-          <h2>Upload PDFs</h2>
-          {!uploading ? (
-            <div
-              {...getRootProps()}
-              className={`${styles.dropzone} ${
-                isDragActive ? styles.activeDrop : ''
-              }`}
-            >
-              <input {...getInputProps()} />
-              {isDragActive ? (
-                <p>Drop PDFs here...</p>
-              ) : (
-                <p>Drag & drop PDFs here, or click to select</p>
-              )}
-            </div>
-          ) : (
-            <div className={styles.loaderContainer}>
-              <FileLoader />
-            </div>
-          )}
-          {uploading && (
-            <div className={styles.uploading}>
-              <h4>Uploading...</h4>
-              <p>
-                Hold tight &ndash; our AI is weaving your data into its
-                knowledge base. Precision takes time.
-              </p>
-            </div>
-          )}
+        <section className={styles.bottomContainer}>
+          <section className={styles.uploadContainer}>
+            <h2>Upload PDFs</h2>
+            {!uploading ? (
+              <div
+                {...getRootProps()}
+                className={`${styles.dropzone} ${
+                  isDragActive ? styles.activeDrop : ''
+                }`}
+              >
+                <input {...getInputProps()} />
+                {isDragActive ? (
+                  <p>Drop PDFs here...</p>
+                ) : (
+                  <p>Drag & drop PDFs here, or click to select</p>
+                )}
+              </div>
+            ) : (
+              <div className={styles.loaderContainer}>
+                <FileLoader />
+              </div>
+            )}
+            {uploading && (
+              <div className={styles.uploading}>
+                <h4>Uploading...</h4>
+                <p>
+                  Hold tight &ndash; our AI is weaving your data into its
+                  knowledge base. Precision takes time.
+                </p>
+              </div>
+            )}
+          </section>
+          <section className={styles.infoContainer}>
+            <h2>Web Analytics</h2>
+            <ul>
+              <li>
+                Number of Visits: <span>{totalVisits}</span>
+              </li>
+              <li>
+                Number of Unique Users: <span>{users.length}</span>
+              </li>
+              <li>
+                Number of Live Users: <span>--</span>
+              </li>
+            </ul>
+          </section>
         </section>
       </div>
     </div>
