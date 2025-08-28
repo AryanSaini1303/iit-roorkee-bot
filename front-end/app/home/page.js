@@ -358,11 +358,10 @@ export default function HomePage() {
           createdAt: new Date().toISOString(),
         },
       ]);
-      const chatRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ask`, {
+      const chatRes = await fetch('/api/ask', {
         method: 'POST',
         body: JSON.stringify({
           question: query,
-          // messages: [...convo, { role: 'user', content: query }],
           conversation: convo,
         }),
         headers: {

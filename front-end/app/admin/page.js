@@ -82,7 +82,7 @@ export default function AdminPage() {
     const res1 = await fetch('/api/getTotalVisits');
     const data1 = await res1.json();
     // console.log(data1);
-    setTotalVisits(data1.count || 0)
+    setTotalVisits(data1.count || 0);
     setLoadingUsers(false);
     // console.log(data?.users[0]);
   };
@@ -106,10 +106,9 @@ export default function AdminPage() {
     acceptedFiles.forEach((file) => {
       formData.append('files', file);
     });
-
     setUploading(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/add', {
+      const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
