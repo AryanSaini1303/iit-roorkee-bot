@@ -11,7 +11,7 @@ export async function POST(req) {
     const { count } = await supabase
       .from('visits')
       .select('*', { count: 'exact', head: true });
-    console.log(count);
+    // console.log(count);
     const { data, error: insertError } = await supabase.from('visits').insert({
       user_id: user.id,
       timestamp: new Date().toISOString(),
