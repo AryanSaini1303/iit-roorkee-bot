@@ -3,6 +3,7 @@ from openai import OpenAI  # type:ignore
 import chromadb  # type:ignore
 from dotenv import load_dotenv  # type:ignore
 import json
+from datetime import date
 # import requests
 
 load_dotenv()
@@ -12,25 +13,36 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 chroma_client = chromadb.PersistentClient(path="./pilotDB")
 collection = chroma_client.get_or_create_collection(name="iit_docs")
 
-def get_answer(question: str, conversation: list, top_k: int = 10):
+def get_answer(question: str, conversation: list, top_k: int = 20):
     if conversation is None:
         conversation = []
-        
+
     initialCompletion = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o-mini",  # cheaper + faster than gpt-4.1, perfect for rewriting
         messages = [
             {
                 "role": "system",
                 "content": (
-                    "You are a query builder that takes the user's current question and the conversation history, "
-                    "and returns a complete, standalone search query that includes all necessary context, even if it was mentioned earlier.\n\n"
-                    "The constructed query must be in the form of a full question — such as starting with what, why, how, when, where, etc. "
-                    "It should never be a phrase, keyword, or document heading. Avoid vague or incomplete queries.\n\n"
-                    "If the user's intent is casual conversation (e.g., hi, hello, how are you), return:\n"
+                    "You are a query reformulator for an academic assistant. "
+                    "Your job is to take the conversation history and the user’s latest question, "
+                    "and produce a precise, standalone query suitable for document retrieval.\n\n"
+                    f"If the user’s question includes words like 'latest', 'current', 'recent', or 'upcoming', include the current date ({date.today()}) in the reformulated query for context."
+
+                    "Rules:\n"
+                    "- Always include all necessary context from history in the rewritten query.\n"
+                    "- The query must be **a complete, grammatically correct academic question** "
+                    "(starting with what, why, how, when, where, etc.).\n"
+                    "- Keep the query concise but detailed enough for accurate search.\n"
+                    "- Remove filler words, greetings, or irrelevant chatter.\n"
+                    "- Never output vague phrases, keywords, or incomplete fragments.\n\n"
+
+                    "Output format:\n"
+                    "- If the user is making casual conversation (hi, hello, how are you, etc.), return:\n"
                     '{\n  "query_type": "small talk",\n  "query": "<user\'s casual message>"\n}\n\n'
-                    "If the user is asking a question requiring document lookup, return:\n"
-                    '{\n  "query_type": "question",\n  "query": "<fully constructed, grammatically correct question>"\n}\n\n'
-                    "Respond only with the JSON object. Do not include any greeting, explanation, or markdown formatting."
+                    "- If the user is asking something that requires documents, return:\n"
+                    '{\n  "query_type": "question",\n  "query": "<fully constructed standalone question>"\n}\n\n'
+
+                    "Respond only with a valid JSON object — no explanation, no extra text."
                 )
             },
             {
@@ -41,8 +53,10 @@ def get_answer(question: str, conversation: list, top_k: int = 10):
                 "role": "user",
                 "content": f"User's question:\n{question}"
             }
-        ]
+        ],
+        temperature=0.2
     )
+
     query_json_str = initialCompletion.choices[0].message.content.strip()
     query = json.loads(query_json_str)
     # print(query)
@@ -59,7 +73,7 @@ def get_answer(question: str, conversation: list, top_k: int = 10):
     if(query['query_type']=="question"):
         # print(conversation)
         query_embedding = client.embeddings.create(
-            model="text-embedding-3-large", # to improve the accuracy, the database is not embedded with "text-embedding-3-large" model so using same for the search (works so well :)
+            model="text-embedding-3-large", # to improve the accuracy, the database is now embedded with "text-embedding-3-large" model so using same for the search (works so well :)
             input=query['query']
         ).data[0].embedding
         results = collection.query(
@@ -83,7 +97,6 @@ def get_answer(question: str, conversation: list, top_k: int = 10):
     elif(query['query_type']=="small talk"):
         context = "This is a casual conversation, no documents needed."
         pages = set()
-        query=question
 
     # print(context)
     # print(query)
@@ -104,16 +117,19 @@ def get_answer(question: str, conversation: list, top_k: int = 10):
                 "Additionally, you may answer questions about your knowledge base itself (e.g., listing the PDFs you have, the number of pages, etc.) "
                 "even if this information is not in the user-provided context. For other meta-questions, only respond using known facts.\n\n"
                 "If the user's message is casual or conversational (e.g., greetings, opinions, non-academic chat), reply informally and helpfully."
+                "Avoid making tables in your responses."
             )
         },
+        {"role": "user", "content": f"Here is the academic context from your knowledge base:\n\n{context}"},
         {
             "role": "user",
-            "content": f"Context:\n{context}\n\nQuestion: {query}"
+            "content": f"Question: {query['query']}"
         }
     ]
     completion = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=messages
+        model="gpt-4.1",
+        messages=messages,
+        temperature=0.2
     )
     # print("answer generated")
     return completion.choices[0].message.content.strip(), pages
