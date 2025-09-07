@@ -58,7 +58,7 @@ export default function HomePage() {
   const [sessionQuery, setSessionQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [pages, setPages] = useState([]);
+  const [pagesList, setPagesList] = useState([]);
   const [showPages, setShowPages] = useState(false);
   const [voiceModeToggle, setVoiceModeToggle] = useState(true);
   const [noAudio, SetNoAudio] = useState(true);
@@ -73,6 +73,7 @@ export default function HomePage() {
   const sound = new Howl({ src: ['/sounds/tapSound.mp3'] });
   const eyesRef = useRef(null);
   const [showChats, setShowChats] = useState(false);
+  const [pageData, setPageData] = useState({});
   const [loadingChat, setLoadingChat] = useState(false);
   const [isVerified, setIsVerified] = useState(true);
   const { onClick, onDoubleClick } = useClickHandlers({
@@ -265,6 +266,11 @@ export default function HomePage() {
     setValue('');
   }
 
+  function handlePageListClick(data) {
+    setShowPages(true);
+    setPageData(data);
+  }
+
   async function getConversationById(conversationId) {
     try {
       const res = await fetch('/api/getConversation', {
@@ -281,6 +287,7 @@ export default function HomePage() {
         setMessages(data.conversation.messages || []);
         setSessionQuery(data.conversation.messages[0]?.content || '');
         sessionStorage.setItem('messages', data.conversation.messages || []);
+        sessionStorage.setItem('pagesList', data.conversation.pdfList || []);
         sessionStorage.setItem(
           'query',
           data.conversation.messages[0]?.content || '',
@@ -300,9 +307,16 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    messages.length !== 0 &&
+    if (messages.length !== 0) {
       sessionStorage.setItem('messages', JSON.stringify(messages));
+      sessionStorage.setItem('pagesList', JSON.stringify(pagesList));
+    }
   }, [messages]);
+
+  // useEffect(() => {
+  //   if (pagesList.length !== 0) {
+  //   }
+  // }, [pagesList]);
 
   useEffect(() => {
     if (settingsFlag) {
@@ -336,6 +350,7 @@ export default function HomePage() {
     getSession();
     setSessionQuery(sessionStorage.getItem('query') || '');
     setMessages(JSON.parse(sessionStorage.getItem('messages')) || []);
+    setPagesList(JSON.parse(sessionStorage.getItem('pagesList')) || []);
   }, []);
 
   useEffect(() => {
@@ -369,8 +384,12 @@ export default function HomePage() {
         },
       });
       const { answer, pages } = await chatRes.json();
-      setPages(pages);
-      // console.log(answer,pages);
+      if (pagesList.length == 0) {
+        setPagesList([pages]);
+      } else {
+        setPagesList((prev) => [...prev, pages]);
+      }
+      console.log(pages);
       setMessages((prev) => [
         ...prev,
         {
@@ -386,6 +405,7 @@ export default function HomePage() {
     };
     processQuery();
   }, [query, session]);
+  // console.log(pagesList);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -411,11 +431,12 @@ export default function HomePage() {
         body: JSON.stringify({
           conversationId,
           newMessages,
+          newPdfList: pagesList,
         }),
       })
         .then((res) => res.json())
         .then((data) => {
-          // console.log(data);
+          console.log(data);
           if (data?.id && !conversationId) {
             setConversationId(data.id); // capture the new conversation ID
             sessionStorage.setItem('conversationId', data.id);
@@ -426,14 +447,13 @@ export default function HomePage() {
         });
       sessionStorage.setItem('lastMessagesLength', messages.length);
     }
-  }, [messages]);
+  }, [messages, pagesList]);
 
   useEffect(() => {
     const storedConversationId = sessionStorage.getItem('conversationId');
     if (storedConversationId) {
       setConversationId(storedConversationId);
     }
-    // sessionStorage.setItem('lastMessagesLength', messages.length);
     const fetchChats = async () => {
       try {
         const res = await fetch('/api/getChats', {
@@ -470,7 +490,6 @@ export default function HomePage() {
   // if (true) {
   //   return <MaintenancePage />;
   // }
-  // console.log(showChats);
 
   if (!loading && !session)
     return (
@@ -482,7 +501,7 @@ export default function HomePage() {
   return (
     <div className={`${'wrapper'} ${'container'}`}>
       <OnboardingModal session={session} func={setIsVerified} />
-      {showPages && <PagesComponent pages={pages} func={setShowPages} />}
+      {showPages && <PagesComponent pages={pagesList} func={setShowPages} pageData={pageData}/>}
       {showChats && (
         <ChatListModal
           chats={chats}
@@ -606,8 +625,9 @@ export default function HomePage() {
           {(sessionQuery.length !== 0 || messages.length !== 0) && (
             <ChatResponse
               conversation={messages}
-              pages={pages}
-              func={setShowPages}
+              pages={pagesList}
+              func={handlePageListClick}
+              pagesData={pageData}
               isProcessing={isProcessing}
             />
           )}

@@ -16,13 +16,14 @@ export default function SinglePagePdfRenderer({ pdfUrl, pageNumber, key }) {
     const renderPage = async () => {
       const loadingTask = getDocument(pdfUrl);
       const pdf = await loadingTask.promise;
+      // console.log(pdf);
 
       if (cancelled) {
         pdf.destroy(); // cleanup if cancelled
         return;
       }
 
-      const page = await pdf.getPage(pageNumber);
+      const page = await pdf.getPage(parseInt(pageNumber));
 
       if (cancelled) {
         pdf.destroy();
@@ -70,5 +71,11 @@ export default function SinglePagePdfRenderer({ pdfUrl, pageNumber, key }) {
     };
   }, [pdfUrl, pageNumber]);
 
-  return <canvas ref={canvasRef} style={{ height: '100%', width: '100%', scale: '1.15' }} key={key} />;
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ height: '100%', width: '100%', scale: '1.15' }}
+      key={key}
+    />
+  );
 }

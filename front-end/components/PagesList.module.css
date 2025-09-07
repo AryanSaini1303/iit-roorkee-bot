@@ -1,0 +1,129 @@
+.card {
+  margin-top: 1rem;
+  padding: 1rem 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  position: relative;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.hideBtn {
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.hideBtn:hover {
+  color: #ef4444;
+}
+
+.list {
+  list-style: decimal inside;
+  margin: 0;
+  padding: 0;
+}
+
+.listItem {
+  margin-bottom: 1rem;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.pdfName {
+  font-weight: 500;
+  color: #2563eb;
+  word-break: break-word; /* for long names */
+}
+
+.pageList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0;
+}
+
+.pageBadge {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid #bfdbfe;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+}
+
+.pageBadge:hover {
+  background-color: black;
+  color: white;
+  cursor: pointer;
+}
+
+/* 📱 Responsive tweaks */
+@media (max-width: 768px) {
+  .title {
+    font-size: 1rem;
+  }
+
+  .card {
+    padding: 0.75rem 1rem;
+  }
+
+  .pageList {
+    gap: 0.4rem;
+  }
+
+  .pageBadge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .title {
+    font-size: 0.95rem;
+  }
+
+  .hideBtn {
+    align-self: flex-end;
+    font-size: 0.8rem;
+  }
+
+  .listItem {
+    font-size: 0.9rem;
+  }
+
+  .pageBadge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+}

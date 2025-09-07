@@ -9,13 +9,15 @@ const SinglePagePdfRenderer = dynamic(
   },
 );
 
-export default function PagesComponent({ pages, func }) {
-  const [pageNum, setPageNum] = useState(0);
-  const parsedPages = pages.map((entry) => {
-    const [name, pageStr] = entry.split('|').map((str) => str.trim());
-    const pageNumber = parseInt(pageStr.replace('Page', '').trim(), 10);
-    return { name, page: pageNumber };
-  });
+export default function PagesComponent({ pages, func, pageData }) {
+  // const [pageNum, setPageNum] = useState(0);
+  // const parsedPages = pages.map((entry) => {
+  //   const [name, pageStr] = entry.split('|').map((str) => str.trim());
+  //   const pageNumber = parseInt(pageStr.replace('Page', '').trim(), 10);
+  //   return { name, page: pageNumber };
+  // });
+  // // console.log(parsedPages);
+  // console.log(pageData.pageNum.split(' ')[1]);
   return (
     <section className={styles.pagesSection}>
       <section className={styles.buttonContainer}>
@@ -200,7 +202,7 @@ export default function PagesComponent({ pages, func }) {
         </button>
         <section className={styles.pageControlContainer}>
           <section className={styles.pageControl}>
-            <button
+            {/* <button
               onClick={() =>
                 setPageNum(() => (pageNum === 0 ? 0 : pageNum - 1))
               }
@@ -220,9 +222,9 @@ export default function PagesComponent({ pages, func }) {
                   d="M9.31 6.71a.996.996 0 0 0 0 1.41L13.19 12l-3.88 3.88a.996.996 0 1 0 1.41 1.41l4.59-4.59a.996.996 0 0 0 0-1.41L10.72 6.7c-.38-.38-1.02-.38-1.41.01"
                 ></path>
               </svg>
-            </button>
-            <strong>{parsedPages[pageNum].page}</strong>
-            <button
+            </button> */}
+            <strong>{pageData.pageNum.split(" ")[1]}</strong>
+            {/* <button
               onClick={() =>
                 setPageNum(() =>
                   pages.length - 1 === pageNum ? pages.length - 1 : pageNum + 1,
@@ -243,16 +245,16 @@ export default function PagesComponent({ pages, func }) {
                   d="M9.31 6.71a.996.996 0 0 0 0 1.41L13.19 12l-3.88 3.88a.996.996 0 1 0 1.41 1.41l4.59-4.59a.996.996 0 0 0 0-1.41L10.72 6.7c-.38-.38-1.02-.38-1.41.01"
                 ></path>
               </svg>
-            </button>
+            </button> */}
           </section>
-          <p>{parsedPages[pageNum].name}</p>
+          <p style={{textAlign:'center'}}>{pageData.name}</p>
         </section>
       </section>
       <section className={styles.pagesContainer}>
         <SinglePagePdfRenderer
-          key={`${parsedPages[pageNum].name}-${parsedPages[pageNum].page}`}
-          pdfUrl={`https://botpdfs.blob.core.windows.net/pdfs/${parsedPages[pageNum].name}.pdf`}
-          pageNumber={parsedPages[pageNum].page}
+          key={`${pageData.name}-${pageData.pageNum.split(' ')[1]}`}
+          pdfUrl={`https://botpdfs.blob.core.windows.net/pdfs/${pageData.name}.pdf`}
+          pageNumber={pageData.pageNum.split(' ')[1]}
         />
       </section>
     </section>
