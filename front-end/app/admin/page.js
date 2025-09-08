@@ -19,6 +19,8 @@ export default function AdminPage() {
   const router = useRouter();
   const [signOutFlag, setSignOutFlag] = useState(false);
   const [totalVisits, setTotalVisits] = useState(0);
+  const [pdfs, setPdfs] = useState([]);
+  const [loadingPdfs, setLoadingPdfs] = useState(true);
 
   const handleDownload = () => {
     // 1. Map your users object to array of plain objects
@@ -87,8 +89,18 @@ export default function AdminPage() {
     // console.log(data?.users[0]);
   };
 
+  const fetchPdfs = async () => {
+    const res = await fetch('/api/list_pdfs');
+    const data = await res.json();
+    setPdfs(data.pdfs || []);
+    // console.log(data1);
+    setLoadingPdfs(false);
+    // console.log(data?.users[0]);
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchPdfs();
   }, []);
 
   const deleteUser = async (userId) => {
@@ -268,6 +280,16 @@ export default function AdminPage() {
               <li>
                 Number of Live Users: <span>--</span>
               </li>
+            </ul>
+          </section>
+          <section className={styles.infoContainer}>
+            <h2>Knowledge Base</h2>
+            <ul>
+              {pdfs.map((pdf, i) => (
+                <li key={pdf}>
+                  {i + 1}. {pdf}
+                </li>
+              ))}
             </ul>
           </section>
         </section>

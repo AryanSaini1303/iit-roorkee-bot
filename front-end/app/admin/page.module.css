@@ -1,12 +1,12 @@
 .container {
   backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.472);
   padding: 2rem;
   border-radius: 12px;
   width: 100%;
   font-family: sans-serif;
   color: #222;
-  margin: auto 2rem;
+  margin: auto;
   position: relative;
 }
 
@@ -198,6 +198,10 @@
   justify-content: space-between;
 }
 
+.infoContainer ol{
+  list-style:decimal;
+}
+
 .infoContainer li:last-child {
   border-bottom: none;
 }
@@ -205,4 +209,10 @@
 .infoContainer li span {
   font-weight: 700;
   color: black;
+}
+
+.infoContainer:last-child{
+  grid-area: 2/1/2/3;
+  overflow: auto;
+  max-height: 40vh;
 }

@@ -118,3 +118,12 @@ async def add_pdfs(files: List[UploadFile] = File(...)):
         "files_processed": processed_files,
         "errors": errors
     }
+    
+@app.get("/list-pdfs")
+async def list_pdfs():
+    all_items=collection.get(include=["metadatas"])
+    unique_pdfs=set()
+    for meta in all_items["metadatas"]:
+        if meta and "pdf_name" in meta:
+            unique_pdfs.add(meta["pdf_name"])
+    return {"pdfs":list(unique_pdfs)}
