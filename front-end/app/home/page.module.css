@@ -18,11 +18,23 @@
   font-style: normal;
   font-size: 2rem;
   margin: 0;
+  /* display: flex;
+  flex-direction: column;
+  gap: 0; */
 }
 
 .header .headerElement:nth-child(1) h1 {
   margin: 1rem 0;
 }
+
+/* .header .headerElement:nth-child(1) h3 {
+  margin: 0;
+}
+
+.header .headerElement:nth-child(1) img {
+  height: 3rem;
+  width: 100%;
+} */
 
 .header .headerElement:last-child {
   background-color: whitesmoke;

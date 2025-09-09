@@ -11,9 +11,10 @@ export async function POST(request) {
     }
     const { data, error } = await supabase
       .from('conversations')
-      .select('messages')
+      .select('messages, pdfList')
       .eq('id', conversationId)
       .single();
+      // console.log(data);
     if (error) throw error;
     return new Response(JSON.stringify({ success: true, conversation: data }), {
       status: 200,

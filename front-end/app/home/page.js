@@ -282,12 +282,19 @@ export default function HomePage() {
       if (!res.ok) throw new Error('Failed to fetch conversation');
 
       const data = await res.json();
-      // console.log(data);
       if (data.success) {
+        // console.log(data.conversation.pdfList);
         setMessages(data.conversation.messages || []);
         setSessionQuery(data.conversation.messages[0]?.content || '');
-        sessionStorage.setItem('messages', data.conversation.messages || []);
-        sessionStorage.setItem('pagesList', data.conversation.pdfList || []);
+        setPagesList(data.conversation.pdfList || []);
+        sessionStorage.setItem(
+          'messages',
+          JSON.stringify(data.conversation.messages) || [],
+        );
+        sessionStorage.setItem(
+          'pagesList',
+          JSON.stringify(data.conversation.pdfList) || [],
+        );
         sessionStorage.setItem(
           'query',
           data.conversation.messages[0]?.content || '',
@@ -312,11 +319,6 @@ export default function HomePage() {
       sessionStorage.setItem('pagesList', JSON.stringify(pagesList));
     }
   }, [messages]);
-
-  // useEffect(() => {
-  //   if (pagesList.length !== 0) {
-  //   }
-  // }, [pagesList]);
 
   useEffect(() => {
     if (settingsFlag) {
@@ -501,7 +503,13 @@ export default function HomePage() {
   return (
     <div className={`${'wrapper'} ${'container'}`}>
       <OnboardingModal session={session} func={setIsVerified} />
-      {showPages && <PagesComponent pages={pagesList} func={setShowPages} pageData={pageData}/>}
+      {showPages && (
+        <PagesComponent
+          pages={pagesList}
+          func={setShowPages}
+          pageData={pageData}
+        />
+      )}
       {showChats && (
         <ChatListModal
           chats={chats}
@@ -538,6 +546,8 @@ export default function HomePage() {
         }
       >
         <li className={styles.headerElement}>
+          {/* <img src="/images/icedLogo.png" alt="" />
+          <h3>Varuna</h3> */}
           <h1>Varuna</h1>
         </li>
         <li

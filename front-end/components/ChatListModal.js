@@ -22,6 +22,7 @@ export default function ChatListModal({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      sessionStorage.clear();
       return res;
     } catch (err) {
       console.error('Failed to delete chat:', err.message);
