@@ -496,6 +496,10 @@
   .header .headerElement:nth-child(1) {
     font-size: 1.5rem;
   }
+  .header .headerElement:nth-child(1) img {
+    height: 2.3rem;
+    width: 100%;
+  }
 }
 
 @media (max-width: 850px) {
@@ -511,6 +515,10 @@
   }
   .logoSection {
     top: 5rem;
+  }
+  .header .headerElement:nth-child(1) img {
+    height: 1.8rem;
+    width: 100%;
   }
 }
 
@@ -535,6 +543,10 @@
   }
   .header .headerElement:nth-child(1) {
     font-size: 1rem;
+  }
+  .header .headerElement:nth-child(1) img {
+    height: 1.5rem;
+    width: 100%;
   }
   .header .headerElement:nth-child(2) {
     padding: 0.3rem;
