@@ -18,23 +18,23 @@
   font-style: normal;
   font-size: 2rem;
   margin: 0;
-  /* display: flex;
+  display: flex;
   flex-direction: column;
-  gap: 0; */
+  gap: 0;
 }
 
-.header .headerElement:nth-child(1) h1 {
+/* .header .headerElement:nth-child(1) h1 {
   margin: 1rem 0;
-}
+} */
 
-/* .header .headerElement:nth-child(1) h3 {
+.header .headerElement:nth-child(1) h3 {
   margin: 0;
 }
 
 .header .headerElement:nth-child(1) img {
   height: 3rem;
   width: 100%;
-} */
+}
 
 .header .headerElement:last-child {
   background-color: whitesmoke;
@@ -128,7 +128,8 @@
   opacity: 0;
 }
 
-.options li a, .options li button {
+.options li a,
+.options li button {
   padding: 1rem 0;
   width: 100%;
   background-color: rgba(255, 255, 255, 0);

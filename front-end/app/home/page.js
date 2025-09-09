@@ -546,9 +546,9 @@ export default function HomePage() {
         }
       >
         <li className={styles.headerElement}>
-          {/* <img src="/images/icedLogo.png" alt="" />
-          <h3>Varuna</h3> */}
-          <h1>Varuna</h1>
+          <img src="/images/icedLogo.png" alt="" />
+          <h3>Varuna</h3>
+          {/* <h1>Varuna</h1> */}
         </li>
         <li
           className={styles.headerElement}
