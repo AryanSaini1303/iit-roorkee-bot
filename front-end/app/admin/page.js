@@ -21,9 +21,10 @@ export default function AdminPage() {
   const [totalVisits, setTotalVisits] = useState(0);
   const [pdfs, setPdfs] = useState([]);
   const [loadingPdfs, setLoadingPdfs] = useState(true);
+  const [count, setCount] = useState(0);
 
   const handleDownload = () => {
-    // 1. Map your users object to array of plain objects
+    // Mapping your users object to array of plain objects
     const data = users.map((u) => ({
       ID: u.id,
       Email: u.email,
@@ -33,16 +34,42 @@ export default function AdminPage() {
       CreatedAt: u.created_at,
       LastSignIn: u.last_sign_in_at,
     }));
-    // 2. Create a worksheet
+    // Creating a worksheet
     const ws = XLSX.utils.json_to_sheet(data);
-    // 3. Create a new workbook and append the worksheet
+    // Creating a new workbook and append the worksheet
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Users');
-    // 4. Generate Excel file and trigger download
+    // Generating Excel file and trigger download
     const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
     saveAs(blob, 'users.xlsx');
   };
+
+  const refreshCount = async () => {
+    const { data, error } = await supabase
+      .from('heartbeats')
+      .select('session_id')
+      .gt('last_seen_at', new Date(Date.now() - 30000).toISOString());
+    if (!error) setCount(data.length);
+  };
+
+  useEffect(() => {
+    refreshCount();
+    const channel = supabase
+      .channel('heartbeats-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'heartbeats' },
+        () => {
+          // whenever anyone pings, recalc
+          refreshCount();
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   useEffect(() => {
     const getSession = async () => {
@@ -278,7 +305,7 @@ export default function AdminPage() {
                 Number of Unique Users: <span>{users.length}</span>
               </li>
               <li>
-                Number of Live Users: <span>--</span>
+                Number of Live Users: <span>{count}</span>
               </li>
             </ul>
           </section>

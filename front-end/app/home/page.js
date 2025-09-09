@@ -13,6 +13,7 @@ import { Howl } from 'howler';
 import ChatListModal from '@/components/ChatListModal';
 import OnboardingModal from '@/components/OnboardingModal';
 import Link from 'next/link';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useClickHandlers = ({
   onSingleClick,
@@ -76,6 +77,7 @@ export default function HomePage() {
   const [pageData, setPageData] = useState({});
   const [loadingChat, setLoadingChat] = useState(false);
   const [isVerified, setIsVerified] = useState(true);
+  const sessionId = uuidv4();
   const { onClick, onDoubleClick } = useClickHandlers({
     onSingleClick: () => {
       if (!isVerified) return;
@@ -487,6 +489,21 @@ export default function HomePage() {
       }
     };
     session && incrementVisits();
+  }, [session]);
+
+  useEffect(() => {
+    if (!session) return;
+    const sendHeartbeat = async () => {
+      // console.log(session?.user.id);
+      await fetch('/api/heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: session?.user.id }),
+      });
+    };
+    sendHeartbeat();
+    const interval = setInterval(sendHeartbeat, 10000);
+    return () => clearInterval(interval);
   }, [session]);
 
   // if (true) {
