@@ -1,13 +1,13 @@
 .container {
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.472);
-  padding: 2rem;
-  border-radius: 12px;
   width: 100%;
   font-family: sans-serif;
   color: #222;
   margin: auto;
-  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 5fr;
+  margin: 1rem;
+  gap: 2rem;
+  height: 90vh;
 }
 
 .uploadContainer,
@@ -48,6 +48,7 @@
 
 .container h1 {
   text-align: center;
+  margin-top: 0;
 }
 
 .table {
@@ -86,7 +87,7 @@
 }
 
 .dropzone {
-  padding: 2.8rem;
+  padding: 1.9rem;
   border: 2px dashed #aaa;
   border-radius: 8px;
   background: rgba(240, 248, 255, 0.6);
@@ -165,12 +166,6 @@
   }
 }
 
-.bottomContainer {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-}
-
 .infoContainer {
   border-radius: 1rem;
   margin: 1rem auto;
@@ -198,8 +193,8 @@
   justify-content: space-between;
 }
 
-.infoContainer ol{
-  list-style:decimal;
+.infoContainer ol {
+  list-style: decimal;
 }
 
 .infoContainer li:last-child {
@@ -209,10 +204,103 @@
 .infoContainer li span {
   font-weight: 700;
   color: black;
-}
-
-.infoContainer:last-child{
-  grid-area: 2/1/2/3;
   overflow: auto;
   max-height: 40vh;
+}
+
+.infoContainer:last-child {
+  grid-area: 2/1/2/3;
+  height: 67vh;
+  overflow: auto;
+}
+
+.mainContent h1 {
+  font-size: 2rem;
+}
+
+.mainContent {
+  position: relative;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.472);
+  padding: 2rem;
+  border-radius: 12px;
+  animation: reveal 0.7s ease-in-out;
+}
+
+@keyframes reveal {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.sidebar ul {
+  padding-left: 0;
+  list-style-type: none;
+  margin: 5.5rem 0;
+}
+
+@keyframes slideInSidebar {
+  0% {
+    transform: translateX(-20%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.sidebar ul li {
+  margin: 1rem 0;
+  width: 100%;
+  animation: slideInSidebar ease-out forwards;
+}
+
+.sidebar ul li:nth-child(1) {
+  animation-duration: 0.3s;
+}
+
+.sidebar ul li:nth-child(2) {
+  animation-duration: 0.5s;
+}
+
+.sidebar ul li:nth-child(3) {
+  animation-duration: 0.7s;
+}
+
+.sidebar ul li a {
+  display: block;
+  width: 100%;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: #555;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+  border-radius: 20px;
+  transition: all 0.2s ease-in-out;
+  background-color: rgba(255, 255, 255, 0.471);
+  box-shadow: inset -5px -5px 5px black;
+}
+
+.sidebar ul li a:hover {
+  background-color: black;
+  color: white;
+  box-shadow: inset -5px -5px 5px white;
+}
+
+.sidebar ul li a.active {
+  border-radius: 10px 50px 50px 50px;
+  background-color: black;
+  box-shadow: inset -5px -5px 3px white;
+  color: white;
+}
+
+.sidebar ul li a:active {
+  transform: scale(0.98);
+  opacity: 0.8;
+  box-shadow: inset -5px -5px 3px white;
 }
