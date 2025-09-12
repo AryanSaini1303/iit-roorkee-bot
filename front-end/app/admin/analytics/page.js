@@ -4,11 +4,13 @@ import styles from '../page.module.css';
 import { createClient } from '@/utils/supabase/client';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import CategoriesPieChart from '@/components/CategoriesCountChart';
 
 export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [session, setSession] = useState(null);
   const supabase = createClient();
   const router = useRouter();
@@ -16,6 +18,7 @@ export default function AdminPage() {
   const [totalVisits, setTotalVisits] = useState(0);
   const [count, setCount] = useState(0);
   const route = usePathname();
+  const [categoriesData, setCategoriesData] = useState([]);
 
   const refreshCount = async () => {
     const { data, error } = await supabase
@@ -88,8 +91,18 @@ export default function AdminPage() {
     // console.log(data?.users[0]);
   };
 
+  const getCategoriesCount = async () => {
+    const res = await fetch('/api/getCategoriesCount');
+    const data = await res.json();
+    // console.log(data);
+    setCategoriesData(data.data || []);
+    setLoadingCategories(false);
+    // console.log(data?.users[0]);
+  };
+
   useEffect(() => {
     fetchUsers();
+    getCategoriesCount();
   }, []);
 
   const formatDate = (dateString) => {
@@ -103,6 +116,7 @@ export default function AdminPage() {
       hour12: true,
     });
   };
+
   if (
     !loading &&
     (!session ||
@@ -156,20 +170,28 @@ export default function AdminPage() {
           </button>
           <h1>Admin Dashboard</h1>
           <section className={styles.bottomContainer}>
-            <section className={styles.infoContainer}>
-              <h2>Web Analytics</h2>
-              <ul>
-                <li>
-                  Number of Visits: <span>{loadingUsers?"--":totalVisits}</span>
-                </li>
-                <li>
-                  Number of Unique Users: <span>{loadingUsers?"--":users.length}</span>
-                </li>
-                <li>
-                  Number of Live Users: <span>{loadingUsers?"--":count}</span>
-                </li>
-              </ul>
-            </section>
+            {loadingCategories
+              ? 'Loading...'
+              : categoriesData.length !== 0 && (
+                  <section className={styles.infoContainer}>
+                    <h2>Web Analytics</h2>
+                    <ul>
+                      <li>
+                        Number of Visits:{' '}
+                        <span>{loadingUsers ? '--' : totalVisits}</span>
+                      </li>
+                      <li>
+                        Number of Unique Users:{' '}
+                        <span>{loadingUsers ? '--' : users.length}</span>
+                      </li>
+                      <li>
+                        Number of Live Users:{' '}
+                        <span>{loadingUsers ? '--' : count}</span>
+                      </li>
+                    </ul>
+                    <CategoriesPieChart data={categoriesData} />
+                  </section>
+                )}
           </section>
         </section>
       </div>

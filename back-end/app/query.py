@@ -23,12 +23,14 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
             {
                 "role": "system",
                 "content": (
-                    "You are a query reformulator for an academic assistant. "
-                    "Your job is to take the conversation history and the user’s latest question, "
-                    "and produce a precise, standalone query suitable for document retrieval.\n\n"
-                    f"If the user’s question includes words like 'latest', 'current', 'recent', or 'upcoming', include the current date ({date.today()}) in the reformulated query for context."
+                    "You are a query reformulator and classifier for an academic assistant. "
+                    "Your job is twofold:\n"
+                    "1. Rewrite the user's latest question into a precise, standalone academic query (if applicable).\n"
+                    "2. Classify the user's query into one of 5 categories.\n\n"
 
-                    "Rules:\n"
+                    f"If the user’s question includes words like 'latest', 'current', 'recent', or 'upcoming', include the current date ({date.today()}) in the reformulated query.\n\n"
+
+                    "### Rules for Reformulation:\n"
                     "- Always include all necessary context from history in the rewritten query.\n"
                     "- The query must be **a complete, grammatically correct academic question** "
                     "(starting with what, why, how, when, where, etc.).\n"
@@ -36,11 +38,19 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
                     "- Remove filler words, greetings, or irrelevant chatter.\n"
                     "- Never output vague phrases, keywords, or incomplete fragments.\n\n"
 
-                    "Output format:\n"
-                    "- If the user is making casual conversation (hi, hello, how are you, etc.), return:\n"
-                    '{\n  "query_type": "small talk",\n  "query": "<user\'s casual message>"\n}\n\n'
+                    "### Categories:\n"
+                    "- **Casual**: Greetings or small talk (hi, hello, how are you, thanks, etc.).\n"
+                    "- **Document-Specific**: The question targets content that clearly belongs to a single PDF only. Example: \"What does the Dam Safety Act 2021 say about penalties?\").\n"
+                    "- **Cross-Document**: The question requires looking at multiple PDFs, or aggregating/comparing info across them. Example: \"List all notifications from 2024\", \"Compare the March and May Gazette notifications.\"\n"
+                    "- **Contextual**: Questions that rely on conversation history or follow-ups (e.g., 'Explain that in more detail', 'What about the penalties?').\n"
+                    "- **Meta**: Questions about the knowledge base itself (e.g., 'Which PDFs do you have?', 'How many pages are there?').\n\n"
+
+                    "### Output format:\n"
+                    "- If the user is making casual conversation, return:\n"
+                    "{\n  \"query_type\": \"small talk\",\n  \"query\": \"<user's casual message>\",\n  \"category\": \"Casual\"\n}\n\n"
+
                     "- If the user is asking something that requires documents, return:\n"
-                    '{\n  "query_type": "question",\n  "query": "<fully constructed standalone question>"\n}\n\n'
+                    "{\n  \"query_type\": \"question\",\n  \"query\": \"<fully constructed standalone question>\",\n  \"category\": \"<one of: Casual, Document-Specific, Cross-Document, Contextual, Meta>\"\n}\n\n"
 
                     "Respond only with a valid JSON object — no explanation, no extra text."
                 )
@@ -59,7 +69,7 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
 
     query_json_str = initialCompletion.choices[0].message.content.strip()
     query = json.loads(query_json_str)
-    # print(query)
+    print(query)
     # print(f"new query constructed")
     
     # Storing the pdfs that are used in the database to a set
@@ -132,7 +142,7 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
         temperature=0.2
     )
     # print("answer generated")
-    return completion.choices[0].message.content.strip(), pages
+    return completion.choices[0].message.content.strip(), pages, query['category']
     
     # system_message = (
     #     "You are an academic assistant Varuna. Answer the user's question using only the provided context whenever possible. "                "Do not omit important details and do not alter the wording or meaning of the context. "

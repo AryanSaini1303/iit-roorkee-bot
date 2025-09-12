@@ -273,6 +273,20 @@ export default function HomePage() {
     setPageData(data);
   }
 
+  async function incrementCategoryCount(category) {
+    try {
+      const res = await fetch('/api/incrementCategoryCount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({category:category}),
+      });
+      const data = await res.json();
+      console.log(data);
+    } catch (error) {
+      console.log('Failed to increment categorty', error.message);
+    }
+  }
+
   async function getConversationById(conversationId) {
     try {
       const res = await fetch('/api/getConversation', {
@@ -387,7 +401,8 @@ export default function HomePage() {
           'Content-Type': 'application/json',
         },
       });
-      const { answer, pages } = await chatRes.json();
+      const { answer, pages, category } = await chatRes.json();
+      console.log(category);
       if (pagesList.length == 0) {
         setPagesList([pages]);
       } else {
@@ -406,6 +421,7 @@ export default function HomePage() {
       // playElevenLabsAudio(answer);
       setIsProcessing(false);
       setVoiceInputFlag(false); // remove this too if you want continuous voice input
+      incrementCategoryCount(category);
     };
     processQuery();
   }, [query, session]);
