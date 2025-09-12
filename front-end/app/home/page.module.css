@@ -500,6 +500,9 @@
     height: 2.3rem;
     width: 100%;
   }
+  .whiteSection{
+    height: 89vh;
+  }
 }
 
 @media (max-width: 850px) {
@@ -520,14 +523,19 @@
     height: 1.8rem;
     width: 100%;
   }
+  .whiteSection{
+    height: 91vh;
+  }
 }
 
 @media (max-width: 490px) {
   .header {
     padding: 0 1rem;
+    margin: 1rem 0;
   }
   .whiteSection {
     margin: 0;
+    height: 87vh;
   }
   .textInput form {
     border-radius: 0;
@@ -579,5 +587,8 @@
   .logoSection {
     scale: 0.9;
     top: 4.2rem;
+  }
+  .whiteSection{
+    height: 88vh;
   }
 }

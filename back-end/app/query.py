@@ -89,26 +89,48 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
         results = collection.query(
             query_embeddings=[query_embedding],
             n_results=top_k,
-            include=["documents", "metadatas"]
+            include=["documents", "metadatas", "distances"]
         )
         docs = results["documents"][0]
-        # Here all the pages are retained but can be net picked based on individual score to reduce the context size
         metas = results["metadatas"][0]
-        if not docs:
-            return "No relevant info found.", set()
+        distances = results["distances"][0]
+        scored_results = [
+            {
+                "document": doc.strip(),
+                "metadata": meta,
+                "distance": dist,
+                "score": 1 - dist  # closer distance → higher score
+            }
+            for doc, meta, dist in zip(docs, metas, distances)
+        ]
+        filtered = sorted(scored_results, key=lambda x: x["score"], reverse=True)
+
+        if not filtered:
+            return "No relevant info found.", set(), []
+
+        # Build context string + structured JSON
         context = ""
-        context_json=[]
-        pages = set()
-        for doc, meta in zip(docs, metas):
-            page = meta["page"]
-            source = meta["pdf_name"]
-            pages.add(f"{source} | Page {page}")
-            context += f"[{source} | Page {page}]\n{doc.strip()}\n\n"
+        context_json = []
+        pages = []
+        seen = set()
+
+        for item in filtered:
+            source = item["metadata"]["pdf_name"]
+            page = item["metadata"]["page"]
+            page_key = f"{source} | Page {page}"
+
+            if page_key not in seen:
+                seen.add(page_key)
+                pages.append(page_key)
+
+            context += f"[{page_key}] (score={item['score']:.2f})\n{item['document']}\n\n"
             context_json.append({
-                "pdf_name":source,
-                "page_num":page,
-                "content":doc.strip()
+                "pdf_name": source,
+                "page_num": page,
+                "content": item["document"],
+                "score": item["score"]
             })
+
         # print("context formed from documents")
     elif(query['query_type']=="small talk"):
         context = "This is a casual conversation, no documents needed."

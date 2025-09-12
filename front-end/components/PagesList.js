@@ -5,6 +5,7 @@ export default function PagesList({ idx, pagesData, func, setClickIndex }) {
   const [visible, setVisible] = useState(true);
 
   if (!pagesData || !pagesData[idx] || !visible) return null;
+  // console.log(pagesData[idx]);
 
   return (
     <div className={styles.card}>
@@ -45,7 +46,11 @@ export default function PagesList({ idx, pagesData, func, setClickIndex }) {
                   key={i}
                   className={styles.pageBadge}
                   onClick={() =>
-                    func({ name: pdf, pageNum: pagesData[idx][pdf][i], index:idx })
+                    func({
+                      name: pdf,
+                      pageNum: pagesData[idx][pdf][i],
+                      index: idx,
+                    })
                   }
                 >
                   {pageNum}

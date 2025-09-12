@@ -13,7 +13,6 @@ import { Howl } from 'howler';
 import ChatListModal from '@/components/ChatListModal';
 import OnboardingModal from '@/components/OnboardingModal';
 import Link from 'next/link';
-import { v4 as uuidv4 } from 'uuid';
 
 export const useClickHandlers = ({
   onSingleClick,
@@ -405,7 +404,7 @@ export default function HomePage() {
         },
       });
       const { answer, pages, category, context } = await chatRes.json();
-      // console.log(context);
+      // console.log(pages);
       setContext(context);
       if (contextList.length == 0) {
         setContextList([context]);
@@ -569,6 +568,8 @@ export default function HomePage() {
             setShowChats(false);
             setQuery('');
             setReply('');
+            setPagesList([]);
+            setContextList([]);
           }}
           onSelectChat={async (id) => {
             await getConversationById(id);
@@ -683,7 +684,7 @@ export default function HomePage() {
               conversation={messages}
               pages={pagesList}
               func={handlePageListClick}
-              pagesData={pageData}
+              // pagesData={pageData}
               isProcessing={isProcessing}
             />
           )}

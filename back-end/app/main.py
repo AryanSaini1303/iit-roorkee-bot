@@ -68,7 +68,7 @@ async def ask_question(req: QueryRequest):
     response, pages, category, context_json = get_answer(req.question, req.conversation)
     return {
         "answer": response,
-        "pages": sorted(pages),
+        "pages": pages,
         "category":category,
         "context":context_json
     }

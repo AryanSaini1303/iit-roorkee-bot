@@ -14,11 +14,11 @@ export default function ChatResponse({
   isProcessing,
 }) {
   const bottomRef = useRef(null);
-  const width = (() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth;
-    }
-  })();
+  // const width = (() => {
+  //   if (typeof window !== 'undefined') {
+  //     return window.innerWidth;
+  //   }
+  // })();
   const [showlist, setShowlist] = useState(false);
   const [clickIndex, setClickIndex] = useState(-1);
   const [pagesData, setPagesData] = useState([]);
