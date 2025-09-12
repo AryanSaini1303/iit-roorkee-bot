@@ -62,22 +62,22 @@ export default function HomePage() {
   const [pagesList, setPagesList] = useState([]);
   const [showPages, setShowPages] = useState(false);
   const [voiceModeToggle, setVoiceModeToggle] = useState(true);
-  const [noAudio, SetNoAudio] = useState(true);
-  const [audioIsReady, setAudioIsReady] = useState(false);
+  // const [noAudio, SetNoAudio] = useState(true);
+  // const [audioIsReady, setAudioIsReady] = useState(false);
   const [audioHasEnded, setAudioHasEnded] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [voiceInputFlag, setVoiceInputFlag] = useState(false);
   const [currentAudio, setCurrentAudio] = useState(null);
-  const [voiceId, setVoiceId] = useState('KoVIHoyLDrQyd4pGalbs');
+  // const [voiceId, setVoiceId] = useState('KoVIHoyLDrQyd4pGalbs');
   const [conversationId, setConversationId] = useState(null);
   const [chats, setChats] = useState([]);
   const sound = new Howl({ src: ['/sounds/tapSound.mp3'] });
   const eyesRef = useRef(null);
   const [showChats, setShowChats] = useState(false);
   const [pageData, setPageData] = useState({});
-  const [loadingChat, setLoadingChat] = useState(false);
   const [isVerified, setIsVerified] = useState(true);
-  const sessionId = uuidv4();
+  const [context, setContext] = useState([]);
+  const [contextList, setContextList] = useState([]);
   const { onClick, onDoubleClick } = useClickHandlers({
     onSingleClick: () => {
       if (!isVerified) return;
@@ -271,6 +271,7 @@ export default function HomePage() {
   function handlePageListClick(data) {
     setShowPages(true);
     setPageData(data);
+    setContext(contextList[data.index]);
   }
 
   async function incrementCategoryCount(category) {
@@ -278,10 +279,10 @@ export default function HomePage() {
       const res = await fetch('/api/incrementCategoryCount', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({category:category}),
+        body: JSON.stringify({ category: category }),
       });
       const data = await res.json();
-      console.log(data);
+      // console.log(data);
     } catch (error) {
       console.log('Failed to increment categorty', error.message);
     }
@@ -333,6 +334,7 @@ export default function HomePage() {
     if (messages.length !== 0) {
       sessionStorage.setItem('messages', JSON.stringify(messages));
       sessionStorage.setItem('pagesList', JSON.stringify(pagesList));
+      sessionStorage.setItem('contextList', JSON.stringify(contextList));
     }
   }, [messages]);
 
@@ -369,6 +371,7 @@ export default function HomePage() {
     setSessionQuery(sessionStorage.getItem('query') || '');
     setMessages(JSON.parse(sessionStorage.getItem('messages')) || []);
     setPagesList(JSON.parse(sessionStorage.getItem('pagesList')) || []);
+    setContextList(JSON.parse(sessionStorage.getItem('contextList')) || []);
   }, []);
 
   useEffect(() => {
@@ -401,14 +404,20 @@ export default function HomePage() {
           'Content-Type': 'application/json',
         },
       });
-      const { answer, pages, category } = await chatRes.json();
-      console.log(category);
+      const { answer, pages, category, context } = await chatRes.json();
+      // console.log(context);
+      setContext(context);
+      if (contextList.length == 0) {
+        setContextList([context]);
+      } else {
+        setContextList((prev) => [...prev, context]);
+      }
       if (pagesList.length == 0) {
         setPagesList([pages]);
       } else {
         setPagesList((prev) => [...prev, pages]);
       }
-      console.log(pages);
+      // console.log(pages);
       setMessages((prev) => [
         ...prev,
         {
@@ -452,11 +461,12 @@ export default function HomePage() {
           conversationId,
           newMessages,
           newPdfList: pagesList,
+          newContextList: contextList,
         }),
       })
         .then((res) => res.json())
         .then((data) => {
-          console.log(data);
+          // console.log(data);
           if (data?.id && !conversationId) {
             setConversationId(data.id); // capture the new conversation ID
             sessionStorage.setItem('conversationId', data.id);
@@ -541,6 +551,7 @@ export default function HomePage() {
           pages={pagesList}
           func={setShowPages}
           pageData={pageData}
+          context={context}
         />
       )}
       {showChats && (
@@ -562,6 +573,8 @@ export default function HomePage() {
           onSelectChat={async (id) => {
             await getConversationById(id);
           }}
+          setPagesList={setPagesList}
+          setContextList={setContextList}
         />
       )}
       <div className={styles.logoSection}>

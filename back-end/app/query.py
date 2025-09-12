@@ -97,16 +97,23 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
         if not docs:
             return "No relevant info found.", set()
         context = ""
+        context_json=[]
         pages = set()
         for doc, meta in zip(docs, metas):
             page = meta["page"]
             source = meta["pdf_name"]
             pages.add(f"{source} | Page {page}")
             context += f"[{source} | Page {page}]\n{doc.strip()}\n\n"
+            context_json.append({
+                "pdf_name":source,
+                "page_num":page,
+                "content":doc.strip()
+            })
         # print("context formed from documents")
     elif(query['query_type']=="small talk"):
         context = "This is a casual conversation, no documents needed."
         pages = set()
+        context_json=[]
 
     # print(context)
     # print(query)
@@ -142,7 +149,7 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
         temperature=0.2
     )
     # print("answer generated")
-    return completion.choices[0].message.content.strip(), pages, query['category']
+    return completion.choices[0].message.content.strip(), pages, query['category'], context_json
     
     # system_message = (
     #     "You are an academic assistant Varuna. Answer the user's question using only the provided context whenever possible. "                "Do not omit important details and do not alter the wording or meaning of the context. "

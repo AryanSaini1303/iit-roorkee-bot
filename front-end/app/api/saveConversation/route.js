@@ -7,7 +7,8 @@ export async function POST(req) {
   } = await supabase.auth.getUser();
 
   try {
-    const { conversationId, newMessages, newPdfList } = await req.json();
+    const { conversationId, newMessages, newPdfList, newContextList } =
+      await req.json();
     if (
       !newMessages ||
       !Array.isArray(newMessages) ||
@@ -29,11 +30,16 @@ export async function POST(req) {
       if (data) {
         const updatedConversation = [...(data.messages || []), ...newMessages];
         const updatedPdfList = [...(data.pdfList || []), ...newPdfList];
+        const updatedContextList = [
+          ...(data.contextList || []),
+          ...newContextList,
+        ];
         const { error: updateError } = await supabase
           .from('conversations')
           .update({
             messages: updatedConversation,
             pdfList: updatedPdfList,
+            contextList: updatedContextList,
             updated_at: new Date().toISOString(),
           })
           .eq('id', conversationId);
@@ -57,6 +63,7 @@ export async function POST(req) {
             ? newMessages[0].content.split(' ').slice(0, 5).join(' ')
             : newMessages[0].content.split(' ').join(' '),
         pdfList: newPdfList || [],
+        contextList: newContextList || [],
         updated_at: new Date().toISOString(),
         email: user?.email,
         user_id: user?.id,

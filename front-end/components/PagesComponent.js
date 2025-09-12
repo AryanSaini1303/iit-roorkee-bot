@@ -9,7 +9,7 @@ const SinglePagePdfRenderer = dynamic(
   },
 );
 
-export default function PagesComponent({ pages, func, pageData }) {
+export default function PagesComponent({ pages, func, pageData, context }) {
   // const [pageNum, setPageNum] = useState(0);
   // const parsedPages = pages.map((entry) => {
   //   const [name, pageStr] = entry.split('|').map((str) => str.trim());
@@ -17,7 +17,25 @@ export default function PagesComponent({ pages, func, pageData }) {
   //   return { name, page: pageNumber };
   // });
   // // console.log(parsedPages);
-  // console.log(pageData.pageNum.split(' ')[1]);
+  const pdfContext = context
+    .filter(
+      (item) =>
+        item.pdf_name === pageData.name &&
+        item.page_num === Number(pageData.pageNum.split(' ')[1]),
+    )
+    .flatMap((item) => item.content) // flatten arrays of strings
+    .flatMap((sentence) => {
+      // split each sentence into chunks of 5 words
+      const words = sentence.split(/\s+/);
+      const chunks = [];
+      for (let i = 0; i < words.length; i += 5) {
+        chunks.push(words.slice(i, i + 5).join(' '));
+      }
+      return chunks;
+    });
+
+  // console.log(pdfContext);
+
   return (
     <section className={styles.pagesSection}>
       <section className={styles.buttonContainer}>
@@ -223,7 +241,7 @@ export default function PagesComponent({ pages, func, pageData }) {
                 ></path>
               </svg>
             </button> */}
-            <strong>{pageData.pageNum.split(" ")[1]}</strong>
+            <strong>{pageData.pageNum.split(' ')[1]}</strong>
             {/* <button
               onClick={() =>
                 setPageNum(() =>
@@ -247,7 +265,7 @@ export default function PagesComponent({ pages, func, pageData }) {
               </svg>
             </button> */}
           </section>
-          <p style={{textAlign:'center'}}>{pageData.name}</p>
+          <p style={{ textAlign: 'center' }}>{pageData.name}</p>
         </section>
       </section>
       <section className={styles.pagesContainer}>
@@ -255,6 +273,7 @@ export default function PagesComponent({ pages, func, pageData }) {
           key={`${pageData.name}-${pageData.pageNum.split(' ')[1]}`}
           pdfUrl={`https://botpdfs.blob.core.windows.net/pdfs/${pageData.name}.pdf`}
           pageNumber={pageData.pageNum.split(' ')[1]}
+          highlights={pdfContext}
         />
       </section>
     </section>

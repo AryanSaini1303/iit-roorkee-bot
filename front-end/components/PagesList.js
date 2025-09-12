@@ -45,7 +45,7 @@ export default function PagesList({ idx, pagesData, func, setClickIndex }) {
                   key={i}
                   className={styles.pageBadge}
                   onClick={() =>
-                    func({ name: pdf, pageNum: pagesData[idx][pdf][i] })
+                    func({ name: pdf, pageNum: pagesData[idx][pdf][i], index:idx })
                   }
                 >
                   {pageNum}

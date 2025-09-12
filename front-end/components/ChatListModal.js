@@ -8,6 +8,8 @@ export default function ChatListModal({
   onClose,
   onNewChat,
   onSelectChat,
+  setPagesList,
+  setContextList,
 }) {
   const modalRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -23,6 +25,8 @@ export default function ChatListModal({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       sessionStorage.clear();
+      setPagesList([]);
+      setContextList([]);
       return res;
     } catch (err) {
       console.error('Failed to delete chat:', err.message);

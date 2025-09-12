@@ -4,9 +4,18 @@ import { useEffect, useRef } from 'react';
 import { getDocument } from 'pdfjs-dist';
 import setPdfWorker from '@/components/pdfWorker';
 
-export default function SinglePagePdfRenderer({ pdfUrl, pageNumber, key }) {
+export default function SinglePagePdfRenderer({
+  pdfUrl,
+  pageNumber,
+  key,
+  highlights = [],
+}) {
   const canvasRef = useRef(null);
   const renderTaskRef = useRef(null); // to store the current render task
+
+  function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
 
   useEffect(() => {
     setPdfWorker();
@@ -32,7 +41,6 @@ export default function SinglePagePdfRenderer({ pdfUrl, pageNumber, key }) {
 
       const scale = 2;
       const viewport = page.getViewport({ scale });
-
       const canvas = canvasRef.current;
       const context = canvas?.getContext('2d');
       if (!canvas || !context) return;
@@ -48,8 +56,29 @@ export default function SinglePagePdfRenderer({ pdfUrl, pageNumber, key }) {
         viewport,
       });
 
+      const textContent = await page.getTextContent();
+      const highlightRegexes = highlights.map(
+        (h) => new RegExp(escapeRegex(h.toLowerCase()), 'gi'),
+      );
+
       try {
         await renderTaskRef.current.promise;
+        textContent.items.forEach((item) => {
+          const itemText = item.str;
+          const [a, b, c, d, e, f] = item.transform;
+          const x = e * scale;
+          const y = viewport.height - f * scale;
+          const width = item.width * scale;
+          const height = (item.height || 10) * scale;
+
+          highlightRegexes.forEach((regex) => {
+            if (regex.test(itemText.toLowerCase())) {
+              // console.log(itemText);
+              context.fillStyle = 'rgba(255, 242, 0, 0.25)'; // yellow highlight
+              context.fillRect(x, y - height, width, height);
+            }
+          });
+        });
       } catch (err) {
         if (err?.name === 'RenderingCancelledException') {
           // ignore cancellation errors
@@ -74,7 +103,7 @@ export default function SinglePagePdfRenderer({ pdfUrl, pageNumber, key }) {
   return (
     <canvas
       ref={canvasRef}
-      style={{ height: '100%', width: '100%', scale: '1.15' }}
+      style={{ height: '100%', width: '100%', transform: 'scale(1.15)' }}
       key={key}
     />
   );

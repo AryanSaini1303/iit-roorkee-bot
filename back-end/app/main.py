@@ -65,11 +65,12 @@ def split_into_chunks(text, max_tokens=800, overlap=100):
 
 @app.post("/ask")
 async def ask_question(req: QueryRequest):
-    response, pages, category = get_answer(req.question, req.conversation)
+    response, pages, category, context_json = get_answer(req.question, req.conversation)
     return {
         "answer": response,
         "pages": sorted(pages),
-        "category":category
+        "category":category,
+        "context":context_json
     }
 
 @app.post("/add")
