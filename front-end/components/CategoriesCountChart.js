@@ -42,8 +42,8 @@ export default function CategoriesPieChart({ data }) {
             ))}
           </Pie>
           <Tooltip
-            // formatter={(value, name) => [`${value} queries`, name]}
-            formatter={(value, name) => [`${value} queries`]}
+            formatter={(value, name) => [`${value} queries`, name]}
+            // formatter={(value, name) => [`${value} queries`]}
             contentStyle={{
               background: '#fff',
               border: '1px solid #ddd',

@@ -1,6 +1,5 @@
 .chartContainer {
   width: 100%;
-  /* max-width: 600px; */
   margin: auto;
   border-radius: 1.5rem;
   /* background: #ffffff; */
@@ -10,7 +9,6 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* position: relative; */
 }
 
 .chartContainer .legends li span {
@@ -21,26 +19,22 @@
 .chartContainer .legends {
   display: flex;
   gap: 1.5rem;
-  /* position: absolute;
-  top: 50%;
-  left: 9%;
-  transform: translate(-50%, -50%); */
 }
-.chartContainer .legends li{
+.chartContainer .legends li {
   border-bottom: none;
 }
 .chartContainer .legends li:nth-child(1) span {
-  background-color: #6366f1;
+  background-color: #10b981;
 }
 .chartContainer .legends li:nth-child(2) span {
   background-color: #a855f7;
 }
 .chartContainer .legends li:nth-child(3) span {
-  background-color: #06b6d4;
+  background-color: #6366f1;
 }
 .chartContainer .legends li:nth-child(4) span {
   background-color: #f97316;
 }
 .chartContainer .legends li:nth-child(5) span {
-  background-color: #10b981;
+  background-color: #06b6d4;
 }
