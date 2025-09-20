@@ -12,7 +12,7 @@ import Link from 'next/link';
 
 export default function AdminPage() {
   const [users, setUsers] = useState([]);
-  const [uploading, setUploading] = useState(false);
+  // const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [session, setSession] = useState(null);
@@ -20,7 +20,7 @@ export default function AdminPage() {
   const router = useRouter();
   const [signOutFlag, setSignOutFlag] = useState(false);
   const route = usePathname();
-  
+
   const handleDownload = () => {
     // Mapping your users object to array of plain objects
     const data = users.map((u) => ({
@@ -101,42 +101,43 @@ export default function AdminPage() {
     fetchUsers();
   };
 
-  const onDrop = useCallback(async (acceptedFiles) => {
-    const formData = new FormData();
-    acceptedFiles.forEach((file) => {
-      formData.append('files', file);
-    });
-    setUploading(true);
-    try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      alert(`Uploaded: ${data.files_processed.join(', ')}`);
-    } catch (err) {
-      alert('Upload failed.');
-      console.log(err);
-    }
-    setUploading(false);
-  }, []);
+  // const onDrop = useCallback(async (acceptedFiles) => {
+  //   const formData = new FormData();
+  //   acceptedFiles.forEach((file) => {
+  //     formData.append('files', file);
+  //   });
+  //   setUploading(true);
+  //   try {
+  //     const res = await fetch('/api/upload', {
+  //       method: 'POST',
+  //       body: formData,
+  //     });
+  //     const data = await res.json();
+  //     alert(`Uploaded: ${data.files_processed.join(', ')}`);
+  //   } catch (err) {
+  //     alert('Upload failed.');
+  //     console.log(err);
+  //   }
+  //   setUploading(false);
+  // }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { 'application/pdf': ['.pdf'] },
-  });
+  // const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  //   onDrop,
+  //   accept: { 'application/pdf': ['.pdf'] },
+  // });
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
-  };
+  // const formatDate = (dateString) => {
+  //   const date = new Date(dateString);
+  //   return date.toLocaleString('en-GB', {
+  //     day: 'numeric',
+  //     month: 'short',
+  //     year: 'numeric',
+  //     hour: 'numeric',
+  //     minute: '2-digit',
+  //     hour12: true,
+  //   });
+  // };
+
   if (
     !loading &&
     (!session ||
@@ -180,6 +181,16 @@ export default function AdminPage() {
                 className={route === '/admin/kb' ? `${styles.active}` : null}
               >
                 Knowledge Base
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={'/admin/upload'}
+                className={
+                  route === '/admin/upload' ? `${styles.active}` : null
+                }
+              >
+                Upload
               </Link>
             </li>
           </ul>
@@ -255,7 +266,7 @@ export default function AdminPage() {
               </p>
             )}
           </section>
-          <section className={styles.bottomContainer}>
+          {/* <section className={styles.bottomContainer}>
             <section className={styles.uploadContainer}>
               <h2>Upload PDFs</h2>
               {!uploading ? (
@@ -287,7 +298,7 @@ export default function AdminPage() {
                 </div>
               )}
             </section>
-          </section>
+          </section> */}
         </section>
       </div>
     </div>

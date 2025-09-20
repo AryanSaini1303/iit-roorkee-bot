@@ -9,7 +9,7 @@ export default function CategoriesPieChart({ data }) {
   //   console.log(data);
   return (
     <div className={styles.chartContainer}>
-      <ResponsiveContainer width="30%" height={350} style={{ outline: 'none' }}>
+      <ResponsiveContainer width="50%" height={320} style={{ outline: 'none' }}>
         <PieChart>
           <Pie
             data={data}

@@ -105,6 +105,16 @@ export default function AdminPage() {
                 Knowledge Base
               </Link>
             </li>
+            <li>
+              <Link
+                href={'/admin/upload'}
+                className={
+                  route === '/admin/upload' ? `${styles.active}` : null
+                }
+              >
+                Upload
+              </Link>
+            </li>
           </ul>
         </aside>
         <section className={styles.mainContent}>

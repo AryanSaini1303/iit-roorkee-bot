@@ -26,8 +26,9 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 assert OPENAI_API_KEY, "Missing OPENAI_API_KEY in .env"
 
 client = OpenAI(api_key=OPENAI_API_KEY)
-chroma_client = chromadb.PersistentClient(path="./pilotDB") # change this to "./db" in production
+chroma_client = chromadb.PersistentClient(path="./pilotDB")
 collection = chroma_client.get_or_create_collection(name="iit_docs")
+collection1 = chroma_client.get_or_create_collection(name="iit_image_metadata")
 
 app = FastAPI()
 app.add_middleware(
@@ -74,7 +75,7 @@ async def ask_question(req: QueryRequest):
     }
 
 @app.post("/add")
-async def add_pdfs(files: List[UploadFile] = File(...)):
+async def add_main_pdfs(files: List[UploadFile] = File(...)):
     processed_files = []
     errors = []
     for file in files:
@@ -103,6 +104,52 @@ async def add_pdfs(files: List[UploadFile] = File(...)):
                         ids=[chunk_id],
                         metadatas=[{
                             "page": page_num,
+                            "pdf_name": pdf_name,
+                            "chunk_index": idx
+                        }]
+                    )
+                except Exception as e:
+                    errors.append({
+                        "file": file.filename,
+                        "chunk_id": chunk_id,
+                        "error": str(e)
+                    })
+        os.remove(temp_path)
+        processed_files.append(file.filename)
+    return {
+        "status": "completed",
+        "files_processed": processed_files,
+        "errors": errors
+    }
+    
+@app.post("/add_metadata")
+async def add_metadata_pdfs(files: List[UploadFile] = File(...)):
+    processed_files = []
+    errors = []
+    for file in files:
+        temp_path = f"./temp_{file.filename}"
+        with open(temp_path, "wb") as f:
+            f.write(await file.read())
+        pdf_name = os.path.splitext(file.filename)[0]
+        doc = fitz.open(temp_path)
+        for i in range(len(doc)):
+            raw_text = doc[i].get_text().strip()
+            if not raw_text:
+                continue
+            clean_text = re.sub(r'\s+', ' ', raw_text)
+            chunks = split_into_chunks(clean_text)
+            for idx, chunk in enumerate(chunks):
+                try:
+                    embedding = client.embeddings.create(
+                        model="text-embedding-3-large",
+                        input=chunk
+                    ).data[0].embedding
+                    chunk_id = f"metadata_{pdf_name}_chunk_{idx}"
+                    collection1.add(
+                        documents=[chunk],
+                        embeddings=[embedding],
+                        ids=[chunk_id],
+                        metadatas=[{
                             "pdf_name": pdf_name,
                             "chunk_index": idx
                         }]

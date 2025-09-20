@@ -162,6 +162,16 @@ export default function AdminPage() {
                 Knowledge Base
               </Link>
             </li>
+            <li>
+              <Link
+                href={'/admin/upload'}
+                className={
+                  route === '/admin/upload' ? `${styles.active}` : null
+                }
+              >
+                Upload
+              </Link>
+            </li>
           </ul>
         </aside>
         <section className={styles.mainContent}>
@@ -173,7 +183,10 @@ export default function AdminPage() {
             {loadingCategories
               ? 'Loading...'
               : categoriesData.length !== 0 && (
-                  <section className={styles.infoContainer}>
+                  <section
+                    className={styles.infoContainer}
+                    style={{ height: '70vh' }}
+                  >
                     <h2>Web Analytics</h2>
                     <ul>
                       <li>
