@@ -12,10 +12,14 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 chroma_client = chromadb.PersistentClient(path="./pilotDB")
 collection = chroma_client.get_or_create_collection(name="iit_docs")
+collection1 = chroma_client.get_or_create_collection(name="iit_image_metadata_v2")
 
 def get_answer(question: str, conversation: list, top_k: int = 20):
     if conversation is None:
         conversation = []
+    context=""
+    pages=set()
+    context_json=[]
 
     initialCompletion = client.chat.completions.create(
         model="gpt-4o-mini",  # cheaper + faster than gpt-4.1, perfect for rewriting
@@ -24,11 +28,13 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
                 "role": "system",
                 "content": (
                     "You are a query reformulator and classifier for an academic assistant. "
-                    "Your job is twofold:\n"
+                    "Your job is threefold:\n"
                     "1. Rewrite the user's latest question into a precise, standalone academic query (if applicable).\n"
-                    "2. Classify the user's query into one of 5 categories.\n\n"
+                    "2. Classify the user's query into one of 5 categories.\n"
+                    "3. Detect if the question is about an image.\n\n"
 
-                    f"If the user’s question includes words like 'latest', 'current', 'recent', or 'upcoming', include the current date ({date.today()}) in the reformulated query.\n\n"
+                    f"If the user’s question includes words like 'latest', 'current', 'recent', or 'upcoming', "
+                    f"include the current date ({date.today()}) in the reformulated query.\n\n"
 
                     "### Rules for Reformulation:\n"
                     "- Always include all necessary context from history in the rewritten query.\n"
@@ -40,20 +46,46 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
 
                     "### Categories:\n"
                     "- **Casual**: Greetings or small talk (hi, hello, how are you, thanks, etc.).\n"
-                    "- **Document-Specific**: The question targets content that clearly belongs to a single PDF only. Example: \"What does the Dam Safety Act 2021 say about penalties?\").\n"
-                    "- **Cross-Document**: The question requires looking at multiple PDFs, or aggregating/comparing info across them. Example: \"List all notifications from 2024\", \"Compare the March and May Gazette notifications.\"\n"
-                    "- **Contextual**: Questions that rely on conversation history or follow-ups (e.g., 'Explain that in more detail', 'What about the penalties?').\n"
-                    "- **Meta**: Questions about the knowledge base itself (e.g., 'Which PDFs do you have?', 'How many pages are there?').\n\n"
+                    "- **Document-Specific**: The question targets content that clearly belongs to a single PDF only. "
+                    "Example: \"What does the Dam Safety Act 2021 say about penalties?\"\n"
+                    "- **Cross-Document**: The question requires looking at multiple PDFs, or aggregating/comparing info across them. "
+                    "Example: \"List all notifications from 2024\", \"Compare the March and May Gazette notifications.\"\n"
+                    "- **Contextual**: Questions that rely on conversation history or follow-ups "
+                    "(e.g., 'Explain that in more detail', 'What about the penalties?').\n"
+                    "- **Meta**: Questions about the knowledge base itself "
+                    "(e.g., 'Which PDFs do you have?', 'How many pages are there?').\n\n"
+
+                    "### Query Types:\n"
+                    "- **small_talk**: Casual conversation, greetings, or chit-chat.\n"
+                    "- **question**: Standard academic/document-related question (not about images).\n"
+                    "- **image_question**: Any query that explicitly refers to an image, describes an image, "
+                    "asks about image content, or requests information based on an image.\n\n"
 
                     "### Output format:\n"
-                    "- If the user is making casual conversation, return:\n"
-                    "{\n  \"query_type\": \"small talk\",\n  \"query\": \"<user's casual message>\",\n  \"category\": \"Casual\"\n}\n\n"
+                    "- For casual conversation:\n"
+                    "{\n"
+                    "  \"query_type\": \"small_talk\",\n"
+                    "  \"query\": \"<user's casual message>\",\n"
+                    "  \"category\": \"Casual\"\n"
+                    "}\n\n"
 
-                    "- If the user is asking something that requires documents, return:\n"
-                    "{\n  \"query_type\": \"question\",\n  \"query\": \"<fully constructed standalone question>\",\n  \"category\": \"<one of: Casual, Document-Specific, Cross-Document, Contextual, Meta>\"\n}\n\n"
+                    "- For image-related questions:\n"
+                    "{\n"
+                    "  \"query_type\": \"image_question\",\n"
+                    "  \"query\": \"<fully constructed standalone question referencing an image>\",\n"
+                    "  \"category\": \"<one of: Document-Specific, Cross-Document, Contextual, Meta>\"\n"
+                    "}\n\n"
+
+                    "- For standard questions:\n"
+                    "{\n"
+                    "  \"query_type\": \"question\",\n"
+                    "  \"query\": \"<fully constructed standalone question>\",\n"
+                    "  \"category\": \"<one of: Document-Specific, Cross-Document, Contextual, Meta>\"\n"
+                    "}\n\n"
 
                     "Respond only with a valid JSON object — no explanation, no extra text."
                 )
+
             },
             {
                 "role": "user",
@@ -69,9 +101,9 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
 
     query_json_str = initialCompletion.choices[0].message.content.strip()
     query = json.loads(query_json_str)
-    print(query)
+    # print(query)
     # print(f"new query constructed")
-    
+    # return "",[],"",{}
     # Storing the pdfs that are used in the database to a set
     unique_docs = set()
     all_items = collection.get(include=["metadatas"])
@@ -104,25 +136,20 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
             for doc, meta, dist in zip(docs, metas, distances)
         ]
         filtered = sorted(scored_results, key=lambda x: x["score"], reverse=True)
-
         if not filtered:
-            return "No relevant info found.", set(), []
-
+            return "No relevant info found.", set(), [], {}
         # Build context string + structured JSON
         context = ""
         context_json = []
         pages = []
         seen = set()
-
         for item in filtered:
             source = item["metadata"]["pdf_name"]
             page = item["metadata"]["page"]
             page_key = f"{source} | Page {page}"
-
             if page_key not in seen:
                 seen.add(page_key)
                 pages.append(page_key)
-
             context += f"[{page_key}] (score={item['score']:.2f})\n{item['document']}\n\n"
             context_json.append({
                 "pdf_name": source,
@@ -130,16 +157,108 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
                 "content": item["document"],
                 "score": item["score"]
             })
-
         # print("context formed from documents")
     elif(query['query_type']=="small talk"):
         context = "This is a casual conversation, no documents needed."
         pages = set()
         context_json=[]
+    
+    elif query['query_type'] == 'image_question':
+        query_embedding = client.embeddings.create(
+            model="text-embedding-3-large",
+            input=query['query']
+        ).data[0].embedding
+        results = collection1.query(
+            query_embeddings=[query_embedding],
+            n_results=top_k,
+            include=["documents", "metadatas", "distances"]
+        )
+        context = ""
+        if "documents" in results and results["documents"]:
+            for doc_list in results["documents"]:
+                for doc in doc_list:
+                    context += doc + "\n"
+        prompt = f"""
+            You are an academic assistant named Varuna. Answer the user's question using ONLY the provided context whenever possible. 
+            You have your knowledge base from the following PDFs: 
 
-    # print(context)
-    # print(query)
-    # print(unique_docs)
+            {unique_docs}
+
+            Instructions:
+
+            - Do not omit important details and do not alter the wording or meaning of the context.
+            - Answer casual greetings and general conversation, but ignore questions outside of academic or dam-related context.
+            - Explicitly avoid non-academic, abusive, or sexual topics.
+            - Cite the PDF name and page number for every fact you include using this format: (PDF: <pdf_name>, Page: <page_number>).
+            - Extract and include all relevant information from the context.
+            - If the context is insufficient, respond with: 'Couldn’t find that in the provided materials.'
+            - Never fabricate or make up facts. Clearly indicate when using general knowledge versus provided materials.
+            - Additionally, you may answer questions about your knowledge base itself (e.g., listing the PDFs you have, number of pages, etc.).
+            - Avoid making tables in your responses.
+            - Return STRICT JSON ONLY.
+
+            Context:
+            {context}
+
+            User Query:
+            {query['query']}
+
+            Output format:
+
+            For every relevant page that can answer the query, create an object with the following fields:
+                "pdf_name": "<PDF name from context>",
+                "page_num": <page number from context>,
+                "content": "<relevant context text from that page>",
+                "score": 1.0  # placeholder similarity score
+
+            Combine all these objects into a JSON array named "context_json".
+
+            Additionally, provide a "final_answer" field with the direct answer to the user's query.
+
+            Example output:
+            {{
+                "context_json": [
+                    {{
+                        "pdf_name": "CDSE_SOP_Draft_Sep 2024",
+                        "page_num": 14,
+                        "content": "Flow over the crest washes out material in the downstream slope...",
+                        "score": 1.0
+                    }},
+                    {{
+                        "pdf_name": "CDSE_SOP_Draft_Sep 2024",
+                        "page_num": 13,
+                        "content": "The spillway has insufficient discharging capacity to pass the design flood...",
+                        "score": 1.0
+                    }}
+                ],
+                "final_answer": "The situation is called 'overtopping'..."
+            }}
+        """
+
+        messages = [
+            {"role": "system", "content": "You are an academic assistant Varuna. Follow instructions strictly."},
+            {"role": "user", "content": prompt}
+        ]
+        completion = client.chat.completions.create(
+            model="gpt-4.1",
+            messages=messages,
+            temperature=0.2
+        )
+        response_text = completion.choices[0].message.content
+        try:
+            response_json = json.loads(response_text)
+        except json.JSONDecodeError:
+            response_json = {"error": "GPT did not return valid JSON", "raw": response_text}
+            return context, [], query['category'],{}
+        print(response_json)
+        context_json = response_json.get("context_json", [])
+        answer= response_json.get("final_answer", "Couldn't find that in the provided materials.")
+        pages = []
+        for page in context_json:
+            page_key = f"{page['pdf_name']} | Page {page['page_num']}"
+            pages.append(page_key)
+        return answer, pages, query['category'], context_json
+        
     messages = [
         {
             "role": "system",

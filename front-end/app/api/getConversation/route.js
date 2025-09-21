@@ -11,7 +11,7 @@ export async function POST(request) {
     }
     const { data, error } = await supabase
       .from('conversations')
-      .select('messages, pdfList')
+      .select('messages, pdfList, contextList')
       .eq('id', conversationId)
       .single();
       // console.log(data);

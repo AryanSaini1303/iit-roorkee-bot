@@ -303,6 +303,7 @@ export default function HomePage() {
         setMessages(data.conversation.messages || []);
         setSessionQuery(data.conversation.messages[0]?.content || '');
         setPagesList(data.conversation.pdfList || []);
+        setContextList(data.conversation.contextList || []);
         sessionStorage.setItem(
           'messages',
           JSON.stringify(data.conversation.messages) || [],
@@ -310,6 +311,10 @@ export default function HomePage() {
         sessionStorage.setItem(
           'pagesList',
           JSON.stringify(data.conversation.pdfList) || [],
+        );
+        sessionStorage.setItem(
+          'contextList',
+          JSON.stringify(data.conversation.contextList) || [],
         );
         sessionStorage.setItem(
           'query',
@@ -331,9 +336,9 @@ export default function HomePage() {
 
   useEffect(() => {
     if (messages.length !== 0) {
-      sessionStorage.setItem('messages', JSON.stringify(messages));
-      sessionStorage.setItem('pagesList', JSON.stringify(pagesList));
-      sessionStorage.setItem('contextList', JSON.stringify(contextList));
+      sessionStorage.setItem('messages', JSON.stringify(messages) || []);
+      sessionStorage.setItem('pagesList', JSON.stringify(pagesList) || []);
+      sessionStorage.setItem('contextList', JSON.stringify(contextList) || []);
     }
   }, [messages]);
 

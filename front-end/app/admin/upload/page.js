@@ -84,6 +84,7 @@ export default function AdminPage() {
         body: formData,
       });
       const data = await res.json();
+      console.log(data);
       alert(`Uploaded: ${data.files_processed.join(', ')}`);
     } catch (err) {
       alert('Upload failed.');

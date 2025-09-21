@@ -10,7 +10,7 @@ export async function POST(req) {
   try {
     // Convert the request to a Blob so we can pipe it
     const body = await req.arrayBuffer(); // get raw bytes
-    const response = await fetch(`${process.env.PUBLIC_API_URL}/add_metadata`, {
+    const response = await fetch(`${process.env.PUBLIC_API_URL}/add`, {
       method: 'POST',
       body: body, // pass raw bytes
       headers: {
