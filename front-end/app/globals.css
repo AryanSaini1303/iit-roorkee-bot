@@ -5,7 +5,7 @@
 body {
   margin: 0;
   padding: 0;
-  background: url('/images/background.png') no-repeat center;
+  background: url('/images/bg.jpg') no-repeat center;
   background-size: cover;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   height: 100%;

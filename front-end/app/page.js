@@ -46,8 +46,8 @@ export default function Home() {
         </div>
         <div className={styles.holder}>
           <div className={styles.infoContainer}>
-            <p>&ndash; by ICED, IIT Roorkee</p>
-            <img src="/images/rocket.gif" alt="rocket" />
+            {/* <p>&ndash; by ICED, IIT Roorkee</p> */}
+            <img src="/images/icedLogo.png" alt="rocket" />
           </div>
         </div>
         <div className={styles.holder}>
