@@ -2,7 +2,7 @@ import sys
 import chromadb #type:ignore
 
 CHROMA_PATH = "../pilotDB"
-COLLECTION_NAME = "iit_docs"
+COLLECTION_NAME = "iit_image_metadata_v2"
 
 def delete_file(file_name: str):
     try:
