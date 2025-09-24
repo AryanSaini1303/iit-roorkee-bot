@@ -93,16 +93,16 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap:0.5rem
+  gap: 0.5rem;
 }
-.loginSection h1{
+.loginSection h1 {
   font-family: 'MyCustomFont', sans-serif;
 }
-.infoContainer p{
+.infoContainer p {
   font-size: 1.2rem;
 }
 .infoContainer img {
-  height:3.5rem;
+  height: 3.5rem;
   margin-bottom: 1rem;
   /* position: absolute; */
   /* right: -3.8rem; */
@@ -203,9 +203,19 @@
   }
 }
 
+@media (max-width: 486px) {
+  .image {
+    height: 70vh;
+  }
+}
+
 @media (max-width: 430px) {
   .image {
     height: 100vh;
+    border-radius: 0;
+    object-fit: cover;
+    width: 100%;
+    object-position: 75% center; /* <- this makes the right side be the focal point */
     border-radius: 0;
   }
   .imageContainer {
