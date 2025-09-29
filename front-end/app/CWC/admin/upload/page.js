@@ -12,7 +12,11 @@ export default function AdminPage() {
   const [uploadingMeta, setUploadingMeta] = useState(false);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
-  const supabase = createClient('CWC');
+  const [supabase, setSupabase] = useState(null);
+  useEffect(() => {
+    const sb = createClient('CWC');
+    setSupabase(sb);
+  }, []);
   const router = useRouter();
   const [signOutFlag, setSignOutFlag] = useState(false);
   const route = usePathname();

@@ -16,7 +16,11 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [session, setSession] = useState(null);
-  const supabase = createClient('DSA');
+  const [supabase, setSupabase] = useState(null);
+  useEffect(() => {
+    const sb = createClient('DSA');
+    setSupabase(sb);
+  }, []);
   const router = useRouter();
   const [signOutFlag, setSignOutFlag] = useState(false);
   const route = usePathname();

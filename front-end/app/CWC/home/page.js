@@ -44,7 +44,11 @@ export const useClickHandlers = ({
 };
 
 export default function HomePage() {
-  const supabase = createClient('CWC');
+  const [supabase, setSupabase] = useState(null);
+  useEffect(() => {
+    const sb = createClient('CWC');
+    setSupabase(sb);
+  }, []);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const router = useRouter();
@@ -553,7 +557,7 @@ export default function HomePage() {
 
   return (
     <div className={`${'wrapper'} ${'container'}`}>
-      <OnboardingModal session={session} func={setIsVerified} origin={'CWC'}/>
+      <OnboardingModal session={session} func={setIsVerified} origin={'CWC'} />
       {showPages && (
         <PagesComponent
           pages={pagesList}

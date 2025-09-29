@@ -3,17 +3,19 @@
 import MaintenancePage from '@/components/notFound';
 import styles from './page.module.css';
 import { createClient } from '@/utils/supabase/client';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
-  const supabase = createClient('DSA');
+  const [supabase, setSupabase] = useState(null);
+  useEffect(() => {
+    const sb = createClient('DSA');
+    setSupabase(sb);
+  }, []);
   const signIn = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        scopes: [
-          'openid',
-          'profile',
-        ],
+        scopes: ['openid', 'profile'],
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',

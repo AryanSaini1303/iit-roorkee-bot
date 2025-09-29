@@ -3,9 +3,14 @@
 import MaintenancePage from '@/components/notFound';
 import styles from './page.module.css';
 import { createClient } from '@/utils/supabase/client';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
-  const supabase = createClient('CWC');
+  const [supabase, setSupabase] = useState(null);
+  useEffect(() => {
+    const sb = createClient('CWC');
+    setSupabase(sb);
+  }, []);
   const signIn = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
