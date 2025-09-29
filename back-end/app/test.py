@@ -1,8 +1,8 @@
 import sys
 import chromadb #type:ignore
 
-CHROMA_PATH = "../pilotDB"
-COLLECTION_NAME = "iit_image_metadata_v2"
+CHROMA_PATH = "../CWC_DB"
+COLLECTION_NAME = "CWC_DOCS"
 
 def delete_file(file_name: str):
     try:
