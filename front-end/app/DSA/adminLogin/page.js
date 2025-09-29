@@ -3,6 +3,7 @@
 import MaintenancePage from '@/components/notFound';
 import styles from './page.module.css';
 import { createClient } from '@/utils/supabase/client';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
   const [supabase, setSupabase] = useState(null);
