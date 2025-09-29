@@ -24,11 +24,7 @@ export default function OnboardingModal({ session, func, origin }) {
   //   console.log(showModal);
 
   async function updateUserProfile(data) {
-    const [supabase, setSupabase] = useState(null);
-    useEffect(() => {
-      const sb = createClient(origin);
-      setSupabase(sb);
-    }, []);
+    const supabase = createClient(origin);
     const { error } = await supabase.auth.updateUser({ data });
     if (error) {
       console.error('Error updating user metadata:', error.message);

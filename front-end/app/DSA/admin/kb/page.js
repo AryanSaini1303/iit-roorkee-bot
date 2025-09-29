@@ -8,11 +8,7 @@ import Link from 'next/link';
 export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
-  const [supabase, setSupabase] = useState(null);
-  useEffect(() => {
-    const sb = createClient('DSA');
-    setSupabase(sb);
-  }, []);
+  const supabase = createClient('DSA');
   const router = useRouter();
   const [signOutFlag, setSignOutFlag] = useState(false);
   const [pdfs, setPdfs] = useState([]);

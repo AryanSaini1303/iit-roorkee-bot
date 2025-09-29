@@ -6,11 +6,7 @@ import { createClient } from '@/utils/supabase/client';
 import { useState, useEffect } from 'react';
 
 export default function Home() {
-  const [supabase, setSupabase] = useState(null);
-  useEffect(() => {
-    const sb = createClient('CWC');
-    setSupabase(sb);
-  }, []);
+  const supabase = createClient('CWC');
   const signIn = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',

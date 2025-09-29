@@ -44,11 +44,7 @@ export const useClickHandlers = ({
 };
 
 export default function HomePage() {
-  const [supabase, setSupabase] = useState(null);
-  useEffect(() => {
-    const sb = createClient('CWC');
-    setSupabase(sb);
-  }, []);
+  const supabase = createClient('CWC');
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const router = useRouter();

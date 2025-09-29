@@ -44,11 +44,7 @@ export const useClickHandlers = ({
 };
 
 export default function HomePage() {
-  const [supabase, setSupabase] = useState(null);
-  useEffect(() => {
-    const sb = createClient('DSA');
-    setSupabase(sb);
-  }, []);
+  const supabase = createClient('DSA');
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const router = useRouter();
@@ -559,7 +555,7 @@ export default function HomePage() {
 
   return (
     <div className={`${'wrapper'} ${'container'}`}>
-      <OnboardingModal session={session} func={setIsVerified} origin={'DSA'}/>
+      <OnboardingModal session={session} func={setIsVerified} origin={'DSA'} />
       {showPages && (
         <PagesComponent
           pages={pagesList}
