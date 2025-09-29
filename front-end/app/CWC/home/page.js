@@ -666,7 +666,7 @@ export default function HomePage() {
                 </button>
               </li>
               <li>
-                <Link href={'/about'}>About</Link>
+                <Link href={'/CWC/about'}>About</Link>
               </li>
               <li>
                 <button onClick={() => signOut()} className={styles.lastChild}>
