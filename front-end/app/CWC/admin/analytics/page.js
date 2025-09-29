@@ -209,7 +209,7 @@ export default function AdminPage() {
                         <span>{loadingUsers ? '--' : totalVisits}</span>
                       </li>
                       <li>
-                        Number of Unique Users:{' '}
+                        Number of Registered Users:{' '}
                         <span>{loadingUsers ? '--' : users.length}</span>
                       </li>
                       <li>

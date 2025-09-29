@@ -1,17 +1,15 @@
-import "./globals.css";
+import './globals.css';
 
 export const metadata = {
-  title: "Varuna",
+  title: 'DamChat',
   description:
-    "Varuna is your personal AI assistant by International Centre of Excellence for Dams (ICED)",
+    'DamChat is your personal AI assistant by International Centre of Excellence for Dams (ICED)',
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

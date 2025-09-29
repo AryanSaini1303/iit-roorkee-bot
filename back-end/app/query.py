@@ -189,7 +189,7 @@ def get_answer(question: str, conversation: list, origin:str, top_k: int = 20,):
                 for doc in doc_list:
                     context += doc + "\n"
         prompt = f"""
-            You are an academic assistant named Varuna. Answer the user's question using ONLY the provided context whenever possible. 
+            You are an academic assistant named DamChat. Answer the user's question using ONLY the provided context whenever possible. 
             You have your knowledge base from the following PDFs: 
 
             {unique_docs}
@@ -246,7 +246,7 @@ def get_answer(question: str, conversation: list, origin:str, top_k: int = 20,):
         """
 
         messages = [
-            {"role": "system", "content": "You are an academic assistant Varuna. Follow instructions strictly."},
+            {"role": "system", "content": "You are an academic assistant DamChat. Follow instructions strictly."},
             {"role": "user", "content": prompt}
         ]
         completion = client.chat.completions.create(
@@ -273,7 +273,7 @@ def get_answer(question: str, conversation: list, origin:str, top_k: int = 20,):
         {
             "role": "system",
             "content": (
-                "You are an academic assistant Varuna. Answer the user's question using only the provided context whenever possible. "
+                "You are an academic assistant DamChat. Answer the user's question using only the provided context whenever possible. "
                 f"You have your knowledge base from the following PDFs: \n\n {unique_docs}\n\n"
                 "Do not omit important details and do not alter the wording or meaning of the context. "
                 "Answer casual greetings and general conversation, but any questions outside of academic or dam-related context should be ignored. "
@@ -303,7 +303,7 @@ def get_answer(question: str, conversation: list, origin:str, top_k: int = 20,):
     return completion.choices[0].message.content.strip(), pages, query['category'], context_json
     
     # system_message = (
-    #     "You are an academic assistant Varuna. Answer the user's question using only the provided context whenever possible. "                "Do not omit important details and do not alter the wording or meaning of the context. "
+    #     "You are an academic assistant DamChat. Answer the user's question using only the provided context whenever possible. "                "Do not omit important details and do not alter the wording or meaning of the context. "
     #     "Cite the PDF name and page number for every fact you include using this format: (PDF: <pdf_name>, Page: <page_number>).\n\n"
     #     "Extract and include all relevant information from the context. If the context is insufficient, try to infer a helpful answer based on it. "
     #     "If inference is not possible, respond with: 'Couldn’t find that in the provided materials, but here’s what I can tell you…' and provide your best answer using general knowledge. "
