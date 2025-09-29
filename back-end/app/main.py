@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, File, UploadFile #type: ignore
+from fastapi import FastAPI, Request, File, UploadFile, Request, HTTPException, Header #type: ignore
 from pydantic import BaseModel #type: ignore
 from app.query import get_answer
 from fastapi.middleware.cors import CORSMiddleware #type: ignore
@@ -11,39 +11,38 @@ from dotenv import load_dotenv #type: ignore
 import tiktoken #type: ignore
 import nltk #type: ignore
 from typing import List
-from fastapi.responses import StreamingResponse #type: ignore
-import os
-import json
 
-# Load NLTK punkt tokenizer
 nltk.download('punkt')
 
-# Init token encoder
 enc = tiktoken.encoding_for_model("text-embedding-3-large")
 
-# Load API key
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 assert OPENAI_API_KEY, "Missing OPENAI_API_KEY in .env"
 
 client = OpenAI(api_key=OPENAI_API_KEY)
-chroma_client = chromadb.PersistentClient(path="./pilotDB")
-collection = chroma_client.get_or_create_collection(name="iit_docs")
-collection1 = chroma_client.get_or_create_collection(name="iit_image_metadata_v2")
+chroma_client = chromadb.PersistentClient(path="./CWC_DB")
+chroma_client1 = chromadb.PersistentClient(path="./DSA_DB")
+
+DOCS_MAP = {
+    "CWC": chroma_client.get_or_create_collection(name="CWC_DOCS"),
+    "DSA": chroma_client1.get_or_create_collection(name="DSA_DOCS"),
+}
+
+META_MAP = {
+    "CWC": chroma_client.get_or_create_collection(name="CWC_METADATA"),
+    "DSA": chroma_client1.get_or_create_collection(name="DSA_METADATA"),
+}
 
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    # allow_origins=["http://localhost:3000","https://iit-roorkee-bot.vercel.app"],
+    # allow_origins=["*"],
+    allow_origins=["http://localhost:3000","https://iit-roorkee-bot.vercel.app", "https://damchat.in"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-class QueryRequest(BaseModel):
-    question: str
-    conversation: list
 
 def num_tokens(text):
     return len(enc.encode(text))
@@ -65,9 +64,14 @@ def split_into_chunks(text, max_tokens=800, overlap=100):
         chunks.append(' '.join(current_chunk))
     return chunks
 
+class QueryRequest(BaseModel):
+    question: str
+    conversation: list
+    origin:str
+
 @app.post("/ask")
 async def ask_question(req: QueryRequest):
-    response, pages, category, context_json = get_answer(req.question, req.conversation)
+    response, pages, category, context_json = get_answer(req.question, req.conversation, req.origin)
     return {
         "answer": response,
         "pages": pages,
@@ -76,8 +80,9 @@ async def ask_question(req: QueryRequest):
     }
 
 @app.post("/add")
-async def add_main_pdfs(files: List[UploadFile] = File(...)):
+async def add_main_pdfs(files: List[UploadFile] = File(...), x_origin: str = Header(None)):
     try:
+        print(f"Origin Header: {x_origin}")
         processed_files = []
         errors = []
         for file in files:
@@ -100,6 +105,7 @@ async def add_main_pdfs(files: List[UploadFile] = File(...)):
                             input=chunk
                         ).data[0].embedding
                         chunk_id = f"{pdf_name}_page_{page_num}_chunk_{idx}"
+                        collection=DOCS_MAP[x_origin]
                         collection.add(
                             documents=[chunk],
                             embeddings=[embedding],
@@ -131,7 +137,7 @@ async def add_main_pdfs(files: List[UploadFile] = File(...)):
         }
     
 @app.post("/add_metadata")
-async def add_metadata_pdfs(files: List[UploadFile] = File(...)):
+async def add_metadata_pdfs(files: List[UploadFile] = File(...), x_origin: str = Header(None)):
     processed_files = []
     errors = []
     for file in files:
@@ -154,7 +160,8 @@ async def add_metadata_pdfs(files: List[UploadFile] = File(...)):
                         input=chunk
                     ).data[0].embedding
                     chunk_id = f"metadata_{pdf_name}_page_{page_num}_chunk_{idx}"
-                    collection1.add(
+                    collection=META_MAP[x_origin]
+                    collection.add(
                         documents=[chunk],
                         embeddings=[embedding],
                         ids=[chunk_id],
@@ -179,7 +186,9 @@ async def add_metadata_pdfs(files: List[UploadFile] = File(...)):
     }
     
 @app.get("/list-pdfs")
-async def list_pdfs():
+async def list_pdfs(x_origin: str = Header(None)):
+    print(f"Origin Header: {x_origin}")
+    collection=DOCS_MAP[x_origin]
     all_items=collection.get(include=["metadatas"])
     unique_pdfs=set()
     for meta in all_items["metadatas"]:

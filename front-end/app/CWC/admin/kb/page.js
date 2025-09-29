@@ -48,7 +48,7 @@ export default function AdminPage() {
   };
 
   const fetchPdfs = async () => {
-    const res = await fetch('/api/list_pdfs');
+    const res = await fetch('/api/list_pdfs?origin=CWC');
     const data = await res.json();
     setPdfs(data.pdfs || []);
     // console.log(data1);

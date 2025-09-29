@@ -10,11 +10,19 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-chroma_client = chromadb.PersistentClient(path="./pilotDB")
-collection = chroma_client.get_or_create_collection(name="iit_docs")
-collection1 = chroma_client.get_or_create_collection(name="iit_image_metadata_v2")
+chroma_client = chromadb.PersistentClient(path="./CWC_DB")
+chroma_client1 = chromadb.PersistentClient(path="./DSA_DB")
+DOCS_MAP = {
+    "CWC": chroma_client.get_or_create_collection(name="CWC_DOCS"),
+    "DSA": chroma_client1.get_or_create_collection(name="DSA_DOCS"),
+}
+META_MAP = {
+    "CWC": chroma_client.get_or_create_collection(name="CWC_METADATA"),
+    "DSA": chroma_client1.get_or_create_collection(name="DSA_METADATA"),
+}
 
-def get_answer(question: str, conversation: list, top_k: int = 20):
+def get_answer(question: str, conversation: list, origin:str, top_k: int = 20,):
+    print(f"Origin: {origin}")
     if conversation is None:
         conversation = []
     context=""
@@ -106,6 +114,8 @@ def get_answer(question: str, conversation: list, top_k: int = 20):
     # return "",[],"",{}
     # Storing the pdfs that are used in the database to a set
     unique_docs = set()
+    collection=DOCS_MAP[origin]
+    collection1=META_MAP[origin]
     all_items = collection.get(include=["metadatas"])
     for meta in all_items['metadatas']:
         fname = meta.get("pdf_name")

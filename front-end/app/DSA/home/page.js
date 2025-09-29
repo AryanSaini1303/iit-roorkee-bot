@@ -551,7 +551,7 @@ export default function HomePage() {
       </div>
     );
 
-  console.log(session);
+  // console.log(session);
 
   return (
     <div className={`${'wrapper'} ${'container'}`}>
