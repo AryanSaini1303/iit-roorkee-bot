@@ -248,13 +248,12 @@
   }
 }
 
-/* WHITE SECTION */
 .whiteSection {
   position: relative;
   background-color: white;
   margin: 0 3rem;
   border-radius: 10px;
-  opacity: 0.8;
+  opacity: 0.9;
   height: 85vh;
   backdrop-filter: blur(10px);
   overflow: hidden;
