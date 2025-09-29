@@ -33,6 +33,7 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    if (!supabase) return;
     refreshCount();
     const channel = supabase
       .channel('heartbeats-channel')
@@ -48,7 +49,7 @@ export default function AdminPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
     const getSession = async () => {
@@ -198,33 +199,35 @@ export default function AdminPage() {
           </button>
           <h1>Admin Dashboard</h1>
           <section className={styles.bottomContainer}>
-            {loadingCategories
-              ? 'Loading...'
-              : categoriesData.length !== 0 ? (
-                  <section
-                    className={styles.infoContainer}
-                    style={{ height: '70vh' }}
-                  >
-                    <h2>Web Analytics</h2>
-                    <ul>
-                      <li>
-                        Number of Visits:{' '}
-                        <span>{loadingUsers ? '--' : totalVisits}</span>
-                      </li>
-                      <li>
-                        Number of Unique Users:{' '}
-                        <span>{loadingUsers ? '--' : users.length}</span>
-                      </li>
-                      <li>
-                        Number of Live Users:{' '}
-                        <span>{loadingUsers ? '--' : count}</span>
-                      </li>
-                    </ul>
-                    {categoriesData.length !== 0 && (
-                      <CategoriesPieChart data={categoriesData} />
-                    )}
-                  </section>
-                ):<p>No data to show!</p>}
+            {loadingCategories ? (
+              'Loading...'
+            ) : categoriesData.length !== 0 ? (
+              <section
+                className={styles.infoContainer}
+                style={{ height: '70vh' }}
+              >
+                <h2>Web Analytics</h2>
+                <ul>
+                  <li>
+                    Number of Visits:{' '}
+                    <span>{loadingUsers ? '--' : totalVisits}</span>
+                  </li>
+                  <li>
+                    Number of Unique Users:{' '}
+                    <span>{loadingUsers ? '--' : users.length}</span>
+                  </li>
+                  <li>
+                    Number of Live Users:{' '}
+                    <span>{loadingUsers ? '--' : count}</span>
+                  </li>
+                </ul>
+                {categoriesData.length !== 0 && (
+                  <CategoriesPieChart data={categoriesData} />
+                )}
+              </section>
+            ) : (
+              <p>No data to show!</p>
+            )}
           </section>
         </section>
       </div>
