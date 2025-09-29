@@ -221,7 +221,7 @@
 .mainContent {
   position: relative;
   backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.472);
+  background: rgba(255, 255, 255, 0.664);
   padding: 2rem;
   border-radius: 12px;
   animation: reveal 0.7s ease-in-out;
@@ -286,7 +286,7 @@
   border-left: 3px solid transparent;
   border-radius: 20px;
   transition: all 0.2s ease-in-out;
-  background-color: rgba(255, 255, 255, 0.471);
+  background-color: rgba(255, 255, 255, 0.664);
   box-shadow: inset -5px -5px 5px black;
 }
 

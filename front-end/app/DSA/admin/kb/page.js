@@ -8,7 +8,7 @@ import Link from 'next/link';
 export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
-  const supabase = createClient();
+  const supabase = createClient('DSA');
   const router = useRouter();
   const [signOutFlag, setSignOutFlag] = useState(false);
   const [pdfs, setPdfs] = useState([]);
@@ -43,7 +43,7 @@ export default function AdminPage() {
       console.error('Sign-out error:', error.message);
     } else {
       setSession(null);
-      router.push('/adminLogin');
+      router.push('/DSA/adminLogin');
     }
   };
 
@@ -81,17 +81,17 @@ export default function AdminPage() {
           <ul>
             <li>
               <Link
-                href={'/admin'}
-                className={route === '/admin' ? `${styles.active}` : null}
+                href={'/DSA/admin'}
+                className={route === '/DSA/admin' ? `${styles.active}` : null}
               >
                 Home
               </Link>
             </li>
             <li>
               <Link
-                href={'/admin/analytics'}
+                href={'/DSA/admin/analytics'}
                 className={
-                  route === '/admin/analytics' ? `${styles.active}` : null
+                  route === '/DSA/admin/analytics' ? `${styles.active}` : null
                 }
               >
                 Analytics
@@ -99,17 +99,19 @@ export default function AdminPage() {
             </li>
             <li>
               <Link
-                href={'/admin/kb'}
-                className={route === '/admin/kb' ? `${styles.active}` : null}
+                href={'/DSA/admin/kb'}
+                className={
+                  route === '/DSA/admin/kb' ? `${styles.active}` : null
+                }
               >
                 Knowledge Base
               </Link>
             </li>
             <li>
               <Link
-                href={'/admin/upload'}
+                href={'/DSA/admin/upload'}
                 className={
-                  route === '/admin/upload' ? `${styles.active}` : null
+                  route === '/DSA/admin/upload' ? `${styles.active}` : null
                 }
               >
                 Upload

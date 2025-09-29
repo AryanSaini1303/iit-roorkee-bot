@@ -1,9 +1,9 @@
 import { createClient } from '@/utils/supabase/server';
 
 export async function DELETE(req) {
-  const supabase = await createClient();
   try {
-    const { conversationId } = await req.json();
+    const { conversationId, origin } = await req.json();
+    const supabase = await createClient(origin === 'CWC' ? 'CWC' : 'DSA');
 
     if (!conversationId) {
       return new Response(

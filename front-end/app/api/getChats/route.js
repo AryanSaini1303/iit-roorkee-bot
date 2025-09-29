@@ -1,7 +1,9 @@
 import { createClient } from '@/utils/supabase/server';
 
-export async function POST() {
-  const supabase = await createClient();
+export async function POST(req) {
+  const { origin } = await req.json();
+  // console.log(origin);
+  const supabase = await createClient(origin === 'CWC' ? 'CWC' : 'DSA');
   const {
     data: { user },
   } = await supabase.auth.getUser();

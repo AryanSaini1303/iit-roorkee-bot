@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(req) {
   try {
     const body = await req.json();
+    // console.log('Received body:', body);
 
     const response = await fetch(`${process.env.PUBLIC_API_URL}/ask`, {
       method: 'POST',

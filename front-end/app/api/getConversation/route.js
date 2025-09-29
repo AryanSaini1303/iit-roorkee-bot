@@ -1,9 +1,9 @@
 import { createClient } from '@/utils/supabase/server';
 
 export async function POST(request) {
-  const supabase = await createClient();
   try {
-    const { conversationId } = await request.json();
+    const { conversationId, origin } = await request.json();
+    const supabase = await createClient(origin === 'CWC' ? 'CWC' : 'DSA');
     if (!conversationId) {
       return new Response(JSON.stringify({ error: 'Missing conversationId' }), {
         status: 400,
@@ -14,7 +14,7 @@ export async function POST(request) {
       .select('messages, pdfList, contextList')
       .eq('id', conversationId)
       .single();
-      // console.log(data);
+    // console.log(data);
     if (error) throw error;
     return new Response(JSON.stringify({ success: true, conversation: data }), {
       status: 200,

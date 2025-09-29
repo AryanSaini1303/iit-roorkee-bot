@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
-
 export async function POST(request) {
-  const { category } = await request.json();
+  const { category, origin } = await request.json();
+  const supabase = createClient(
+    origin === 'CWC'
+      ? process.env.SUPABASE_SERVER_URL_CWC
+      : process.env.SUPABASE_SERVER_URL_DSA,
+    origin === 'CWC'
+      ? process.env.SUPABASE_SERVICE_ROLE_KEY_CWC
+      : process.env.SUPABASE_SERVICE_ROLE_KEY_DSA,
+  );
   try {
     const { data, error } = await supabase
       .from('categories')

@@ -12,7 +12,7 @@ export default function AdminPage() {
   const [uploadingMeta, setUploadingMeta] = useState(false);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
-  const supabase = createClient();
+  const supabase = createClient('CWC');
   const router = useRouter();
   const [signOutFlag, setSignOutFlag] = useState(false);
   const route = usePathname();
@@ -68,7 +68,7 @@ export default function AdminPage() {
       console.error('Sign-out error:', error.message);
     } else {
       setSession(null);
-      router.push('/adminLogin');
+      router.push('/CWC/adminLogin');
     }
   };
 
@@ -79,7 +79,7 @@ export default function AdminPage() {
     });
     type === 'knowledgeBase' ? setUploadingKB(true) : setUploadingMeta(true);
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(`${endpoint}?origin=CWC`, {
         method: 'POST',
         body: formData,
       });
@@ -114,17 +114,17 @@ export default function AdminPage() {
           <ul>
             <li>
               <Link
-                href={'/admin'}
-                className={route === '/admin' ? `${styles.active}` : null}
+                href={'/CWC/admin'}
+                className={route === '/CWC/admin' ? `${styles.active}` : null}
               >
                 Home
               </Link>
             </li>
             <li>
               <Link
-                href={'/admin/analytics'}
+                href={'/CWC/admin/analytics'}
                 className={
-                  route === '/admin/analytics' ? `${styles.active}` : null
+                  route === '/CWC/admin/analytics' ? `${styles.active}` : null
                 }
               >
                 Analytics
@@ -132,17 +132,19 @@ export default function AdminPage() {
             </li>
             <li>
               <Link
-                href={'/admin/kb'}
-                className={route === '/admin/kb' ? `${styles.active}` : null}
+                href={'/CWC/admin/kb'}
+                className={
+                  route === '/CWC/admin/kb' ? `${styles.active}` : null
+                }
               >
                 Knowledge Base
               </Link>
             </li>
             <li>
               <Link
-                href={'/admin/upload'}
+                href={'/CWC/admin/upload'}
                 className={
-                  route === '/admin/upload' ? `${styles.active}` : null
+                  route === '/CWC/admin/upload' ? `${styles.active}` : null
                 }
               >
                 Upload

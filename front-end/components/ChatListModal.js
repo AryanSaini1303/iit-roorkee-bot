@@ -10,6 +10,7 @@ export default function ChatListModal({
   onSelectChat,
   setPagesList,
   setContextList,
+  origin,
 }) {
   const modalRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,7 @@ export default function ChatListModal({
     try {
       const res = await fetch('/api/deleteChat', {
         method: 'DELETE',
-        body: JSON.stringify({ conversationId }),
+        body: JSON.stringify({ conversationId, origin: origin }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -42,7 +43,7 @@ export default function ChatListModal({
       const res = await fetch('/api/updateName', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId, name }),
+        body: JSON.stringify({ conversationId, name, origin: origin }),
       });
       if (!res.ok) {
         const errorText = await res.text();

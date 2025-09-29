@@ -1,7 +1,8 @@
 import { createClient } from '@/utils/supabase/server';
 
-export async function GET() {
-  const supabase = await createClient();
+export async function POST(req) {
+  const { origin } = await req.json();
+  const supabase = await createClient(origin === 'CWC' ? 'CWC' : 'DSA');
   try {
     const { count, error } = await supabase
       .from('visits')

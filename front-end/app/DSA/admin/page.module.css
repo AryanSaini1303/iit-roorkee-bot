@@ -1,0 +1,310 @@
+.container {
+  width: 100%;
+  font-family: sans-serif;
+  color: #222;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 1fr 5fr;
+  margin: 1rem;
+  gap: 2rem;
+  height: 90vh;
+}
+
+.uploadContainer,
+.userContainer {
+  box-shadow: inset -4px -4px 9px rgb(94, 94, 94);
+  /* border: dashed grey 2px; */
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 12px;
+}
+
+.uploading p {
+  font-size: 0.9rem;
+}
+
+.loaderContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.wrapperContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tableContainer {
+  /* max-height: 25vh; */
+  overflow: auto;
+}
+
+.container h1,
+.container h2 {
+  color: #003366;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.container h1 {
+  text-align: center;
+  margin-top: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #ccc;
+  text-align: left;
+}
+
+.deleteBtn {
+  background: black;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  color: white;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.deleteBtn svg {
+  stroke: white;
+  stroke-width: 1.5px;
+}
+
+.deleteBtn:hover {
+  background: #cc0000;
+}
+
+.dropzone {
+  padding: 1.9rem;
+  border: 2px dashed #aaa;
+  border-radius: 8px;
+  background: rgba(240, 248, 255, 0.6);
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  margin-bottom: 1rem;
+}
+
+.activeDrop {
+  background: rgba(173, 216, 230, 0.6);
+}
+
+.signOut {
+  position: absolute;
+  right: 0rem;
+  top: 0rem;
+  margin: 2rem;
+  border: none;
+  background-color: black;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  transition: 0.2s all ease-in-out;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.signOut:hover {
+  background-color: red;
+  cursor: pointer;
+}
+
+.downloadBtn {
+  position: absolute;
+  left: 0rem;
+  top: 0rem;
+  margin: 2rem;
+  padding: 0.5rem 0.75rem;
+  background-color: black;
+  color: white;
+  border-radius: 6px;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.downloadBtn:hover {
+  background-color: green;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+
+.downloadBtn:active {
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+  transform: scale(0.98);
+}
+
+.uploading {
+  margin-top: 1rem;
+  color: #555;
+  text-align: center;
+  animation: pulse 1.8s ease-in-out infinite;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.4;
+  }
+}
+
+.infoContainer {
+  border-radius: 1rem;
+  margin: 1rem auto;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen, Ubuntu, Cantarell, sans-serif;
+  box-shadow: inset -4px -4px 9px rgb(94, 94, 94);
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 12px;
+}
+
+.infoContainer ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.infoContainer li {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  justify-content: space-between;
+}
+
+.infoContainer ol {
+  list-style: decimal;
+}
+
+.infoContainer li:last-child {
+  border-bottom: none;
+}
+
+.infoContainer li span {
+  font-weight: 700;
+  color: black;
+  overflow: auto;
+  max-height: 40vh;
+}
+
+.infoContainer:last-child {
+  grid-area: 2/1/2/3;
+  height: 67vh;
+  overflow: auto;
+}
+
+.mainContent h1 {
+  font-size: 2rem;
+}
+
+.mainContent {
+  position: relative;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.664);
+  padding: 2rem;
+  border-radius: 12px;
+  animation: reveal 0.7s ease-in-out;
+}
+
+@keyframes reveal {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.sidebar ul {
+  padding-left: 0;
+  list-style-type: none;
+  margin: 5.5rem 0;
+}
+
+@keyframes slideInSidebar {
+  0% {
+    transform: translateX(-20%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.sidebar ul li {
+  margin: 1rem 0;
+  width: 100%;
+  animation: slideInSidebar ease-out forwards;
+}
+
+.sidebar ul li:nth-child(1) {
+  animation-duration: 0.3s;
+}
+
+.sidebar ul li:nth-child(2) {
+  animation-duration: 0.5s;
+}
+
+.sidebar ul li:nth-child(3) {
+  animation-duration: 0.7s;
+}
+
+.sidebar ul li:nth-child(4) {
+  animation-duration: 0.9s;
+}
+
+.sidebar ul li a {
+  display: block;
+  width: 100%;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: #555;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+  border-radius: 20px;
+  transition: all 0.2s ease-in-out;
+  background-color: rgba(255, 255, 255, 0.664);
+  box-shadow: inset -5px -5px 5px black;
+}
+
+.sidebar ul li a:hover {
+  background-color: black;
+  color: white;
+  box-shadow: inset -5px -5px 5px white;
+}
+
+.sidebar ul li a.active {
+  border-radius: 10px 50px 50px 50px;
+  background-color: black;
+  box-shadow: inset -5px -5px 3px white;
+  color: white;
+}
+
+.sidebar ul li a:active {
+  transform: scale(0.98);
+  opacity: 0.8;
+  box-shadow: inset -5px -5px 3px white;
+}

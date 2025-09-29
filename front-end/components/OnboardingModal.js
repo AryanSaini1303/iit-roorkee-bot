@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import styles from './OnboardingModal.module.css';
 import { createClient } from '@/utils/supabase/client';
 
-export default function OnboardingModal({ session, func }) {
+export default function OnboardingModal({ session, func, origin }) {
   const { phone, organisation, designation } =
     session?.user.user_metadata || {};
   //   console.log(phone, organisation);
@@ -24,12 +24,12 @@ export default function OnboardingModal({ session, func }) {
   //   console.log(showModal);
 
   async function updateUserProfile(data) {
-    const supabase = createClient();
+    const supabase = createClient(origin);
     const { error } = await supabase.auth.updateUser({ data });
     if (error) {
       console.error('Error updating user metadata:', error.message);
     } else {
-      setShowModal(false); // close modal after success
+      setShowModal(false);
       func(true);
     }
     setLoading(false);
@@ -45,6 +45,18 @@ export default function OnboardingModal({ session, func }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
+    if (formData.phone.length !== 10) {
+      alert('Please enter a valid 10-digit phone number.');
+      setLoading(false);
+      return;
+    } else if (
+      formData.organisation.trim() === '' ||
+      formData.designation.trim() === ''
+    ) {
+      alert('Organisation and Designation cannot be empty.');
+      setLoading(false);
+      return;
+    }
     await updateUserProfile(formData);
   }
 

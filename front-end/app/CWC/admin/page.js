@@ -16,7 +16,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [session, setSession] = useState(null);
-  const supabase = createClient();
+  const supabase = createClient('CWC');
   const router = useRouter();
   const [signOutFlag, setSignOutFlag] = useState(false);
   const route = usePathname();
@@ -58,7 +58,7 @@ export default function AdminPage() {
   useEffect(() => {
     const url = new URL(window.location.href);
     if (url.searchParams.has('code')) {
-      router.replace('/admin');
+      router.replace('/CWC/admin');
     }
   }, []);
 
@@ -71,18 +71,19 @@ export default function AdminPage() {
       console.error('Sign-out error:', error.message);
     } else {
       setSession(null);
-      router.push('/adminLogin');
+      router.push('/CWC/adminLogin');
     }
   };
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
-    const res = await fetch('/api/list_users');
+    const res = await fetch('/api/list_users', {
+      method: 'POST',
+      body: JSON.stringify({ origin: 'CWC' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
     const data = await res.json();
     setUsers(data.users || []);
-    const res1 = await fetch('/api/getTotalVisits');
-    const data1 = await res1.json();
-    // console.log(data1);
     setLoadingUsers(false);
     // console.log(data?.users[0]);
   };
@@ -96,7 +97,7 @@ export default function AdminPage() {
     await fetch('/api/delete_user', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
+      body: JSON.stringify({ userId, origin: 'CWC' }),
     });
     fetchUsers();
   };
@@ -159,17 +160,17 @@ export default function AdminPage() {
           <ul>
             <li>
               <Link
-                href={'/admin'}
-                className={route === '/admin' ? `${styles.active}` : null}
+                href={'/CWC/admin'}
+                className={route === '/CWC/admin' ? `${styles.active}` : null}
               >
                 Home
               </Link>
             </li>
             <li>
               <Link
-                href={'/admin/analytics'}
+                href={'/CWC/admin/analytics'}
                 className={
-                  route === '/admin/analytics' ? `${styles.active}` : null
+                  route === '/CWC/admin/analytics' ? `${styles.active}` : null
                 }
               >
                 Analytics
@@ -177,17 +178,19 @@ export default function AdminPage() {
             </li>
             <li>
               <Link
-                href={'/admin/kb'}
-                className={route === '/admin/kb' ? `${styles.active}` : null}
+                href={'/CWC/admin/kb'}
+                className={
+                  route === '/CWC/admin/kb' ? `${styles.active}` : null
+                }
               >
                 Knowledge Base
               </Link>
             </li>
             <li>
               <Link
-                href={'/admin/upload'}
+                href={'/CWC/admin/upload'}
                 className={
-                  route === '/admin/upload' ? `${styles.active}` : null
+                  route === '/CWC/admin/upload' ? `${styles.active}` : null
                 }
               >
                 Upload

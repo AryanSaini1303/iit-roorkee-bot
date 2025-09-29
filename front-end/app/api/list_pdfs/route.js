@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(req) {
   try {
+    const { searchParams } = new URL(req.url);
+    const origin = searchParams.get('origin');
     const response = await fetch(`${process.env.PUBLIC_API_URL}/list-pdfs`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', origin: origin },
     });
 
     const data = await response.json();
@@ -13,7 +15,7 @@ export async function GET() {
   } catch (err) {
     return NextResponse.json(
       { error: 'Failed to fetch pdfs', details: err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

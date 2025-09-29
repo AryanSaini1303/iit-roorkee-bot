@@ -44,7 +44,7 @@ export const useClickHandlers = ({
 };
 
 export default function HomePage() {
-  const supabase = createClient();
+  const supabase = createClient('CWC');
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const router = useRouter();
@@ -256,7 +256,7 @@ export default function HomePage() {
       console.error('Sign-out error:', error.message);
     } else {
       setSession(null);
-      router.push('/');
+      router.push('/CWC');
     }
   };
 
@@ -278,7 +278,7 @@ export default function HomePage() {
       const res = await fetch('/api/incrementCategoryCount', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category: category }),
+        body: JSON.stringify({ category: category, origin: 'CWC' }),
       });
       const data = await res.json();
       // console.log(data);
@@ -292,7 +292,7 @@ export default function HomePage() {
       const res = await fetch('/api/getConversation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId }),
+        body: JSON.stringify({ conversationId, origin: 'CWC' }),
       });
 
       if (!res.ok) throw new Error('Failed to fetch conversation');
@@ -403,6 +403,7 @@ export default function HomePage() {
         body: JSON.stringify({
           question: query,
           conversation: convo,
+          origin: 'CWC',
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -443,7 +444,7 @@ export default function HomePage() {
   useEffect(() => {
     const url = new URL(window.location.href);
     if (url.searchParams.has('code')) {
-      router.replace('/home');
+      router.replace('/CWC/home');
     }
   }, []);
 
@@ -466,6 +467,7 @@ export default function HomePage() {
           newMessages,
           newPdfList: pagesList,
           newContextList: contextList,
+          origin: 'CWC',
         }),
       })
         .then((res) => res.json())
@@ -493,6 +495,7 @@ export default function HomePage() {
         const res = await fetch('/api/getChats', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ origin: 'CWC' }),
         });
         if (!res.ok) throw new Error('Failed to fetch chats');
         const data = await res.json();
@@ -511,6 +514,7 @@ export default function HomePage() {
         const res = await fetch('/api/incrementVisits', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ origin: 'CWC' }),
         });
         const data = await res.json();
         // console.log(data);
@@ -528,7 +532,7 @@ export default function HomePage() {
       await fetch('/api/heartbeat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: session?.user.id }),
+        body: JSON.stringify({ sessionId: session?.user.id, origin: 'CWC' }),
       });
     };
     sendHeartbeat();
@@ -549,7 +553,7 @@ export default function HomePage() {
 
   return (
     <div className={`${'wrapper'} ${'container'}`}>
-      <OnboardingModal session={session} func={setIsVerified} />
+      <OnboardingModal session={session} func={setIsVerified} origin={'CWC'}/>
       {showPages && (
         <PagesComponent
           pages={pagesList}
@@ -581,6 +585,7 @@ export default function HomePage() {
           }}
           setPagesList={setPagesList}
           setContextList={setContextList}
+          origin={'CWC'}
         />
       )}
       <div className={styles.logoSection}>

@@ -1,14 +1,13 @@
 import { createClient } from '@/utils/supabase/server';
 
 export async function POST(req) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   try {
-    const { conversationId, newMessages, newPdfList, newContextList } =
+    const { conversationId, newMessages, newPdfList, newContextList, origin } =
       await req.json();
+    const supabase = await createClient(origin === 'CWC' ? 'CWC' : 'DSA');
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (
       !newMessages ||
       !Array.isArray(newMessages) ||

@@ -9,6 +9,8 @@ export const config = {
 export async function POST(req) {
   try {
     // Convert the request to a Blob so we can pipe it
+    const { searchParams } = new URL(req.url);
+    const origin = searchParams.get('origin');
     const body = await req.arrayBuffer(); // get raw bytes
     const response = await fetch(`${process.env.PUBLIC_API_URL}/add_metadata`, {
       method: 'POST',
@@ -16,6 +18,7 @@ export async function POST(req) {
       headers: {
         // Keep original content-type from client
         'Content-Type': req.headers.get('content-type'),
+        'x-origin': origin,
       },
     });
 

@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
-
-export async function GET() {
+export async function POST(req) {
+  const { origin } = await req.json();
+  const supabase = createClient(
+    origin === 'CWC'
+      ? process.env.SUPABASE_SERVER_URL_CWC
+      : process.env.SUPABASE_SERVER_URL_DSA,
+    origin === 'CWC'
+      ? process.env.SUPABASE_SERVICE_ROLE_KEY_CWC
+      : process.env.SUPABASE_SERVICE_ROLE_KEY_DSA,
+  );
   try {
     const { data, error } = await supabase.auth.admin.listUsers();
     if (error) throw error;

@@ -5,7 +5,7 @@ import styles from './page.module.css';
 import { createClient } from '@/utils/supabase/client';
 
 export default function Home() {
-  const supabase = createClient();
+  const supabase = createClient('CWC');
   const signIn = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',

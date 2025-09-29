@@ -12,7 +12,7 @@ export default function AdminPage() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [session, setSession] = useState(null);
-  const supabase = createClient();
+  const supabase = createClient('CWC');
   const router = useRouter();
   const [signOutFlag, setSignOutFlag] = useState(false);
   const [totalVisits, setTotalVisits] = useState(0);
@@ -74,16 +74,24 @@ export default function AdminPage() {
       console.error('Sign-out error:', error.message);
     } else {
       setSession(null);
-      router.push('/adminLogin');
+      router.push('/CWC/adminLogin');
     }
   };
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
-    const res = await fetch('/api/list_users');
+    const res = await fetch('/api/list_users', {
+      method: 'POST',
+      body: JSON.stringify({ origin: 'CWC' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
     const data = await res.json();
     setUsers(data.users || []);
-    const res1 = await fetch('/api/getTotalVisits');
+    const res1 = await fetch('/api/getTotalVisits', {
+      method: 'POST',
+      body: JSON.stringify({ origin: 'CWC' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
     const data1 = await res1.json();
     // console.log(data1);
     setTotalVisits(data1.count || 0);
@@ -92,7 +100,11 @@ export default function AdminPage() {
   };
 
   const getCategoriesCount = async () => {
-    const res = await fetch('/api/getCategoriesCount');
+    const res = await fetch('/api/getCategoriesCount', {
+      method: 'POST',
+      body: JSON.stringify({ origin: 'CWC' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
     const data = await res.json();
     // console.log(data);
     setCategoriesData(data.data || []);
@@ -138,17 +150,17 @@ export default function AdminPage() {
           <ul>
             <li>
               <Link
-                href={'/admin'}
-                className={route === '/admin' ? `${styles.active}` : null}
+                href={'/CWC/admin'}
+                className={route === '/CWC/admin' ? `${styles.active}` : null}
               >
                 Home
               </Link>
             </li>
             <li>
               <Link
-                href={'/admin/analytics'}
+                href={'/CWC/admin/analytics'}
                 className={
-                  route === '/admin/analytics' ? `${styles.active}` : null
+                  route === '/CWC/admin/analytics' ? `${styles.active}` : null
                 }
               >
                 Analytics
@@ -156,17 +168,19 @@ export default function AdminPage() {
             </li>
             <li>
               <Link
-                href={'/admin/kb'}
-                className={route === '/admin/kb' ? `${styles.active}` : null}
+                href={'/CWC/admin/kb'}
+                className={
+                  route === '/CWC/admin/kb' ? `${styles.active}` : null
+                }
               >
                 Knowledge Base
               </Link>
             </li>
             <li>
               <Link
-                href={'/admin/upload'}
+                href={'/CWC/admin/upload'}
                 className={
-                  route === '/admin/upload' ? `${styles.active}` : null
+                  route === '/CWC/admin/upload' ? `${styles.active}` : null
                 }
               >
                 Upload
@@ -182,7 +196,7 @@ export default function AdminPage() {
           <section className={styles.bottomContainer}>
             {loadingCategories
               ? 'Loading...'
-              : categoriesData.length !== 0 && (
+              : totalVisits.length !== 0 && (
                   <section
                     className={styles.infoContainer}
                     style={{ height: '70vh' }}
@@ -202,7 +216,9 @@ export default function AdminPage() {
                         <span>{loadingUsers ? '--' : count}</span>
                       </li>
                     </ul>
-                    <CategoriesPieChart data={categoriesData} />
+                    {categoriesData.length !== 0 && (
+                      <CategoriesPieChart data={categoriesData} />
+                    )}
                   </section>
                 )}
           </section>

@@ -8,6 +8,8 @@ export const config = {
 
 export async function POST(req) {
   try {
+    const { searchParams } = new URL(req.url);
+    const origin = searchParams.get('origin');
     // Convert the request to a Blob so we can pipe it
     const body = await req.arrayBuffer(); // get raw bytes
     const response = await fetch(`${process.env.PUBLIC_API_URL}/add`, {
@@ -16,6 +18,7 @@ export async function POST(req) {
       headers: {
         // Keep original content-type from client
         'Content-Type': req.headers.get('content-type'),
+        'x-origin': origin,
       },
     });
 

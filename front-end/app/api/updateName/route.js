@@ -2,7 +2,8 @@ import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function POST(req) {
-  const supabase = await createClient();
+  const { origin } = await req.json();
+  const supabase = await createClient(origin === 'CWC' ? 'CWC' : 'DSA');
   try {
     const { conversationId, name } = await req.json();
 

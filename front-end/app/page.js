@@ -1,62 +1,30 @@
-'use client';
+"use client";
 
-import MaintenancePage from '@/components/notFound';
-import styles from './page.module.css';
-import { createClient } from '@/utils/supabase/client';
+import { useRouter } from "next/navigation";
+import styles from "./page.module.css";
 
-export default function Home() {
-  const supabase = createClient();
-  const signIn = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        scopes: [
-          'openid',
-          'profile',
-        ],
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        },
-        redirectTo: window.location.href + `${'/home'}`, // here we mentioned to redirect to the same link which was opened, post authentication.
-      },
-    });
-    if (error) {
-      console.log(error);
-      return;
-    }
-  };
-
-  // if(true){
-  //   return <MaintenancePage/>
-  // }
+export default function TenantSelect() {
+  const router = useRouter();
 
   return (
-    <div className={`wrapper ${styles.container}`}>
-      <div className={styles.imageContainer}>
-        <img
-          src="/images/loginImage.jpg"
-          alt="ai-assistant"
-          className={styles.image}
-        />
-      </div>
-      <section className={styles.loginSection}>
-        <div className={styles.holder}>
-          <h1>Varuna</h1>
-        </div>
-        <div className={styles.holder}>
-          <div className={styles.infoContainer}>
-            {/* <p>&ndash; by ICED, IIT Roorkee</p> */}
-            <img src="/images/icedLogo.png" alt="rocket" />
-          </div>
-        </div>
-        <div className={styles.holder}>
-          <button className={styles.signInBtn} onClick={signIn}>
-            <img src="/images/googleLogo.png" alt="google logo" />
-            <h3>Sign in with Google</h3>
+    <div className={styles.container}>
+      <div className={styles.card}>
+        <h1 className={styles.title}>Choose Your Portal</h1>
+        <div className={styles.buttons}>
+          <button
+            className={styles.cwcButton}
+            onClick={() => router.push("/CWC")}
+          >
+            CWC
+          </button>
+          <button
+            className={styles.dsaButton}
+            onClick={() => router.push("/DSA")}
+          >
+            DSA
           </button>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
