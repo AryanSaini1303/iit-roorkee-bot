@@ -33,6 +33,7 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    if (!supabase) return;
     refreshCount();
     const channel = supabase
       .channel('heartbeats-channel')
@@ -48,7 +49,7 @@ export default function AdminPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
     const getSession = async () => {
