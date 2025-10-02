@@ -184,9 +184,8 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!session) return;
-    const { phone, organisation } = session.user.user_metadata || {};
-    // console.log(phone, organisation);
-    if (!phone || !organisation) {
+    const { organisation, designation } = session.user.user_metadata || {};
+    if (!designation || !organisation) {
       setIsVerified(false);
     } else {
       setIsVerified(true);

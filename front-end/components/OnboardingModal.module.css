@@ -24,7 +24,6 @@
 }
 
 .title {
-  margin-bottom: 1rem;
   font-size: 1.3rem;
   font-weight: 600;
   text-align: center;
@@ -41,6 +40,16 @@
   flex-direction: column;
   font-size: 0.9rem;
   font-weight: 500;
+  width: fit-content;
+  position: relative;
+}
+
+.form div:not(:first-child) label::after{
+  content:'*';
+  color: red;
+  position: absolute;
+  right: -0.5rem;
+  top: 0;
 }
 
 .form input {
@@ -49,6 +58,12 @@
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 1rem;
+}
+
+.form div{
+  display: flex;
+  flex-direction: column;
+
 }
 
 .form input[type='number']::-webkit-inner-spin-button,

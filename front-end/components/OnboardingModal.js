@@ -17,7 +17,7 @@ export default function OnboardingModal({ session, func, origin }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (session && (!phone || !organisation || !designation)) {
+    if (session && (!organisation || !designation)) {
       setShowModal(true);
     }
   }, [session, phone, organisation, designation]);
@@ -45,10 +45,12 @@ export default function OnboardingModal({ session, func, origin }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
-    if (formData.phone.length !== 10) {
-      alert('Please enter a valid 10-digit phone number.');
-      setLoading(false);
-      return;
+    if (formData.phone.trim().length > 0) {
+      if (formData.phone.length !== 10) {
+        alert('Please enter a valid 10-digit phone number.');
+        setLoading(false);
+        return;
+      }
     } else if (
       formData.organisation.trim() === '' ||
       formData.designation.trim() === ''
@@ -67,18 +69,18 @@ export default function OnboardingModal({ session, func, origin }) {
       <div className={styles.modal}>
         <h2 className={styles.title}>Complete Your Profile</h2>
         <form onSubmit={handleSubmit} className={styles.form}>
-          <label>
-            Phone Number
+          <div>
+            <label>Phone Number</label>
             <input
               type="number"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              required
+              // required
             />
-          </label>
-          <label>
-            Organisation
+          </div>
+          <div>
+            <label>Organisation</label>
             <input
               type="text"
               name="organisation"
@@ -86,9 +88,9 @@ export default function OnboardingModal({ session, func, origin }) {
               onChange={handleChange}
               required
             />
-          </label>
-          <label>
-            Designation
+          </div>
+          <div>
+            <label>Designation</label>
             <input
               type="text"
               name="designation"
@@ -96,7 +98,7 @@ export default function OnboardingModal({ session, func, origin }) {
               onChange={handleChange}
               required
             />
-          </label>
+          </div>
           <button type="submit" className={styles.submit} disabled={loading}>
             {loading ? 'Saving...' : 'Save'}
           </button>
