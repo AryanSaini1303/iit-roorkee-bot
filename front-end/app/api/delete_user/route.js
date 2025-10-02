@@ -9,8 +9,8 @@ export async function POST(req) {
         ? process.env.SUPABASE_SERVER_URL_CWC
         : process.env.SUPABASE_SERVER_URL_DSA,
       origin === 'CWC'
-        ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_CWC
-        : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_DSA,
+        ? process.env.SUPABASE_SERVICE_ROLE_KEY_CWC
+        : process.env.SUPABASE_SERVICE_ROLE_KEY_DSA,
     );
     if (!userId) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
@@ -21,6 +21,7 @@ export async function POST(req) {
 
     return NextResponse.json({ status: 'success', deleted: userId });
   } catch (err) {
+    console.log(err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

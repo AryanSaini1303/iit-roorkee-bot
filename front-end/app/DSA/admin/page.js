@@ -102,43 +102,6 @@ export default function AdminPage() {
     fetchUsers();
   };
 
-  // const onDrop = useCallback(async (acceptedFiles) => {
-  //   const formData = new FormData();
-  //   acceptedFiles.forEach((file) => {
-  //     formData.append('files', file);
-  //   });
-  //   setUploading(true);
-  //   try {
-  //     const res = await fetch('/api/upload', {
-  //       method: 'POST',
-  //       body: formData,
-  //     });
-  //     const data = await res.json();
-  //     alert(`Uploaded: ${data.files_processed.join(', ')}`);
-  //   } catch (err) {
-  //     alert('Upload failed.');
-  //     console.log(err);
-  //   }
-  //   setUploading(false);
-  // }, []);
-
-  // const { getRootProps, getInputProps, isDragActive } = useDropzone({
-  //   onDrop,
-  //   accept: { 'application/pdf': ['.pdf'] },
-  // });
-
-  // const formatDate = (dateString) => {
-  //   const date = new Date(dateString);
-  //   return date.toLocaleString('en-GB', {
-  //     day: 'numeric',
-  //     month: 'short',
-  //     year: 'numeric',
-  //     hour: 'numeric',
-  //     minute: '2-digit',
-  //     hour12: true,
-  //   });
-  // };
-
   if (
     !loading &&
     (!session ||
