@@ -82,7 +82,7 @@ async def ask_question(req: QueryRequest):
 @app.post("/add")
 async def add_main_pdfs(files: List[UploadFile] = File(...), x_origin: str = Header(None)):
     try:
-        print(f"Origin Header: {x_origin}")
+        # print(f"Origin Header: {x_origin}")
         processed_files = []
         errors = []
         for file in files:
@@ -187,7 +187,7 @@ async def add_metadata_pdfs(files: List[UploadFile] = File(...), x_origin: str =
     
 @app.get("/list-pdfs")
 async def list_pdfs(x_origin: str = Header(None)):
-    print(f"Origin Header: {x_origin}")
+    # print(f"Origin Header: {x_origin}")
     collection=DOCS_MAP[x_origin]
     all_items=collection.get(include=["metadatas"])
     unique_pdfs=set()

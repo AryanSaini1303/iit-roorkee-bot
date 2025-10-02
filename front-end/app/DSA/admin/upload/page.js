@@ -17,11 +17,11 @@ export default function AdminPage() {
   const [signOutFlag, setSignOutFlag] = useState(false);
   const route = usePathname();
   const onDropKnowledgeBase = useCallback(async (acceptedFiles) => {
-    await handleUpload(acceptedFiles, '/api/upload', 'knowledgeBase');
+    await handleUpload(acceptedFiles, '/add', 'knowledgeBase');
   }, []);
 
   const onDropMetadata = useCallback(async (acceptedFiles) => {
-    await handleUpload(acceptedFiles, '/api/uploadMetadata', 'metadata');
+    await handleUpload(acceptedFiles, '/add_metadata', 'metadata');
   }, []);
   const {
     getRootProps: getKBRootProps,
@@ -79,9 +79,12 @@ export default function AdminPage() {
     });
     type === 'knowledgeBase' ? setUploadingKB(true) : setUploadingMeta(true);
     try {
-      const res = await fetch(`${endpoint}?origin=DSA`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
         method: 'POST',
         body: formData,
+        headers: {
+          'x-origin': 'DSA',
+        },
       });
       const data = await res.json();
       console.log(data);
