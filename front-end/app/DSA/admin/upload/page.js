@@ -72,26 +72,50 @@ export default function AdminPage() {
     }
   };
 
-  const handleUpload = async (acceptedFiles, endpoint, type) => {
-    const formData = new FormData();
-    acceptedFiles.forEach((file) => {
-      formData.append('files', file);
+  const uploadToAzure = async (file) => {
+    const res = await fetch(
+      `${
+        process.env.NEXT_PUBLIC_API_URL
+      }/getUploadSas?filename=${encodeURIComponent(file.name)}`,
+    );
+    const { uploadUrl } = await res.json();
+    const uploadRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'x-ms-blob-type': 'BlockBlob',
+      },
+      body: file,
     });
+    if (!uploadRes.ok) throw new Error('Azure upload failed');
+    return `Uploaded ${file.name}`;
+  };
+
+  const handleUpload = async (acceptedFiles, endpoint, type) => {
     type === 'knowledgeBase' ? setUploadingKB(true) : setUploadingMeta(true);
     try {
+      if (type === 'knowledgeBase') {
+        const azureUrls = await Promise.all(
+          acceptedFiles.map((file) => uploadToAzure(file)),
+        );
+        // console.log('Uploaded to Azure:', azureUrls);
+      }
+      const formData = new FormData();
+      acceptedFiles.forEach((file) => {
+        formData.append('files', file);
+      });
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
         method: 'POST',
-        body: formData,
         headers: {
           'x-origin': 'DSA',
         },
+        body: formData,
       });
       const data = await res.json();
-      console.log(data);
-      alert(`Uploaded: ${data.files_processed.join(', ')}`);
+      // console.log(data);
+      // alert(`Uploaded: ${data.files_processed.join(', ')}`);
     } catch (err) {
-      alert('Upload failed.');
       console.error(err);
+      alert('Upload failed.');
     }
     type === 'knowledgeBase' ? setUploadingKB(false) : setUploadingMeta(false);
   };
