@@ -24,6 +24,7 @@ assert OPENAI_API_KEY, "Missing OPENAI_API_KEY in .env"
 
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 CONTAINER_NAME = "pdfs"
+CONTAINER_NAME_IMAGES='images'
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 chroma_client = chromadb.PersistentClient(path="./CWC_DB")
@@ -213,4 +214,18 @@ def get_upload_sas(filename: str):
         expiry=datetime.utcnow() + timedelta(minutes=5)  # short-lived
     )
     blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{CONTAINER_NAME}/{filename}?{sas_token}"
+    return {"uploadUrl": blob_url}
+
+@app.get("/generate-upload-url")
+def generate_upload_url(filename: str):
+    blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
+    sas_token = generate_blob_sas(
+        account_name=blob_service_client.account_name,
+        container_name=CONTAINER_NAME_IMAGES,
+        blob_name=filename,
+        account_key=blob_service_client.credential.account_key,
+        permission=BlobSasPermissions(write=True, create=True),
+        expiry=datetime.utcnow() + timedelta(minutes=10)
+    )
+    blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{CONTAINER_NAME_IMAGES}/{filename}?{sas_token}"
     return {"uploadUrl": blob_url}

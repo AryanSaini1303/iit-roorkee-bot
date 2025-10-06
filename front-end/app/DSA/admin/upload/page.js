@@ -10,6 +10,7 @@ import Link from 'next/link';
 export default function AdminPage() {
   const [uploadingKB, setUploadingKB] = useState(false);
   const [uploadingMeta, setUploadingMeta] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const supabase = createClient('DSA');
@@ -19,10 +20,13 @@ export default function AdminPage() {
   const onDropKnowledgeBase = useCallback(async (acceptedFiles) => {
     await handleUpload(acceptedFiles, '/add', 'knowledgeBase');
   }, []);
-
   const onDropMetadata = useCallback(async (acceptedFiles) => {
     await handleUpload(acceptedFiles, '/add_metadata', 'metadata');
   }, []);
+  const onDropImages = useCallback(async (acceptedFiles) => {
+    await handleUpload(acceptedFiles, 'generate-upload-url', 'images');
+  }, []);
+
   const {
     getRootProps: getKBRootProps,
     getInputProps: getKBInputProps,
@@ -31,6 +35,7 @@ export default function AdminPage() {
     onDrop: onDropKnowledgeBase,
     accept: { 'application/pdf': ['.pdf'] },
   });
+
   const {
     getRootProps: getMetaRootProps,
     getInputProps: getMetaInputProps,
@@ -38,6 +43,17 @@ export default function AdminPage() {
   } = useDropzone({
     onDrop: onDropMetadata,
     accept: { 'application/pdf': ['.pdf'] },
+  });
+
+  const {
+    getRootProps: getImagesRootProps,
+    getInputProps: getImagesInputProps,
+    isDragActive: isImagesActive,
+  } = useDropzone({
+    onDrop: onDropImages,
+    accept: {
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
+    },
   });
 
   useEffect(() => {
@@ -72,11 +88,11 @@ export default function AdminPage() {
     }
   };
 
-  const uploadToAzure = async (file) => {
+  const uploadToAzure = async (file, endpoint) => {
     const res = await fetch(
       `${
         process.env.NEXT_PUBLIC_API_URL
-      }/getUploadSas?filename=${encodeURIComponent(file.name)}`,
+      }/${endpoint}?filename=${encodeURIComponent(file.name)}`,
     );
     const { uploadUrl } = await res.json();
     const uploadRes = await fetch(uploadUrl, {
@@ -91,19 +107,32 @@ export default function AdminPage() {
   };
 
   const handleUpload = async (acceptedFiles, endpoint, type) => {
-    type === 'knowledgeBase' ? setUploadingKB(true) : setUploadingMeta(true);
+    type === 'knowledgeBase'
+      ? setUploadingKB(true)
+      : type === 'metadata'
+      ? setUploadingMeta(true)
+      : setUploadingImages(true);
     try {
       if (type === 'knowledgeBase') {
         const azureUrls = await Promise.all(
-          acceptedFiles.map((file) => uploadToAzure(file)),
+          acceptedFiles.map((file) => uploadToAzure(file, 'getUploadSas')),
         );
         // console.log('Uploaded to Azure:', azureUrls);
+      } else if (type === 'images') {
+        const azureUrls = await Promise.all(
+          acceptedFiles.map((file) => uploadToAzure(file, `${endpoint}`)),
+        );
+        // console.log('Uploaded to Azure:', azureUrls);
+        const msgs = azureUrls.map((url) => url.replace('Uploaded ', ''));
+        alert(`Uploaded: ${msgs.join(', ')}`);
+        setUploadingImages(false);
+        return;
       }
       const formData = new FormData();
       acceptedFiles.forEach((file) => {
         formData.append('files', file);
       });
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'x-origin': 'DSA',
@@ -111,13 +140,16 @@ export default function AdminPage() {
         body: formData,
       });
       const data = await res.json();
-      // console.log(data);
-      // alert(`Uploaded: ${data.files_processed.join(', ')}`);
+      alert(`Uploaded: ${data.files_processed.join(', ')}`);
     } catch (err) {
       console.error(err);
       alert('Upload failed.');
     }
-    type === 'knowledgeBase' ? setUploadingKB(false) : setUploadingMeta(false);
+    type === 'knowledgeBase'
+      ? setUploadingKB(false)
+      : type === 'metadata'
+      ? setUploadingMeta(false)
+      : setUploadingImages(false);
   };
 
   if (
@@ -245,6 +277,38 @@ export default function AdminPage() {
                   <p>
                     Hold tight &ndash; our AI is weaving your data into its
                     Metadata. Precision takes time.
+                  </p>
+                </div>
+              )}
+            </section>
+            <h2 style={{ textAlign: 'center', color: 'grey' }}>or</h2>
+            <section className={styles.uploadContainer}>
+              <h2>Images</h2>
+              {!uploadingImages ? (
+                <div
+                  {...getImagesRootProps()}
+                  className={`${styles.dropzone} ${
+                    isImagesActive ? styles.activeDrop : ''
+                  }`}
+                >
+                  <input {...getImagesInputProps()} />
+                  {isImagesActive ? (
+                    <p>Drop Image(s) here...</p>
+                  ) : (
+                    <p>Drag & drop image(s) here, or click to select</p>
+                  )}
+                </div>
+              ) : (
+                <div className={styles.loaderContainer}>
+                  <FileLoader />
+                </div>
+              )}
+              {uploadingImages && (
+                <div className={styles.uploading}>
+                  <h4>Uploading...</h4>
+                  <p>
+                    Hold tight &ndash; our AI is weaving your image(s) into its
+                    collection. Precision takes time.
                   </p>
                 </div>
               )}

@@ -51,8 +51,6 @@ export default function ChatResponse({
     setPagesData(structuredData);
   }, [pages]);
 
-  // console.log(pagesData);
-
   return (
     <div className={styles.container}>
       {conversation.map((message, index) => {
@@ -116,6 +114,30 @@ export default function ChatResponse({
               <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
                 {message.content}
               </ReactMarkdown>
+
+              {message.role !== 'user' &&
+                pagesData[botIndex] &&
+                (() => {
+                  if (!Object.keys(pagesData[botIndex])[0]) return;
+                  if (Object.keys(pagesData[botIndex]).length > 2) return;
+                  // console.log(Object.keys(pagesData[botIndex]).length);
+                  const docName = Object.keys(pagesData[botIndex])[0];
+                  // console.log(docName);
+                  const pageName = pagesData[botIndex][docName][0];
+                  // console.log(pageName);
+                  const pageNum = pageName?.replace('Page ', '');
+                  // console.log(pageNum);
+                  return (
+                    <img
+                      src={`https://botpdfs.blob.core.windows.net/images/${docName} | ${pageNum}.png`}
+                      alt={`${docName} page ${pageNum}`}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                      className={styles.pageImage}
+                    />
+                  );
+                })()}
             </div>
             {pageInfo}
           </section>

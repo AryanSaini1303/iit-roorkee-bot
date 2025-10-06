@@ -225,6 +225,7 @@
   padding: 2rem;
   border-radius: 12px;
   animation: reveal 0.7s ease-in-out;
+  overflow: auto;
 }
 
 @keyframes reveal {

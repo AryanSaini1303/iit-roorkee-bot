@@ -22,7 +22,7 @@ META_MAP = {
 }
 
 def get_answer(question: str, conversation: list, origin:str, top_k: int = 20,):
-    print(f"Origin: {origin}")
+    # print(f"Origin: {origin}")
     if conversation is None:
         conversation = []
     context=""
@@ -260,7 +260,7 @@ def get_answer(question: str, conversation: list, origin:str, top_k: int = 20,):
         except json.JSONDecodeError:
             response_json = {"error": "GPT did not return valid JSON", "raw": response_text}
             return context, [], query['category'],{}
-        print(response_json)
+        # print(response_json)
         context_json = response_json.get("context_json", [])
         answer= response_json.get("final_answer", "Couldn't find that in the provided materials.")
         pages = []
