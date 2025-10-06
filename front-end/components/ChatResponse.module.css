@@ -173,6 +173,7 @@
   margin-top: 1rem;
   border-radius: 8px;
   filter: none !important;
+  max-width: 100%;
 }
 
 @media (max-width: 914px) {

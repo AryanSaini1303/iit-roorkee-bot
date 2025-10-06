@@ -185,13 +185,11 @@
   color: white;
 }
 
-/* CONTAINER */
 .container {
   display: flex;
   flex-direction: column;
 }
 
-/* CHATSCREEN */
 .chatScreen {
   flex: 1;
   padding: 1rem;
@@ -199,7 +197,6 @@
   min-height: 50vh;
 }
 
-/* AI LISTENER */
 .aiListener {
   position: fixed;
   bottom: 0;
@@ -216,7 +213,6 @@
   transition: all 5s ease-in-out forwards;
 }
 
-/* EYES ANIMATION */
 .eyes {
   position: absolute;
   top: 50%;
@@ -525,6 +521,9 @@
   .whiteSection{
     height: 91vh;
   }
+  .chatScreen{
+    padding: 0;
+  }
 }
 
 @media (max-width: 490px) {
@@ -567,7 +566,7 @@
   }
   .options li {
     font-size: 0.8rem;
-    padding: 0.5rem 0;
+    padding: 0;
   }
   .options li:hover {
     background-color: white;
