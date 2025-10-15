@@ -132,7 +132,7 @@ export default function AdminPage() {
       acceptedFiles.forEach((file) => {
         formData.append('files', file);
       });
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'x-origin': 'CWC',
