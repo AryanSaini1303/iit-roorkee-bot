@@ -271,7 +271,7 @@ export default function PagesComponent({ pages, func, pageData, context }) {
       <section className={styles.pagesContainer}>
         <SinglePagePdfRenderer
           key={`${pageData.name}-${pageData.pageNum.split(' ')[1]}`}
-          pdfUrl={`https://botpdfs.blob.core.windows.net/pdfs/${pageData.name}.pdf`}
+          pdfUrl={`https://botpdfsandimages.blob.core.windows.net/pdfs/${pageData.name}.pdf`}
           pageNumber={pageData.pageNum.split(' ')[1]}
           highlights={pdfContext}
         />

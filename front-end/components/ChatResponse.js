@@ -129,7 +129,7 @@ export default function ChatResponse({
                   // console.log(pageNum);
                   return (
                     <img
-                      src={`https://botpdfs.blob.core.windows.net/images/${docName} | ${pageNum}.png`}
+                      src={`https://botpdfsandimages.blob.core.windows.net/images/${docName} | ${pageNum}.png`}
                       alt={`${docName} page ${pageNum}`}
                       onError={(e) => {
                         e.target.style.display = 'none';
