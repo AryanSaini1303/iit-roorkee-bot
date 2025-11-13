@@ -60,7 +60,7 @@ export default function HomePage() {
   const [messages, setMessages] = useState([]);
   const [pagesList, setPagesList] = useState([]);
   const [showPages, setShowPages] = useState(false);
-  const [voiceModeToggle, setVoiceModeToggle] = useState(true);
+  const [voiceModeToggle, setVoiceModeToggle] = useState(false);
   // const [noAudio, SetNoAudio] = useState(true);
   // const [audioIsReady, setAudioIsReady] = useState(false);
   const [audioHasEnded, setAudioHasEnded] = useState(true);
