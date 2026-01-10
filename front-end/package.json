@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "^0.10.0",
@@ -31,5 +33,9 @@
     "rehype-highlight": "^7.0.2",
     "rehype-raw": "^7.0.0",
     "twilio": "^5.6.1"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.16",
+    "vitest": "^4.0.16"
   }
 }
