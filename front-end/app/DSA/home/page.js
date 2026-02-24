@@ -7,7 +7,7 @@ import ChatResponse from '@/components/ChatResponse';
 import ChatPlaceholder from '@/components/ChatPlaceholder';
 import ZenaLoading from '@/components/ZenaLoading';
 import { createClient } from '@/utils/supabase/client';
-import MaintenancePage from '@/components/notFound';
+// import MaintenancePage from '@/components/notFound';
 import PagesComponent from '@/components/PagesComponent';
 import { Howl } from 'howler';
 import ChatListModal from '@/components/ChatListModal';
