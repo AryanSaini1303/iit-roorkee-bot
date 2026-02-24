@@ -1,6 +1,6 @@
 'use client';
 
-import MaintenancePage from '@/components/notFound';
+// import MaintenancePage from '@/components/notFound';
 import styles from './page.module.css';
 import { createClient } from '@/utils/supabase/client';
 import { useState, useEffect } from 'react';
