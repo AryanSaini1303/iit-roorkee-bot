@@ -21,7 +21,7 @@ export default function Home() {
           access_type: 'offline',
           prompt: 'consent',
         },
-        redirectTo: window.location.href + `${'/home'}`, // here we mentioned to redirect to the same link which was opened, post authentication.
+        redirectTo: window.location.href + `${'/home'}`, // mentioned to redirect to the same link which was opened, post authentication.
       },
     });
     if (error) {
