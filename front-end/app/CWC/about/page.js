@@ -49,7 +49,7 @@ export default function AboutPage() {
           </p>
         </div>
 
-        <div className={styles.block1}>
+        {/* <div className={styles.block1}>
           <p>
             Developed by{' '}
             <span>
@@ -58,7 +58,7 @@ export default function AboutPage() {
               </Link>
             </span>
           </p>
-        </div>
+        </div> */}
       </section>
     </main>
   );
