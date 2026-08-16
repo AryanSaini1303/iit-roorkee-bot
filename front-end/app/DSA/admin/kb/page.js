@@ -14,6 +14,22 @@ export default function AdminPage() {
   const [pdfs, setPdfs] = useState([]);
   const [loadingPdfs, setLoadingPdfs] = useState(true);
   const route = usePathname();
+  const [viewingPdf, setViewingPdf] = useState(null);
+
+  const handleDelete = async (pdfName) => {
+    if (!confirm(`Delete "${pdfName}"? This removes it from search results too.`)) return;
+    await fetch(`/api/delete_pdf?pdf_name=${encodeURIComponent(pdfName)}&origin=DSA`, { method: 'DELETE' });
+    setPdfs((prev) => prev.filter((p) => p.name !== pdfName));
+  };
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') setViewingPdf(null);
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
+
 
   useEffect(() => {
     const getSession = async () => {
@@ -51,9 +67,7 @@ export default function AdminPage() {
     const res = await fetch('/api/list_pdfs?origin=DSA');
     const data = await res.json();
     setPdfs(data.pdfs || []);
-    // console.log(data1);
     setLoadingPdfs(false);
-    // console.log(data?.users[0]);
   };
 
   useEffect(() => {
@@ -131,15 +145,49 @@ export default function AdminPage() {
                 {loadingPdfs
                   ? 'loading...'
                   : pdfs.map((pdf, i) => (
-                      <li key={pdf}>
-                        {i + 1}. {pdf}
-                      </li>
-                    ))}
+                    <li key={pdf.name} className={styles.pdfRow}>
+                      <span className={styles.pdfIndex}>{i + 1}.</span>
+                      <button
+                        className={styles.pdfLink}
+                        onClick={() => setViewingPdf(pdf)}
+                      >
+                        {pdf.name}
+                      </button>
+                      <button
+                        className={styles.deleteButton}
+                        onClick={() => handleDelete(pdf.name)}
+                      >
+                        Delete
+                      </button>
+                    </li>
+                  ))}
               </ul>
             </section>
           </section>
         </section>
       </div>
+
+      {viewingPdf && (
+        <div className={styles.modalOverlay} onClick={() => setViewingPdf(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>{viewingPdf.name}</h3>
+              <button
+                className={styles.modalCloseButton}
+                onClick={() => setViewingPdf(null)}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+            <iframe
+              src={viewingPdf.viewUrl}
+              className={styles.pdfFrame}
+              title={viewingPdf.name}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

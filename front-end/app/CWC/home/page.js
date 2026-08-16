@@ -77,6 +77,7 @@ export default function HomePage() {
   const [isVerified, setIsVerified] = useState(true);
   const [context, setContext] = useState([]);
   const [contextList, setContextList] = useState([]);
+  const [exportingFlag, setExportingFlag] = useState(false);
   const { onClick, onDoubleClick } = useClickHandlers({
     onSingleClick: () => {
       if (!isVerified) return;
@@ -142,6 +143,196 @@ export default function HomePage() {
   //     console.warn('Text-to-speech failed:', err);
   //   }
   // };
+
+  // Drop this in as the new handleExportChat inside page.js (HomePage).
+  // Replaces the html2canvas-based version entirely — no DOM capture at all.
+  // You can `npm uninstall html2canvas` once this is in, jsPDF is the only dependency left.
+
+  // Drop this in as the new handleExportChat inside page.js (HomePage).
+  // Replaces the html2canvas-based version entirely — no DOM capture at all.
+  // You can `npm uninstall html2canvas` once this is in, jsPDF is the only dependency left.
+
+  // Drop this in as the new handleExportChat inside page.js (HomePage).
+  // Replaces the html2canvas-based version entirely — no DOM capture at all.
+  // You can `npm uninstall html2canvas` once this is in, jsPDF is the only dependency left.
+
+  const handleExportChat = async () => {
+    if (messages.length === 0) return;
+    setExportingFlag(true);
+    try {
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      const contentWidth = pageWidth - margin * 2;
+      const bottomLimit = pageHeight - margin;
+
+      // ---- Cover page ----
+      const centerX = pageWidth / 2;
+
+      // Title, roughly a third of the way down for real cover-page presence
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(28);
+      pdf.setTextColor(15, 42, 74);
+      pdf.text('DamChat', centerX, 90, { align: 'center' });
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(13);
+      pdf.setTextColor(90, 90, 90);
+      pdf.text('Conversation Export', centerX, 100, { align: 'center' });
+
+      // Accent rule under the title block
+      pdf.setDrawColor(26, 111, 209);
+      pdf.setLineWidth(0.8);
+      pdf.line(centerX - 25, 108, centerX + 25, 108);
+
+      // Meta block — bold labels, regular values, generous spacing
+      let metaY = 130;
+      const drawMetaRow = (label, value) => {
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(11);
+        pdf.setTextColor(15, 42, 74);
+        pdf.text(label, centerX, metaY, { align: 'center' });
+        metaY += 6;
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(11);
+        pdf.setTextColor(60, 60, 60);
+        const wrappedValue = pdf.splitTextToSize(value, pageWidth - 50);
+        pdf.text(wrappedValue, centerX, metaY, { align: 'center' });
+        metaY += wrappedValue.length * 6 + 10;
+      };
+
+      if (sessionQuery) drawMetaRow('Topic', sessionQuery);
+      drawMetaRow('Exported On', new Date().toLocaleString());
+      drawMetaRow('Messages Exchanged', `${messages.length}`);
+      const userMsgCount = messages.filter((m) => m.role === 'user').length;
+      drawMetaRow('Questions Asked', `${userMsgCount}`);
+
+      // Footer note anchored near the bottom of the cover page
+      pdf.setFont('helvetica', 'italic');
+      pdf.setFontSize(9);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text(
+        'Generated from your DamChat conversation history.',
+        centerX,
+        pageHeight - 25,
+        { align: 'center' }
+      );
+
+      pdf.addPage();
+
+      let y = margin;
+
+      const ensureSpace = (needed) => {
+        if (y + needed > bottomLimit) {
+          pdf.addPage();
+          y = margin;
+        }
+      };
+
+      // Splits "some **bold** text" into [{text, bold}] segments
+      const parseInline = (text) =>
+        text
+          .split(/(\*\*[^*]+\*\*)/g)
+          .filter(Boolean)
+          .map((part) =>
+            part.startsWith('**') && part.endsWith('**')
+              ? { text: part.slice(2, -2), bold: true }
+              : { text: part, bold: false }
+          );
+
+      // Word-wraps + draws bold-aware text starting at x, advances the shared `y`
+      const drawRichLine = (segments, x, maxWidth, fontSize, lineHeight) => {
+        pdf.setFontSize(fontSize);
+        let cursorX = x;
+        segments.forEach((seg) => {
+          pdf.setFont('helvetica', seg.bold ? 'bold' : 'normal');
+          const words = seg.text.split(/(\s+)/);
+          words.forEach((word) => {
+            if (word === '') return;
+            const w = pdf.getTextWidth(word);
+            if (word.trim() !== '' && cursorX + w > x + maxWidth) {
+              y += lineHeight;
+              cursorX = x;
+              ensureSpace(lineHeight);
+            }
+            if (word.trim() !== '') pdf.text(word, cursorX, y);
+            cursorX += w;
+          });
+        });
+        y += lineHeight;
+      };
+
+      const renderContent = (content, x, maxWidth) => {
+        content.split('\n').forEach((rawLine) => {
+          const line = rawLine.trim();
+          if (line === '') {
+            y += 2;
+            return;
+          }
+          ensureSpace(8);
+
+          const headingMatch = line.match(/^(#{1,6})\s+(.*)/);
+          if (headingMatch) {
+            const level = headingMatch[1].length; // 1 = #, up to 6 = ######
+            const headingText = headingMatch[2];
+            pdf.setTextColor(15, 42, 74);
+            // Level 1 gets the biggest font; anything level 4+ (e.g. "#### 1. Embankment Dams")
+            // shares the smallest heading size rather than shrinking indefinitely
+            const sizeByLevel = { 1: 15, 2: 13.5, 3: 12 };
+            const lineHeightByLevel = { 1: 8, 2: 7, 3: 6 };
+            const fontSize = sizeByLevel[level] || 11;
+            const lineHeight = lineHeightByLevel[level] || 5.5;
+            drawRichLine(parseInline(headingText), x, maxWidth, fontSize, lineHeight);
+          } else if (/^[-*]\s+/.test(line)) {
+            pdf.setTextColor(30, 30, 30);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(10.5);
+            pdf.text('\u2022', x, y);
+            drawRichLine(parseInline(line.replace(/^[-*]\s+/, '')), x + 5, maxWidth - 5, 10.5, 5.5);
+          } else if (/^\d+\.\s+/.test(line)) {
+            const match = line.match(/^(\d+)\.\s+(.*)/);
+            pdf.setTextColor(30, 30, 30);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(10.5);
+            pdf.text(`${match[1]}.`, x, y);
+            drawRichLine(parseInline(match[2]), x + 7, maxWidth - 7, 10.5, 5.5);
+          } else {
+            pdf.setTextColor(30, 30, 30);
+            drawRichLine(parseInline(line), x, maxWidth, 10.5, 5.5);
+          }
+        });
+      };
+
+      messages.forEach((message) => {
+        ensureSpace(14);
+        const isUser = message.role === 'user';
+
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'bold');
+        if (isUser) pdf.setTextColor(26, 111, 209);
+        else pdf.setTextColor(15, 42, 74);
+        pdf.text(isUser ? 'You' : 'DamChat', margin, y);
+        y += 6;
+
+        renderContent(message.content, margin, contentWidth);
+        y += 6;
+
+        ensureSpace(4);
+        pdf.setDrawColor(230, 230, 230);
+        pdf.line(margin, y, pageWidth - margin, y);
+        y += 6;
+      });
+
+      pdf.save(`DamChat_${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Failed to export chat. Please try again.');
+    } finally {
+      setExportingFlag(false);
+    }
+  };
 
   const stopAudio = () => {
     if (currentAudio) {
@@ -464,7 +655,7 @@ export default function HomePage() {
     // );
     if (
       messages.length -
-        (parseInt(sessionStorage.getItem('lastMessagesLength')) || 0) >=
+      (parseInt(sessionStorage.getItem('lastMessagesLength')) || 0) >=
       2
     ) {
       const newMessages = messages.slice(-2); // user + bot
@@ -668,6 +859,15 @@ export default function HomePage() {
                 <Link href={'/CWC/about'}>About</Link>
               </li>
               <li>
+                <button
+                  onClick={handleExportChat}
+                  disabled={messages.length === 0 || exportingFlag}
+                  style={(messages.length === 0 || exportingFlag) && { pointerEvents: 'none', opacity: 0.5, cursor: 'not-allowed' }}
+                >
+                  {exportingFlag ? 'Exporting...' : 'Export Chat'}
+                </button>
+              </li>
+              <li>
                 <button onClick={() => signOut()} className={styles.lastChild}>
                   {signOutFlag ? 'Signing out...' : 'Sign out'}
                 </button>
@@ -713,9 +913,9 @@ export default function HomePage() {
             isVerified
               ? null
               : {
-                  pointerEvents: 'none',
-                  userSelect: 'none',
-                }
+                pointerEvents: 'none',
+                userSelect: 'none',
+              }
           }
         >
           {voiceModeToggle ? (

@@ -52,7 +52,7 @@ export default function ChatResponse({
   }, [pages]);
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} id="chatExportArea">
       {conversation.map((message, index) => {
         let pageInfo = null;
         if (message.role !== 'user') {
