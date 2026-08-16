@@ -862,7 +862,11 @@ export default function HomePage() {
                 <button
                   onClick={handleExportChat}
                   disabled={messages.length === 0 || exportingFlag}
-                  style={(messages.length === 0 || exportingFlag) && { pointerEvents: 'none', opacity: 0.5, cursor: 'not-allowed' }}
+                  style={
+                    messages.length === 0 || exportingFlag
+                      ? { pointerEvents: 'none', opacity: 0.5, cursor: 'not-allowed' }
+                      : undefined
+                  }
                 >
                   {exportingFlag ? 'Exporting...' : 'Export Chat'}
                 </button>
