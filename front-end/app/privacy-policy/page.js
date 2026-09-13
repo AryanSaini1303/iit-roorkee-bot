@@ -41,9 +41,7 @@ const sections = [
                     This Privacy Policy explains what information we collect, how we
                     use and share it, and the choices available to you. It applies to
                     everyone who uses DamChat, whether through the web app or through
-                    WhatsApp, and it is operated by{" "}
-                    <strong>[Your Organization / Institution Name]</strong> (&ldquo;we,&rdquo;
-                    &ldquo;us,&rdquo; or &ldquo;DamChat&rdquo;).
+                    WhatsApp
                 </p>
             </>
         ),
@@ -255,7 +253,7 @@ const sections = [
                 </ul>
                 <p>
                     To exercise any of these rights, contact us using the details in{" "}
-                    <a href="#contact-us">Contact Us</a>. We will respond within a
+                    <a href="/about">About Us</a>. We will respond within a
                     reasonable timeframe and may need to verify your identity before
                     acting on a request.
                 </p>
