@@ -1,13 +1,7 @@
-# Below given import is for when the file storage is shifted to AWS S3.
-# import boto3 #type: ignore
-
+import boto3 #type: ignore
 from fastapi import FastAPI, Request, File, UploadFile, Request, HTTPException, Header, Query #type: ignore
 from datetime import datetime, timedelta
 from pydantic import BaseModel #type: ignore
-
-# Remove below given import when shifting to AWS S3 for file storage.
-from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions #type:ignore
-
 from app.query import get_answer
 from fastapi.middleware.cors import CORSMiddleware #type: ignore
 import os
@@ -21,24 +15,19 @@ import nltk #type: ignore
 from typing import List
 import requests #type: ignore
 from app.query import get_answer
+import ocrmypdf #type: ignore
+
+load_dotenv()
 
 nltk.download('punkt')
 
 enc = tiktoken.encoding_for_model("text-embedding-3-large")
 
-# Below given definition is for when the file storage is shifted to AWS S3.
-# s3_client = boto3.client("s3", region_name=os.getenv("AWS_REGION", "ap-south-1"))
-# S3_BUCKET = os.getenv("S3_BUCKET")
+s3_client = boto3.client("s3", region_name=os.getenv("AWS_REGION", "ap-south-1"))
+S3_BUCKET = os.getenv("S3_BUCKET")
 
-load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 assert OPENAI_API_KEY, "Missing OPENAI_API_KEY in .env"
-
-# Remove below given definition when shifting to AWS S3 for file storage.
-AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-
-CONTAINER_NAME = "pdfs"
-CONTAINER_NAME_IMAGES='images'
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 chroma_client = chromadb.PersistentClient(path="./CWC_DB")
@@ -151,6 +140,26 @@ def speech_to_text(file_path):
         )
     return transcript.text
 
+def needs_ocr(doc, min_chars_per_page=20) -> bool:
+    """Heuristic: if the average extractable text per page is near-zero,
+    treat this as an image/flattened PDF that needs OCR."""
+    total_chars = sum(len(doc[i].get_text().strip()) for i in range(len(doc)))
+    avg_chars = total_chars / max(len(doc), 1)
+    return avg_chars < min_chars_per_page
+
+def ocr_pdf(input_path: str) -> str:
+    """Runs OCR and returns path to a new, text-searchable PDF."""
+    output_path = input_path.replace(".pdf", "_ocr.pdf").replace("./temp_", "./temp_ocr_")
+    ocrmypdf.ocr(
+        input_path,
+        output_path,
+        language="hin+eng",
+        force_ocr=True,
+        deskew=True,
+        progress_bar=False,
+    )
+    return output_path
+
 class QueryRequest(BaseModel):
     question: str
     conversation: list
@@ -169,7 +178,6 @@ async def ask_question(req: QueryRequest):
 @app.post("/add")
 async def add_main_pdfs(files: List[UploadFile] = File(...), x_origin: str = Header(None)):
     try:
-        # print(f"Origin Header: {x_origin}")
         processed_files = []
         errors = []
         for file in files:
@@ -178,9 +186,21 @@ async def add_main_pdfs(files: List[UploadFile] = File(...), x_origin: str = Hea
                 f.write(await file.read())
             pdf_name = os.path.splitext(file.filename)[0]
             doc = fitz.open(temp_path)
+            ocr_temp_path = None
+            if needs_ocr(doc):
+                # print(f"{file.filename}: no usable text layer, running OCR...")
+                doc.close()
+                try:
+                    ocr_temp_path = ocr_pdf(temp_path)
+                    doc = fitz.open(ocr_temp_path)
+                except Exception as e:
+                    errors.append({"file": file.filename, "error": f"OCR failed: {e}"})
+                    os.remove(temp_path)
+                    continue
             for i in range(len(doc)):
                 page_num = i + 1
                 raw_text = doc[i].get_text().strip()
+                # print(f"Processing {file.filename}, page {page_num}: {len(raw_text)} characters")
                 if not raw_text:
                     continue
                 clean_text = re.sub(r'\s+', ' ', raw_text)
@@ -192,7 +212,7 @@ async def add_main_pdfs(files: List[UploadFile] = File(...), x_origin: str = Hea
                             input=chunk
                         ).data[0].embedding
                         chunk_id = f"{pdf_name}_page_{page_num}_chunk_{idx}"
-                        collection=DOCS_MAP[x_origin]
+                        collection = DOCS_MAP[x_origin]
                         collection.add(
                             documents=[chunk],
                             embeddings=[embedding],
@@ -209,8 +229,10 @@ async def add_main_pdfs(files: List[UploadFile] = File(...), x_origin: str = Hea
                             "chunk_id": chunk_id,
                             "error": str(e)
                         })
+            doc.close()
             os.remove(temp_path)
-            print(file.filename)
+            if ocr_temp_path and os.path.exists(ocr_temp_path):
+                os.remove(ocr_temp_path)
             processed_files.append(file.filename)
         return {
             "status": "completed",
@@ -271,7 +293,7 @@ async def add_metadata_pdfs(files: List[UploadFile] = File(...), x_origin: str =
         "files_processed": processed_files,
         "errors": errors
     }
-    
+
 @app.get("/list-pdfs")
 async def list_pdfs(x_origin: str = Header(None)):
     collection = DOCS_MAP[x_origin]
@@ -280,73 +302,37 @@ async def list_pdfs(x_origin: str = Header(None)):
     for meta in all_items["metadatas"]:
         if meta and "pdf_name" in meta:
             unique_pdfs.add(meta["pdf_name"])
-    blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
     result = []
     for pdf_name in unique_pdfs:
-        sas_token = generate_blob_sas(
-            account_name=blob_service_client.account_name,
-            container_name=CONTAINER_NAME,
-            blob_name=f"{pdf_name}.pdf",
-            account_key=blob_service_client.credential.account_key,
-            permission=BlobSasPermissions(read=True),
-            expiry=datetime.utcnow() + timedelta(hours=1)
+        key = f"pdfs/{pdf_name}.pdf"
+        view_url = s3_client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": S3_BUCKET, "Key": key},
+            ExpiresIn=3600  # 1 hour, matches your original
         )
-        view_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{CONTAINER_NAME}/{pdf_name}.pdf?{sas_token}"
         result.append({"name": pdf_name, "viewUrl": view_url})
     return {"pdfs": result}
 
-@app.get("/getUploadSas")
-def get_upload_sas(filename: str):
-    blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
-    sas_token = generate_blob_sas(
-        account_name=blob_service_client.account_name,
-        container_name=CONTAINER_NAME,
-        blob_name=filename,
-        account_key=blob_service_client.credential.account_key,
-        permission=BlobSasPermissions(write=True, create=True),
-        expiry=datetime.utcnow() + timedelta(minutes=5)  # short-lived
-    )
-    blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{CONTAINER_NAME}/{filename}?{sas_token}"
-    return {"uploadUrl": blob_url}
-
-@app.get("/generate-upload-url")
-def generate_upload_url(filename: str):
-    blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
-    sas_token = generate_blob_sas(
-        account_name=blob_service_client.account_name,
-        container_name=CONTAINER_NAME_IMAGES,
-        blob_name=filename,
-        account_key=blob_service_client.credential.account_key,
-        permission=BlobSasPermissions(write=True, create=True),
-        expiry=datetime.utcnow() + timedelta(minutes=10)
-    )
-    blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{CONTAINER_NAME_IMAGES}/{filename}?{sas_token}"
-    return {"uploadUrl": blob_url}
 
 @app.get("/getViewUrl")
 def get_view_url(filename: str):
-    blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
-    sas_token = generate_blob_sas(
-        account_name=blob_service_client.account_name,
-        container_name=CONTAINER_NAME,
-        blob_name=filename,
-        account_key=blob_service_client.credential.account_key,
-        permission=BlobSasPermissions(read=True),
-        expiry=datetime.utcnow() + timedelta(hours=1)
+    key = f"pdfs/{filename}"
+    view_url = s3_client.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": S3_BUCKET, "Key": key},
+        ExpiresIn=3600
     )
-    blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{CONTAINER_NAME}/{filename}?{sas_token}"
-    return {"viewUrl": blob_url}
+    return {"viewUrl": view_url}
 
 @app.delete("/delete-pdf")
 def delete_pdf(pdf_name: str, x_origin: str = Header(None)):
     if x_origin not in DOCS_MAP:
         raise HTTPException(status_code=400, detail="Invalid origin")
-    blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
-    blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=f"{pdf_name}.pdf")
+    key = f"pdfs/{pdf_name}.pdf"
     try:
-        blob_client.delete_blob()
+        s3_client.delete_object(Bucket=S3_BUCKET, Key=key)
     except Exception as e:
-        print(f"Azure delete warning: {e}")  # don't block vector cleanup on this
+        print(f"S3 delete warning: {e}")  # don't block vector cleanup on this
     for collection in (DOCS_MAP[x_origin], META_MAP[x_origin]):
         items = collection.get(include=["metadatas"])
         ids_to_delete = [
@@ -357,27 +343,25 @@ def delete_pdf(pdf_name: str, x_origin: str = Header(None)):
             collection.delete(ids=ids_to_delete)
     return {"status": "deleted", "pdf_name": pdf_name}
 
-# Below given route is for when the filesystem is shifted to AWS S3.
-# @app.get("/getUploadSas")
-# def get_upload_sas(filename: str):
-#     key = f"pdfs/{filename}"
-#     upload_url = s3_client.generate_presigned_url(
-#         "put_object",
-#         Params={"Bucket": S3_BUCKET, "Key": key},
-#         ExpiresIn=300  # 5 minutes, matches your original
-#     )
-#     return {"uploadUrl": upload_url}
+@app.get("/getUploadSas")
+def get_upload_sas(filename: str):
+    key = f"pdfs/{filename}"
+    upload_url = s3_client.generate_presigned_url(
+        "put_object",
+        Params={"Bucket": S3_BUCKET, "Key": key},
+        ExpiresIn=300  # 5 minutes, matches your original
+    )
+    return {"uploadUrl": upload_url}
 
-# Below given route is for when the filesystem is shifted to AWS S3.
-# @app.get("/generate-upload-url")
-# def generate_upload_url(filename: str):
-#     key = f"images/{filename}"
-#     upload_url = s3_client.generate_presigned_url(
-#         "put_object",
-#         Params={"Bucket": S3_BUCKET, "Key": key},
-#         ExpiresIn=600  # 10 minutes, matches your original
-#     )
-#     return {"uploadUrl": upload_url}
+@app.get("/generate-upload-url")
+def generate_upload_url(filename: str):
+    key = f"images/{filename}"
+    upload_url = s3_client.generate_presigned_url(
+        "put_object",
+        Params={"Bucket": S3_BUCKET, "Key": key},
+        ExpiresIn=600  # 10 minutes, matches your original
+    )
+    return {"uploadUrl": upload_url}
 
 @app.get("/whatsapp/webhook")
 async def verify_webhook(request: Request):
@@ -385,8 +369,6 @@ async def verify_webhook(request: Request):
     if params.get("hub.verify_token") == VERIFY_TOKEN:
         return int(params.get("hub.challenge"))
     return "Verification failed"
-
-import os
 
 @app.post("/whatsapp/webhook")
 async def whatsapp_webhook(request: Request):

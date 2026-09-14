@@ -7,4 +7,6 @@ PyMuPDF
 tiktoken
 nltk
 python-multipart
-azure-storage-blob
+boto3
+requests
+ocrmypdf
