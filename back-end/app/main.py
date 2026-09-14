@@ -363,6 +363,16 @@ def generate_upload_url(filename: str):
     )
     return {"uploadUrl": upload_url}
 
+@app.get("/getImageViewUrl")
+def get_image_view_url(filename: str):
+    key = f"images/{filename}"
+    view_url = s3_client.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": S3_BUCKET, "Key": key},
+        ExpiresIn=3600
+    )
+    return {"viewUrl": view_url}
+
 @app.get("/whatsapp/webhook")
 async def verify_webhook(request: Request):
     params = request.query_params

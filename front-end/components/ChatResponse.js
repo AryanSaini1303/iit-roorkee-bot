@@ -1,11 +1,51 @@
 'use client';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
-import 'highlight.js/styles/github.css'; // Or any preferred theme
+import 'highlight.js/styles/github.css';
 import styles from './ChatResponse.module.css';
 import { useEffect, useRef, useState } from 'react';
 import ZenaLoading from './ZenaLoading';
 import PagesList from './PagesList';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+
+function BotReferenceImage({ docName, pageNum }) {
+  const [imgUrl, setImgUrl] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const filename = `${docName} | ${pageNum}.png`;
+
+    fetch(`${BACKEND_URL}/getImageViewUrl?filename=${encodeURIComponent(filename)}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Failed to fetch image URL: ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        if (!cancelled) setImgUrl(data.viewUrl);
+      })
+      .catch((err) => {
+        console.error('Error fetching presigned image URL:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [docName, pageNum]);
+
+  if (!imgUrl) return null;
+
+  return (
+    <img
+      src={imgUrl}
+      alt={`${docName} page ${pageNum}`}
+      onError={(e) => {
+        e.target.style.display = 'none';
+      }}
+      className={styles.pageImage}
+    />
+  );
+}
 
 export default function ChatResponse({
   conversation,
@@ -14,11 +54,6 @@ export default function ChatResponse({
   isProcessing,
 }) {
   const bottomRef = useRef(null);
-  // const width = (() => {
-  //   if (typeof window !== 'undefined') {
-  //     return window.innerWidth;
-  //   }
-  // })();
   const [showlist, setShowlist] = useState(false);
   const [clickIndex, setClickIndex] = useState(-1);
   const [pagesData, setPagesData] = useState([]);
@@ -120,23 +155,10 @@ export default function ChatResponse({
                 (() => {
                   if (!Object.keys(pagesData[botIndex])[0]) return;
                   if (Object.keys(pagesData[botIndex]).length > 2) return;
-                  // console.log(Object.keys(pagesData[botIndex]).length);
                   const docName = Object.keys(pagesData[botIndex])[0];
-                  // console.log(docName);
                   const pageName = pagesData[botIndex][docName][0];
-                  // console.log(pageName);
                   const pageNum = pageName?.replace('Page ', '');
-                  // console.log(pageNum);
-                  return (
-                    <img
-                      src={`https://botpdfsandimages.blob.core.windows.net/images/${docName} | ${pageNum}.png`}
-                      alt={`${docName} page ${pageNum}`}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                      className={styles.pageImage}
-                    />
-                  );
+                  return <BotReferenceImage docName={docName} pageNum={pageNum} />;
                 })()}
             </div>
             {pageInfo}
