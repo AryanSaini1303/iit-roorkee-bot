@@ -1,6 +1,6 @@
 import boto3 #type: ignore
 from fastapi import FastAPI, Request, File, UploadFile, Request, HTTPException, Header, Query #type: ignore
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel #type: ignore
 from app.query import get_answer
 from fastapi.middleware.cors import CORSMiddleware #type: ignore
@@ -16,6 +16,7 @@ from typing import List
 import requests #type: ignore
 from app.query import get_answer
 import ocrmypdf #type: ignore
+from supabase import create_client, Client  # add to imports #type: ignore
 
 load_dotenv()
 
@@ -25,6 +26,13 @@ enc = tiktoken.encoding_for_model("text-embedding-3-large")
 
 s3_client = boto3.client("s3", region_name=os.getenv("AWS_REGION", "ap-south-1"))
 S3_BUCKET = os.getenv("S3_BUCKET")
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+assert SUPABASE_URL, "Missing SUPABASE_URL in .env"
+assert SUPABASE_SERVICE_ROLE_KEY, "Missing SUPABASE_SERVICE_ROLE_KEY in .env"
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+WHATSAPP_SESSION_WINDOW_HOURS = 24
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 assert OPENAI_API_KEY, "Missing OPENAI_API_KEY in .env"
@@ -159,6 +167,103 @@ def ocr_pdf(input_path: str) -> str:
         progress_bar=False,
     )
     return output_path
+
+def _synthetic_email(phone: str) -> str:
+    return f"{phone}@whatsapp.damchat.internal"
+
+def get_or_create_whatsapp_user(phone: str) -> dict:
+    existing = (
+        supabase.table("whatsapp_users")
+        .select("*")
+        .eq("phone_number", phone)
+        .execute()
+    )
+    if existing.data:
+        row = existing.data[0]
+        return {"user_id": row["user_id"], "email": _synthetic_email(phone)}
+    email = _synthetic_email(phone)
+    auth_res = supabase.auth.admin.create_user(
+        {
+            "phone": phone,
+            "email": email,
+            "email_confirm": True,
+            "phone_confirm": True,
+            "user_metadata": {"source": "whatsapp"},
+        }
+    )
+    user_id = auth_res.user.id
+    supabase.table("whatsapp_users").insert(
+        {"phone_number": phone, "user_id": user_id}
+    ).execute()
+    return {"user_id": user_id, "email": email}
+
+def get_or_create_whatsapp_conversation(phone: str, user_id: str, email: str) -> dict:
+    """Returns the active conversation row for this phone number
+    (within the session window), creating one if none is open."""
+    recent = (
+        supabase.table("conversations")
+        .select("*")
+        .eq("phone_number", phone)
+        .eq("source", "whatsapp")
+        .order("updated_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if recent.data:
+        row = recent.data[0]
+        last_updated = datetime.fromisoformat(row["updated_at"])
+        if datetime.now(timezone.utc) - last_updated < timedelta(
+            hours=WHATSAPP_SESSION_WINDOW_HOURS
+        ):
+            return row
+    new_row = (
+        supabase.table("conversations")
+        .insert(
+            {
+                "user_id": user_id,
+                "email": email,
+                "phone_number": phone,
+                "source": "whatsapp",
+                "messages": [],
+                "pdfList": [],
+                "contextList": [],
+                "name": phone,
+            }
+        )
+        .execute()
+    )
+    return new_row.data[0]
+
+def append_whatsapp_turn(
+    conversation_id: int,
+    user_text: str,
+    bot_text: str,
+    pages: list,
+    context_json: list,
+):
+    row = (
+        supabase.table("conversations")
+        .select("messages, pdfList, contextList")
+        .eq("id", conversation_id)
+        .execute()
+        .data[0]
+    )
+    now = datetime.now(timezone.utc).isoformat()
+    messages = row["messages"] or []
+    messages.append({"role": "user", "content": user_text, "createdAt": now})
+    messages.append({"role": "system", "content": bot_text, "createdAt": now})
+    pdf_list = row["pdfList"] or []
+    pdf_list.append(pages)
+    context_list = row["contextList"] or []
+    context_list.append(context_json)
+    supabase.table("conversations").update(
+        {
+            "messages": messages,
+            "pdfList": pdf_list,
+            "contextList": context_list,
+            "updated_at": now,
+        }
+    ).eq("id", conversation_id).execute()
 
 class QueryRequest(BaseModel):
     question: str
@@ -396,12 +501,18 @@ async def whatsapp_webhook(request: Request):
             print("Audio file deleted")
         except Exception as e:
             print("Error deleting audio file:", e)
-    conversation = []
+    user = get_or_create_whatsapp_user(phone)
+    conversation = get_or_create_whatsapp_conversation(
+        phone, user["user_id"], user["email"]
+    )
+    history = conversation["messages"] or []
     response, pages, category, context_json = get_answer(
         text_message,
-        conversation,
+        history,
         "DSA"
     )
-    ai_reply = response
-    send_whatsapp_message(phone, ai_reply)
+    append_whatsapp_turn(
+        conversation["id"], text_message, response, pages, context_json
+    )
+    send_whatsapp_message(phone, response)
     return {"status": "ok"}

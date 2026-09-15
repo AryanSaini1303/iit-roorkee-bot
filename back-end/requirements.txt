@@ -10,3 +10,4 @@ python-multipart
 boto3
 requests
 ocrmypdf
+supabase
