@@ -1,5 +1,5 @@
 import boto3 #type: ignore
-from fastapi import FastAPI, Request, File, UploadFile, Request, HTTPException, Header, Query #type: ignore
+from fastapi import FastAPI, Request, File, UploadFile, Request, HTTPException, Header, BackgroundTasks #type: ignore
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel #type: ignore
 from app.query import get_answer
@@ -197,9 +197,21 @@ def get_or_create_whatsapp_user(phone: str) -> dict:
     ).execute()
     return {"user_id": user_id, "email": email}
 
+def _make_json_safe(obj):
+    """Recursively convert sets (and anything else non-JSON-native) into
+    JSON-serializable equivalents. Guards against get_answer or its
+    internals returning sets, tuples, etc."""
+    if isinstance(obj, set):
+        return list(obj)
+    if isinstance(obj, tuple):
+        return [_make_json_safe(item) for item in obj]
+    if isinstance(obj, list):
+        return [_make_json_safe(item) for item in obj]
+    if isinstance(obj, dict):
+        return {k: _make_json_safe(v) for k, v in obj.items()}
+    return obj
+
 def get_or_create_whatsapp_conversation(phone: str, user_id: str, email: str) -> dict:
-    """Returns the active conversation row for this phone number
-    (within the session window), creating one if none is open."""
     recent = (
         supabase.table("conversations")
         .select("*")
@@ -211,11 +223,13 @@ def get_or_create_whatsapp_conversation(phone: str, user_id: str, email: str) ->
     )
     if recent.data:
         row = recent.data[0]
-        last_updated = datetime.fromisoformat(row["updated_at"])
-        if datetime.now(timezone.utc) - last_updated < timedelta(
-            hours=WHATSAPP_SESSION_WINDOW_HOURS
-        ):
-            return row
+        if row["updated_at"]:
+            last_updated = datetime.fromisoformat(row["updated_at"])
+            if datetime.now(timezone.utc) - last_updated < timedelta(
+                hours=WHATSAPP_SESSION_WINDOW_HOURS
+            ):
+                return row
+    now = datetime.now(timezone.utc).isoformat()
     new_row = (
         supabase.table("conversations")
         .insert(
@@ -228,6 +242,7 @@ def get_or_create_whatsapp_conversation(phone: str, user_id: str, email: str) ->
                 "pdfList": [],
                 "contextList": [],
                 "name": phone,
+                "updated_at": now,
             }
         )
         .execute()
@@ -253,9 +268,9 @@ def append_whatsapp_turn(
     messages.append({"role": "user", "content": user_text, "createdAt": now})
     messages.append({"role": "system", "content": bot_text, "createdAt": now})
     pdf_list = row["pdfList"] or []
-    pdf_list.append(pages)
+    pdf_list.append(_make_json_safe(pages))
     context_list = row["contextList"] or []
-    context_list.append(context_json)
+    context_list.append(_make_json_safe(context_json))
     supabase.table("conversations").update(
         {
             "messages": messages,
@@ -264,6 +279,24 @@ def append_whatsapp_turn(
             "updated_at": now,
         }
     ).eq("id", conversation_id).execute()
+    
+async def process_whatsapp_message(phone: str, text_message: str):
+    user = get_or_create_whatsapp_user(phone)
+    conversation = get_or_create_whatsapp_conversation(
+        phone, user["user_id"], user["email"]
+    )
+    history = conversation["messages"] or []
+
+    response, pages, category, context_json = get_answer(text_message, history, "DSA")
+
+    append_whatsapp_turn(conversation["id"], text_message, response, pages, context_json)
+    send_whatsapp_message(phone, response)
+    
+def get_whatsapp_message_id(data: dict) -> str | None:
+    try:
+        return data["entry"][0]["changes"][0]["value"]["messages"][0]["id"]
+    except (KeyError, IndexError, TypeError):
+        return None
 
 class QueryRequest(BaseModel):
     question: str
@@ -486,11 +519,12 @@ async def verify_webhook(request: Request):
     return "Verification failed"
 
 @app.post("/whatsapp/webhook")
-async def whatsapp_webhook(request: Request):
+async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     data = await request.json()
     phone, text_message, media_id = extract_message(data)
     if not phone:
         return {"status": "no message"}
+
     if media_id:
         print("Audio message received")
         file_path = download_whatsapp_audio(media_id)
@@ -501,18 +535,6 @@ async def whatsapp_webhook(request: Request):
             print("Audio file deleted")
         except Exception as e:
             print("Error deleting audio file:", e)
-    user = get_or_create_whatsapp_user(phone)
-    conversation = get_or_create_whatsapp_conversation(
-        phone, user["user_id"], user["email"]
-    )
-    history = conversation["messages"] or []
-    response, pages, category, context_json = get_answer(
-        text_message,
-        history,
-        "DSA"
-    )
-    append_whatsapp_turn(
-        conversation["id"], text_message, response, pages, context_json
-    )
-    send_whatsapp_message(phone, response)
+
+    background_tasks.add_task(process_whatsapp_message, phone, text_message)
     return {"status": "ok"}
