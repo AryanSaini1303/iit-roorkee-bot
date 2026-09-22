@@ -78,6 +78,8 @@ export default function HomePage() {
   const [context, setContext] = useState([]);
   const [contextList, setContextList] = useState([]);
   const [exportingFlag, setExportingFlag] = useState(false);
+  const textareaRef = useRef(null);
+  const MAX_ROWS = 4;
   const { onClick, onDoubleClick } = useClickHandlers({
     onSingleClick: () => {
       if (!isVerified) return;
@@ -155,6 +157,26 @@ export default function HomePage() {
 
   const playSound = () => {
     sound.play();
+  };
+
+  const autoResize = (el) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
+    const maxHeight = lineHeight * MAX_ROWS;
+    el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
+    el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden';
+  };
+
+  useEffect(() => {
+    autoResize(textareaRef.current);
+  }, [value]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
   };
 
   const handleExportChat = async () => {
@@ -957,14 +979,16 @@ export default function HomePage() {
               key={voiceModeToggle}
               style={!reply ? { position: 'absolute' } : null}
             >
-              <form onSubmit={handleSubmit}>
-                <input
-                  type="text"
+              <form onSubmit={handleSubmit} className={styles.inputForm}>
+                <textarea
+                  ref={textareaRef}
                   placeholder={'Enter your query...'}
                   name="query"
                   required
+                  rows={1}
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
                 />
                 <div className={styles.buttonContainer}>
                   <button type="submit">

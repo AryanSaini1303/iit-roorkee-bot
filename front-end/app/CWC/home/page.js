@@ -78,6 +78,8 @@ export default function HomePage() {
   const [context, setContext] = useState([]);
   const [contextList, setContextList] = useState([]);
   const [exportingFlag, setExportingFlag] = useState(false);
+  const textareaRef = useRef(null);
+  const MAX_ROWS = 4;
   const { onClick, onDoubleClick } = useClickHandlers({
     onSingleClick: () => {
       if (!isVerified) return;
@@ -144,17 +146,25 @@ export default function HomePage() {
   //   }
   // };
 
-  // Drop this in as the new handleExportChat inside page.js (HomePage).
-  // Replaces the html2canvas-based version entirely — no DOM capture at all.
-  // You can `npm uninstall html2canvas` once this is in, jsPDF is the only dependency left.
+  const autoResize = (el) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
+    const maxHeight = lineHeight * MAX_ROWS;
+    el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
+    el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden';
+  };
 
-  // Drop this in as the new handleExportChat inside page.js (HomePage).
-  // Replaces the html2canvas-based version entirely — no DOM capture at all.
-  // You can `npm uninstall html2canvas` once this is in, jsPDF is the only dependency left.
+  useEffect(() => {
+    autoResize(textareaRef.current);
+  }, [value]);
 
-  // Drop this in as the new handleExportChat inside page.js (HomePage).
-  // Replaces the html2canvas-based version entirely — no DOM capture at all.
-  // You can `npm uninstall html2canvas` once this is in, jsPDF is the only dependency left.
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
 
   const handleExportChat = async () => {
     if (messages.length === 0) return;
@@ -966,14 +976,16 @@ export default function HomePage() {
               key={voiceModeToggle}
               style={!reply ? { position: 'absolute' } : null}
             >
-              <form onSubmit={handleSubmit}>
-                <input
-                  type="text"
+              <form onSubmit={handleSubmit} className={styles.inputForm}>
+                <textarea
+                  ref={textareaRef}
                   placeholder={'Enter your query...'}
                   name="query"
                   required
+                  rows={1}
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
                 />
                 <div className={styles.buttonContainer}>
                   <button type="submit">
