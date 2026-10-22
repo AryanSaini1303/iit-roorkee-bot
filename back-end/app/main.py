@@ -171,6 +171,8 @@ def ocr_pdf(input_path: str) -> str:
 def _synthetic_email(phone: str) -> str:
     return f"{phone}@whatsapp.damchat.internal"
 
+VALID_ORIGINS = {"DSA", "CWC"}
+
 def get_or_create_whatsapp_user(phone: str) -> dict:
     existing = (
         supabase.table("whatsapp_users")
@@ -180,7 +182,11 @@ def get_or_create_whatsapp_user(phone: str) -> dict:
     )
     if existing.data:
         row = existing.data[0]
-        return {"user_id": row["user_id"], "email": _synthetic_email(phone)}
+        return {
+            "user_id": row["user_id"],
+            "email": _synthetic_email(phone),
+            "active_origin": row.get("active_origin") or "DSA",
+        }
     email = _synthetic_email(phone)
     auth_res = supabase.auth.admin.create_user(
         {
@@ -193,9 +199,20 @@ def get_or_create_whatsapp_user(phone: str) -> dict:
     )
     user_id = auth_res.user.id
     supabase.table("whatsapp_users").insert(
-        {"phone_number": phone, "user_id": user_id}
+        {"phone_number": phone, "user_id": user_id, "active_origin": "DSA"}
     ).execute()
-    return {"user_id": user_id, "email": email}
+    return {"user_id": user_id, "email": email, "active_origin": "DSA"}
+
+
+def set_whatsapp_origin(phone: str, origin: str):
+    supabase.table("whatsapp_users").update(
+        {"active_origin": origin}
+    ).eq("phone_number", phone).execute()
+
+
+def origin_footer(origin: str) -> str:
+    other = "CWC" if origin == "DSA" else "DSA"
+    return f"\n\n_Currently answering from: {origin}. Send /{other.lower()} to switch._"
 
 def _make_json_safe(obj):
     """Recursively convert sets (and anything else non-JSON-native) into
@@ -282,13 +299,25 @@ def append_whatsapp_turn(
     
 async def process_whatsapp_message(phone: str, text_message: str):
     user = get_or_create_whatsapp_user(phone)
+    command = (text_message or "").strip().lower()
+    if command in ("/cwc", "/dsa"):
+        new_origin = command[1:].upper()  # "/cwc" -> "CWC", "/dsa" -> "DSA"
+        if new_origin == user["active_origin"]:
+            reply = f"You're already on *{new_origin}*."
+        else:
+            set_whatsapp_origin(phone, new_origin)
+            reply = f"Switched to *{new_origin}*. Ask away!"
+        send_whatsapp_message(phone, reply)
+        return
+    origin = user["active_origin"]
     conversation = get_or_create_whatsapp_conversation(
         phone, user["user_id"], user["email"]
     )
     history = conversation["messages"] or []
-
-    response, pages, category, context_json = get_answer(text_message, history, "DSA")
-
+    response, pages, category, context_json = get_answer(text_message, history, origin)
+    append_whatsapp_turn(conversation["id"], text_message, response, pages, context_json)
+    outgoing = response + origin_footer(origin)
+    send_whatsapp_message(phone, outgoing)
     append_whatsapp_turn(conversation["id"], text_message, response, pages, context_json)
     send_whatsapp_message(phone, response)
     
