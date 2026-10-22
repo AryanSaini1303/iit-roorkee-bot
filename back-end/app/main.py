@@ -550,10 +550,18 @@ async def verify_webhook(request: Request):
 @app.post("/whatsapp/webhook")
 async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     data = await request.json()
+    msg_id = get_whatsapp_message_id(data)
+    if msg_id:
+        try:
+            supabase.table("whatsapp_processed_messages").insert(
+                {"message_id": msg_id}
+            ).execute()
+        except Exception:
+            print(f"Duplicate webhook delivery for {msg_id}, ignoring")
+            return {"status": "duplicate, ignored"}
     phone, text_message, media_id = extract_message(data)
     if not phone:
         return {"status": "no message"}
-
     if media_id:
         print("Audio message received")
         file_path = download_whatsapp_audio(media_id)
@@ -564,6 +572,5 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
             print("Audio file deleted")
         except Exception as e:
             print("Error deleting audio file:", e)
-
     background_tasks.add_task(process_whatsapp_message, phone, text_message)
     return {"status": "ok"}
