@@ -319,7 +319,6 @@ async def process_whatsapp_message(phone: str, text_message: str):
     outgoing = response + origin_footer(origin)
     send_whatsapp_message(phone, outgoing)
     append_whatsapp_turn(conversation["id"], text_message, response, pages, context_json)
-    send_whatsapp_message(phone, response)
     
 def get_whatsapp_message_id(data: dict) -> str | None:
     try:
