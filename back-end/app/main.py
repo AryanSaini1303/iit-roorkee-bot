@@ -551,6 +551,7 @@ async def verify_webhook(request: Request):
 async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     data = await request.json()
     msg_id = get_whatsapp_message_id(data)
+    print(f"DEBUG — incoming webhook, message_id={msg_id}")
     if msg_id:
         try:
             supabase.table("whatsapp_processed_messages").insert(
