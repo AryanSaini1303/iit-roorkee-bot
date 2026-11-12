@@ -5,6 +5,8 @@ from pydantic import BaseModel #type: ignore
 from app.query import get_answer
 from fastapi.middleware.cors import CORSMiddleware #type: ignore
 import os
+import json
+import secrets
 import fitz #type: ignore
 import re
 import chromadb #type: ignore
@@ -33,6 +35,8 @@ assert SUPABASE_URL, "Missing SUPABASE_URL in .env"
 assert SUPABASE_SERVICE_ROLE_KEY, "Missing SUPABASE_SERVICE_ROLE_KEY in .env"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 WHATSAPP_SESSION_WINDOW_HOURS = 24
+REFERENCE_BASE_URL = os.getenv("REFERENCE_BASE_URL", "https://damchat.in")
+WHATSAPP_MAX_CHARS = 4000  # matches the cap inside send_whatsapp_message
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 assert OPENAI_API_KEY, "Missing OPENAI_API_KEY in .env"
@@ -217,10 +221,6 @@ def set_whatsapp_origin(phone: str, origin: str):
     ).eq("phone_number", phone).execute()
 
 
-def origin_footer(origin: str) -> str:
-    other = "CWC" if origin == "DSA" else "DSA"
-    return f"\n\n_Currently answering from: {origin}. Send /{other.lower()} to switch._"
-
 def _make_json_safe(obj):
     """Recursively convert sets (and anything else non-JSON-native) into
     JSON-serializable equivalents. Guards against get_answer or its
@@ -273,13 +273,33 @@ def get_or_create_whatsapp_conversation(phone: str, user_id: str, email: str) ->
     )
     return new_row.data[0]
 
+def create_reference_link(conversation_id: int, bot_index: int) -> str:
+    """Creates an unguessable token that maps to one bot turn's references."""
+    token = secrets.token_urlsafe(9)  # 12 chars, ~72 bits of entropy
+    supabase.table("reference_links").insert(
+        {"token": token, "conversation_id": conversation_id, "bot_index": bot_index}
+    ).execute()
+    return token
+
+def build_whatsapp_reply(answer: str, ref_token: str | None, origin: str) -> str:
+    """Answer + reference link + mode footer. The answer is trimmed (never the
+    suffix) so the link and footer always fit inside WhatsApp's length cap."""
+    suffix = ""
+    if ref_token:
+        suffix += f"\n\n📄 *References:*\n{REFERENCE_BASE_URL}/ref/{ref_token}"
+    suffix += origin_footer(origin)
+    room = WHATSAPP_MAX_CHARS - len(suffix)
+    if len(answer) > room:
+        answer = answer[: room - 1].rstrip() + "…"
+    return answer + suffix
+
 def append_whatsapp_turn(
     conversation_id: int,
     user_text: str,
     bot_text: str,
     pages: list,
     context_json: list,
-):
+) -> str | None:
     row = (
         supabase.table("conversations")
         .select("messages, pdfList, contextList")
@@ -291,8 +311,9 @@ def append_whatsapp_turn(
     messages = row["messages"] or []
     messages.append({"role": "user", "content": user_text, "createdAt": now})
     messages.append({"role": "system", "content": bot_text, "createdAt": now})
+    safe_pages = _make_json_safe(pages)
     pdf_list = row["pdfList"] or []
-    pdf_list.append(_make_json_safe(pages))
+    pdf_list.append(safe_pages)
     context_list = row["contextList"] or []
     context_list.append(_make_json_safe(context_json))
     supabase.table("conversations").update(
@@ -303,6 +324,15 @@ def append_whatsapp_turn(
             "updated_at": now,
         }
     ).eq("id", conversation_id).execute()
+
+    if safe_pages:
+        # this turn's index into pdfList/contextList.
+        # Fail soft: a link problem must never stop the answer from being sent.
+        try:
+            return create_reference_link(conversation_id, len(pdf_list) - 1)
+        except Exception as e:
+            print(f"Could not create reference link: {e}")
+    return None
     
 async def process_whatsapp_message(phone: str, text_message: str):
     user = get_or_create_whatsapp_user(phone)
@@ -323,8 +353,10 @@ async def process_whatsapp_message(phone: str, text_message: str):
     )
     history = conversation["messages"] or []
     response, pages, category, context_json = get_answer(text_message, history, origin)
-    append_whatsapp_turn(conversation["id"], text_message, response, pages, context_json)
-    send_whatsapp_message(phone, response + origin_footer(origin))
+    ref_token = append_whatsapp_turn(
+        conversation["id"], text_message, response, pages, context_json
+    )
+    send_whatsapp_message(phone, build_whatsapp_reply(response, ref_token, origin))
     
 def get_whatsapp_message_id(data: dict) -> str | None:
     try:
@@ -556,6 +588,78 @@ def get_image_view_url(filename: str):
     )
     return {"viewUrl": view_url}
 
+def _jsonish(value, default):
+    """Web-written rows may store pdfList/contextList as a JSON *string*; handle both."""
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except ValueError:
+            return default
+    return value if value is not None else default
+
+@app.get("/refs/{token}")
+def get_references(token: str):
+    link = (
+        supabase.table("reference_links")
+        .select("conversation_id, bot_index")
+        .eq("token", token)
+        .limit(1)
+        .execute()
+    )
+    if not link.data:
+        raise HTTPException(status_code=404, detail="Reference link not found")
+
+    conv = (
+        supabase.table("conversations")
+        .select("pdfList, contextList")
+        .eq("id", link.data[0]["conversation_id"])
+        .limit(1)
+        .execute()
+    )
+    if not conv.data:
+        raise HTTPException(status_code=404, detail="Reference link not found")
+
+    idx = link.data[0]["bot_index"]
+    pdf_list = _jsonish(conv.data[0]["pdfList"], [])
+    context_list = _jsonish(conv.data[0]["contextList"], [])
+    cited = pdf_list[idx] if idx < len(pdf_list) else []
+    contexts = context_list[idx] if idx < len(context_list) else []
+    if not isinstance(cited, list):
+        cited = []
+    if not isinstance(contexts, list):
+        contexts = []
+
+    # pdf name -> set of cited page numbers ("<pdf name> | Page 12")
+    pdfs: dict[str, set] = {}
+    for entry in cited:
+        name, _, page_part = str(entry).partition("|")
+        try:
+            page_num = int(page_part.replace("Page", "").strip())
+        except ValueError:
+            continue
+        pdfs.setdefault(name.strip(), set()).add(page_num)
+
+    # (pdf name, page) -> retrieved chunk text, used for highlighting
+    highlights: dict[tuple, list] = {}
+    for ctx in contexts:
+        content = ctx.get("content", "")
+        bucket = highlights.setdefault((ctx.get("pdf_name"), ctx.get("page_num")), [])
+        bucket.extend(content if isinstance(content, list) else [content])
+
+    # Only cited pages and chunk text leave the server: no messages, no user info.
+    return {
+        "pdfs": [
+            {
+                "name": name,
+                "pages": [
+                    {"page": p, "highlights": highlights.get((name, p), [])}
+                    for p in sorted(page_set)
+                ],
+            }
+            for name, page_set in sorted(pdfs.items())
+        ]
+    }
+
 @app.get("/whatsapp/webhook")
 async def verify_webhook(request: Request):
     params = request.query_params
@@ -567,7 +671,6 @@ async def verify_webhook(request: Request):
 async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     data = await request.json()
     msg_id = get_whatsapp_message_id(data)
-    print(f"DEBUG — incoming webhook, message_id={msg_id}")
     if msg_id:
         try:
             supabase.table("whatsapp_processed_messages").insert(
