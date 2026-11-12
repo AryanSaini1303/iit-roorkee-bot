@@ -55,6 +55,13 @@ VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
 
+MODE_LABELS = {"DSA": "DSA", "CWC": "Guidelines"}
+MODE_COMMANDS = {
+    "#dsa": "DSA",
+    "#guidelines": "CWC",
+    "#guideline": "CWC",
+}
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -299,14 +306,15 @@ def append_whatsapp_turn(
     
 async def process_whatsapp_message(phone: str, text_message: str):
     user = get_or_create_whatsapp_user(phone)
-    command = (text_message or "").strip().lower()
-    if command in ("/cwc", "/dsa"):
-        new_origin = command[1:].upper()  # "/cwc" -> "CWC", "/dsa" -> "DSA"
+    command = (text_message or "").strip().lower().rstrip(".!")
+    if command in MODE_COMMANDS:
+        new_origin = MODE_COMMANDS[command]
+        label = MODE_LABELS[new_origin]
         if new_origin == user["active_origin"]:
-            reply = f"You're already on *{new_origin}*."
+            reply = f"You're already in *{label}* mode."
         else:
             set_whatsapp_origin(phone, new_origin)
-            reply = f"Switched to *{new_origin}*. Ask away!"
+            reply = f"Switched to *{label}* mode. Ask away!"
         send_whatsapp_message(phone, reply)
         return
     origin = user["active_origin"]
@@ -316,16 +324,25 @@ async def process_whatsapp_message(phone: str, text_message: str):
     history = conversation["messages"] or []
     response, pages, category, context_json = get_answer(text_message, history, origin)
     append_whatsapp_turn(conversation["id"], text_message, response, pages, context_json)
-    outgoing = response + origin_footer(origin)
-    send_whatsapp_message(phone, outgoing)
-    append_whatsapp_turn(conversation["id"], text_message, response, pages, context_json)
+    send_whatsapp_message(phone, response + origin_footer(origin))
     
 def get_whatsapp_message_id(data: dict) -> str | None:
     try:
         return data["entry"][0]["changes"][0]["value"]["messages"][0]["id"]
     except (KeyError, IndexError, TypeError):
         return None
+    
+def switch_command_for(origin: str) -> str:
+    """The command a user would send to switch TO this origin."""
+    return "#DSA" if origin == "DSA" else "#Guidelines"
 
+def origin_footer(origin: str) -> str:
+    other = "CWC" if origin == "DSA" else "DSA"
+    return (
+        f"\n\n_Currently in {MODE_LABELS[origin]} mode. "
+        f"Send {switch_command_for(other)} to switch to {MODE_LABELS[other]} mode._"
+    )
+    
 class QueryRequest(BaseModel):
     question: str
     conversation: list
