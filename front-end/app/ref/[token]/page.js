@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import LoaderComponent from '@/components/loader';
 import styles from './page.module.css';
 
 const SinglePagePdfRenderer = dynamic(
@@ -74,7 +75,14 @@ export default function ReferencePage() {
       </main>
     );
   }
-  if (!pdfs) return <main className={styles.state}>Loading references…</main>;
+  if (!pdfs) {
+    return (
+      <main className={styles.state}>
+        <LoaderComponent />
+        <p>Loading references…</p>
+      </main>
+    );
+  }
 
   if (selected) {
     return (
@@ -98,7 +106,10 @@ export default function ReferencePage() {
               </div>
             </div>
           ) : (
-            <p className={styles.state}>Loading page…</p>
+            <div className={styles.pageLoading}>
+              <LoaderComponent />
+              <p>Loading page…</p>
+            </div>
           )}
         </div>
       </main>

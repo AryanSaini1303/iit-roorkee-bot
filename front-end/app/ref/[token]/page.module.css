@@ -84,7 +84,33 @@
   padding: 9%;
 }
 
+/* Full-height, centred. Without a height the body's background image
+   collapses to the size of the text, which is what looked half-shown. */
 .state {
-  padding: 3rem 16px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0 16px;
+  box-sizing: border-box;
   text-align: center;
+  color: #183153;
+}
+
+.state p,
+.pageLoading p {
+  margin: 0;
+}
+
+/* loading a single page inside the viewer */
+.pageLoading {
+  min-height: 60dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: #183153;
 }
