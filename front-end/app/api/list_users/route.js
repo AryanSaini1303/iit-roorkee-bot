@@ -29,8 +29,13 @@ export async function POST(req) {
   );
   try {
     const usersData = await fetchAllUsers(supabase);
-    const users = usersData.map((u) => ({
+    // WhatsApp users are listed by /api/whatsapp_users
+    const webUsers = usersData.filter(
+      (u) => u.user_metadata?.source !== 'whatsapp',
+    );
+    const users = webUsers.map((u) => ({
       id: u.id,
+      source: 'web',
       email: u.email,
       created_at: u.created_at,
       last_sign_in_at: u.last_sign_in_at,

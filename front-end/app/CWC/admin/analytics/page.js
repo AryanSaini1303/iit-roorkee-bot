@@ -4,48 +4,15 @@ import styles from '../page.module.css';
 import { createClient } from '@/utils/supabase/client';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import CategoriesPieChart from '@/components/CategoriesCountChart';
+import AnalyticsPanel from '@/components/admin/AnalyticsPanel';
 
 export default function AdminPage() {
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingUsers, setLoadingUsers] = useState(true);
-  const [loadingCategories, setLoadingCategories] = useState(true);
   const [session, setSession] = useState(null);
   const supabase = createClient('CWC');
   const router = useRouter();
   const [signOutFlag, setSignOutFlag] = useState(false);
-  const [totalVisits, setTotalVisits] = useState(0);
-  const [count, setCount] = useState(0);
   const route = usePathname();
-  const [categoriesData, setCategoriesData] = useState([]);
-
-  const refreshCount = async () => {
-    const { data, error } = await supabase
-      .from('heartbeats')
-      .select('session_id')
-      .gt('last_seen_at', new Date(Date.now() - 30000).toISOString());
-    if (!error) setCount(data.length);
-  };
-
-  useEffect(() => {
-    if (!supabase) return;
-    refreshCount();
-    const channel = supabase
-      .channel('heartbeats-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'heartbeats' },
-        () => {
-          // whenever anyone pings, recalc
-          refreshCount();
-        },
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [supabase]);
 
   useEffect(() => {
     const getSession = async () => {
@@ -78,45 +45,6 @@ export default function AdminPage() {
       router.push('/CWC/adminLogin');
     }
   };
-
-  const fetchUsers = async () => {
-    setLoadingUsers(true);
-    const res = await fetch('/api/list_users', {
-      method: 'POST',
-      body: JSON.stringify({ origin: 'CWC' }),
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const data = await res.json();
-    setUsers(data.users || []);
-    const res1 = await fetch('/api/getTotalVisits', {
-      method: 'POST',
-      body: JSON.stringify({ origin: 'CWC' }),
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const data1 = await res1.json();
-    // console.log(data1);
-    setTotalVisits(data1.count || 0);
-    setLoadingUsers(false);
-    // console.log(data?.users[0]);
-  };
-
-  const getCategoriesCount = async () => {
-    const res = await fetch('/api/getCategoriesCount', {
-      method: 'POST',
-      body: JSON.stringify({ origin: 'CWC' }),
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const data = await res.json();
-    // console.log(data);
-    setCategoriesData(data.data || []);
-    setLoadingCategories(false);
-    // console.log(data?.users[0]);
-  };
-
-  useEffect(() => {
-    fetchUsers();
-    getCategoriesCount();
-  }, []);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -194,35 +122,7 @@ export default function AdminPage() {
             {signOutFlag ? 'Signing out...' : 'Sign Out'}
           </button>
           <h1>Admin Dashboard</h1>
-          <section className={styles.bottomContainer}>
-            {loadingCategories
-              ? 'Loading...'
-              : totalVisits.length !== 0 && (
-                  <section
-                    className={styles.infoContainer}
-                    style={{ height: '70vh' }}
-                  >
-                    <h2>Web Analytics</h2>
-                    <ul>
-                      <li>
-                        Number of Visits:{' '}
-                        <span>{loadingUsers ? '--' : totalVisits}</span>
-                      </li>
-                      <li>
-                        Number of Registered Users:{' '}
-                        <span>{loadingUsers ? '--' : users.length}</span>
-                      </li>
-                      <li>
-                        Number of Live Users:{' '}
-                        <span>{loadingUsers ? '--' : count}</span>
-                      </li>
-                    </ul>
-                    {categoriesData.length !== 0 && (
-                      <CategoriesPieChart data={categoriesData} />
-                    )}
-                  </section>
-                )}
-          </section>
+          <AnalyticsPanel origin="CWC" />
         </section>
       </div>
     </div>
