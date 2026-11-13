@@ -299,6 +299,8 @@ def append_whatsapp_turn(
     bot_text: str,
     pages: list,
     context_json: list,
+    category: str | None = None,
+    origin: str | None = None,
 ) -> str | None:
     row = (
         supabase.table("conversations")
@@ -310,7 +312,13 @@ def append_whatsapp_turn(
     now = datetime.now(timezone.utc).isoformat()
     messages = row["messages"] or []
     messages.append({"role": "user", "content": user_text, "createdAt": now})
-    messages.append({"role": "system", "content": bot_text, "createdAt": now})
+    bot_message = {"role": "system", "content": bot_text, "createdAt": now}
+    # kept for admin analytics; stripped again before the history reaches the model
+    if category:
+        bot_message["category"] = category
+    if origin:
+        bot_message["origin"] = origin
+    messages.append(bot_message)
     safe_pages = _make_json_safe(pages)
     pdf_list = row["pdfList"] or []
     pdf_list.append(safe_pages)
@@ -351,10 +359,14 @@ async def process_whatsapp_message(phone: str, text_message: str):
     conversation = get_or_create_whatsapp_conversation(
         phone, user["user_id"], user["email"]
     )
-    history = conversation["messages"] or []
+    history = [
+        {k: v for k, v in m.items() if k not in ("category", "origin")}
+        for m in (conversation["messages"] or [])
+    ]
     response, pages, category, context_json = get_answer(text_message, history, origin)
     ref_token = append_whatsapp_turn(
-        conversation["id"], text_message, response, pages, context_json
+        conversation["id"], text_message, response, pages, context_json,
+        category=category, origin=origin,
     )
     send_whatsapp_message(phone, build_whatsapp_reply(response, ref_token, origin))
     
