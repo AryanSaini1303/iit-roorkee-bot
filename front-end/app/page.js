@@ -15,7 +15,7 @@ export default function TenantSelect() {
             className={styles.cwcButton}
             onClick={() => router.push("/CWC")}
           >
-            CWC
+            Guidelines
           </button>
           <button
             className={styles.dsaButton}
